@@ -58,7 +58,7 @@
                 background: #fff;
             }
             #printable-ticket svg {
-                max-width: 75% !important;
+                max-width: 45% !important;
                 height: auto !important;
                 display: block !important;
                 margin: 0 auto 2px auto !important;
@@ -83,17 +83,17 @@
 
     <header id="staff-header" class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md">
         <div class="flex items-center gap-3">
-            <div class="bg-gradient-to-tr from-amber-600 to-amber-400 p-2 rounded-xl shadow-lg flex items-center justify-center">
+            <div class="bg-amber-500/10 p-2 rounded-xl border border-amber-500/30 shadow-lg flex items-center justify-center">
                 <!-- Exact Restaurant Logo LA ESQUINA -->
-                <svg viewBox="0 0 1000 320" width="120" height="auto" class="text-slate-950 fill-current">
+                <svg viewBox="0 0 1000 320" width="130" height="auto" class="text-amber-400 fill-current">
                     <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square" />
                     <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
                     <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
                 </svg>
             </div>
             <div>
-                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">Sistema POS & Control</h1>
-                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más...</p>
+                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS</h1>
+                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más ...</p>
             </div>
         </div>
 
@@ -130,9 +130,8 @@
             </button>
         </nav>
 
-        <!-- User Session Indicator & Super Admin Controls -->
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema (Solo Super Admin servipicho)">
+            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema (Super Admin)">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer Sistema</span>
             </button>
             <button id="admin-btn-usuarios" onclick="abrirModalUsuarios()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 hidden" title="Gestionar Personal">
@@ -140,17 +139,16 @@
             </button>
             <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
                 <i id="user-session-icon" class="fa-solid fa-utensils text-brand-400"></i>
-                <span id="user-session-name" class="font-bold text-slate-200">Administrador</span>
+                <span id="user-session-name" class="font-bold text-slate-200">Invitado</span>
             </div>
             <button onclick="openLoginModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition border border-brand-500 flex items-center gap-1.5 shadow-md shadow-brand-600/20" title="Cambiar Usuario">
                 <i class="fa-solid fa-right-to-bracket"></i>
-                <span id="login-btn-text">Cambiar Usuario</span>
+                <span id="login-btn-text">Iniciar Sesión</span>
             </button>
         </div>
     </header>
 
     <main class="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar max-w-7xl w-full mx-auto">
-        
         <!-- PARA LLEVAR VIEW -->
         <section id="view-parallevar" class="view-panel space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -164,7 +162,6 @@
                     <i class="fa-solid fa-plus-circle text-sm"></i> + Nueva Orden Para Llevar
                 </button>
             </div>
-            
             <div id="parallevar-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             </div>
         </section>
@@ -176,7 +173,7 @@
                     <h2 class="text-xl font-black text-white">Plano de Mesas</h2>
                     <p class="text-xs text-slate-400">Seleccione una mesa para abrir o atender una comanda presencial</p>
                 </div>
-                <div id="admin-mesas-controls" class="flex items-center gap-2">
+                <div id="admin-mesas-controls" class="flex items-center gap-2 hidden">
                     <button onclick="eliminarUltimaMesa()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5">
                         <i class="fa-solid fa-minus"></i> Quitar Mesa
                     </button>
@@ -287,9 +284,6 @@
                 <button onclick="abrirModalReservacion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
                     <i class="fa-solid fa-calendar-plus"></i> + Nueva Reservación
                 </button>
-            </div>
-
-            <div id="reservations-alerts-container" class="space-y-2 hidden">
             </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
@@ -564,57 +558,39 @@
     </div>
 
     <!-- MODAL LOGIN -->
-    <div id="modal-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div id="modal-login" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
-            <div class="text-center space-y-1">
-                <div class="bg-gradient-to-tr from-amber-600 to-amber-400 p-2 rounded-2xl shadow-lg inline-flex items-center justify-center mb-2">
-                    <svg viewBox="0 0 1000 320" width="100" height="auto" class="text-slate-950 fill-current">
+            <div class="text-center space-y-2">
+                <div class="bg-amber-500/10 p-3 rounded-2xl border border-amber-500/30 shadow-lg inline-flex items-center justify-center mb-1">
+                    <svg viewBox="0 0 1000 320" width="120" height="auto" class="text-amber-400 fill-current">
                         <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square" />
                         <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
                         <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
                     </svg>
                 </div>
-                <h3 class="text-lg font-black text-white">Cambiar de Usuario</h3>
-                <p class="text-xs text-slate-400">Seleccione su perfil de acceso en LA ESQUINA</p>
+                <h3 class="text-lg font-black text-white">Iniciar Sesión</h3>
+                <p class="text-xs text-slate-400">Ingrese sus credenciales de acceso</p>
             </div>
 
             <form onsubmit="autenticarUsuario(event)" class="space-y-3">
                 <div>
-                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo de Perfil</label>
-                    <select id="login-tipo-rol" onchange="toggleLoginInputs()" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        <option value="admin">Administrador / Super Admin</option>
-                        <option value="mesero">Personal (Mesero, Cocina, Bar)</option>
-                        <option value="cliente">Cliente (Menú Digital)</option>
-                    </select>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
+                    <input id="login-username" type="text" required placeholder="Nombre de usuario" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
-
-                <div id="login-pass-group" class="space-y-2">
-                    <div id="login-user-container">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario / ID</label>
-                        <input id="login-user" type="text" value="servipicho" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña</label>
-                        <input id="login-pass" type="password" placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
-                </div>
-
-                <div id="login-mesero-group" class="space-y-2 hidden">
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Seleccionar Usuario</label>
-                        <select id="login-mesero-select" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña / PIN</label>
-                        <input id="login-mesero-pass" type="password" placeholder="Clave personal (ej. 123)" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña</label>
+                    <input id="login-pass" type="password" required placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
                 </div>
 
                 <button id="login-submit-btn" type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-brand-600/25">
                     Ingresar al Sistema
                 </button>
             </form>
+            <div class="text-center pt-2 border-t border-slate-800">
+                <button onclick="ingresarComoClienteDirecto()" class="text-xs font-bold text-brand-400 hover:text-brand-300">
+                    Ver Menú Digital (Clientes) →
+                </button>
+            </div>
         </div>
     </div>
 
@@ -793,12 +769,12 @@
         </div>
     </div>
 
-    <!-- MODAL USUARIOS -->
+    <!-- MODAL USUARIOS & ADMINISTRADORES -->
     <div id="modal-usuarios" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xl shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                 <h3 class="font-black text-white text-base flex items-center gap-2">
-                    <i class="fa-solid fa-users-gear text-brand-400"></i> Gestión de Personal
+                    <i class="fa-solid fa-users-gear text-brand-400"></i> Gestión de Usuarios y Administradores
                 </h3>
                 <button onclick="cerrarModalUsuarios()" class="text-slate-400 hover:text-white text-lg">
                     <i class="fa-solid fa-xmark"></i>
@@ -807,23 +783,24 @@
 
             <form onsubmit="guardarUsuarioMesero(event)" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
                 <input id="user-edit-id" type="hidden" value="">
-                <h4 id="user-form-title" class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Agregar Nuevo Usuario</h4>
+                <h4 id="user-form-title" class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Agregar Nuevo Usuario o Administrador</h4>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div class="sm:col-span-1">
-                        <label class="block font-bold text-slate-400 uppercase mb-1">Nombre Completo</label>
-                        <input id="user-nombre" type="text" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Nombre / Usuario</label>
+                        <input id="user-nombre" type="text" required placeholder="Ej. admin2 o Carlos" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
                         <label class="block font-bold text-slate-400 uppercase mb-1">Rol / Puesto</label>
                         <select id="user-rol" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="admin">Administrador</option>
                             <option value="mesero">Mesero</option>
                             <option value="barista">Barista</option>
                             <option value="cocinero">Cocinero</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block font-bold text-slate-400 uppercase mb-1">PIN / Clave</label>
-                        <input id="user-pass" type="password" required placeholder="Ej. 123" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Contraseña / PIN</label>
+                        <input id="user-pass" type="password" required placeholder="Contraseña" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                 </div>
                 <div class="flex gap-2 pt-1">
@@ -837,15 +814,15 @@
             </form>
 
             <div class="space-y-2">
-                <h4 class="font-bold text-slate-400 text-xs uppercase tracking-wider">Personal Registrado</h4>
+                <h4 class="font-bold text-slate-400 text-xs uppercase tracking-wider">Personal y Administradores Registrados</h4>
                 <div class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-800 rounded-2xl bg-slate-950">
                     <table class="w-full text-left text-xs">
                         <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800 sticky top-0">
                             <tr>
                                 <th class="p-2.5">ID</th>
-                                <th class="p-2.5">Nombre</th>
+                                <th class="p-2.5">Nombre / Usuario</th>
                                 <th class="p-2.5">Rol</th>
-                                <th class="p-2.5">PIN</th>
+                                <th class="p-2.5">Clave</th>
                                 <th class="p-2.5 text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -857,7 +834,7 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Thermal Ticket Container with LOGO LA ESQUINA -->
+    <!-- Hidden Printable Thermal Ticket Container with SVG Logo LA ESQUINA -->
     <div id="printable-ticket" class="hidden"></div>
 
     <!-- Toast Notification Container -->
@@ -865,7 +842,7 @@
 
     <script>
         const defaultState = {
-            currentUser: { role: 'admin', nombre: 'servipicho' },
+            currentUser: null,
             activeMesaId: -1,
             activeCategory: 'Todos',
             activeMenuCategory: 'Todos',
@@ -874,9 +851,10 @@
             lastCorrelativeDate: new Date().toLocaleDateString(),
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
             usuarios: [
-                { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
-                { id: 2, nombre: 'Luis Méndez', rol: 'barista', password: '123' },
-                { id: 3, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' }
+                { id: 1, nombre: 'servipicho', rol: 'admin', password: '16112021Alo' },
+                { id: 2, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
+                { id: 3, nombre: 'Luis Méndez', rol: 'barista', password: '123' },
+                { id: 4, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' }
             ],
             takeoutCount: 3,
             mesas: [
@@ -994,6 +972,10 @@
             return state.usuarios ? state.usuarios.filter(u => u.rol === 'mesero') : [];
         }
 
+        function getAdministradores() {
+            return state.usuarios ? state.usuarios.filter(u => u.rol === 'admin' && u.nombre !== 'servipicho') : [];
+        }
+
         function saveState() {
             try {
                 localStorage.setItem('gastrocontrol_esquina_v5_state', JSON.stringify(state));
@@ -1057,16 +1039,22 @@
         }
 
         function renderUserSession() {
-            const staffHeader = document.getElementById('staff-header');
             const icon = document.getElementById('user-session-icon');
             const name = document.getElementById('user-session-name');
             const loginBtnText = document.getElementById('login-btn-text');
             const resetBtn = document.getElementById('admin-reset-btn');
             const usersBtn = document.getElementById('admin-btn-usuarios');
+            const adminMesasControls = document.getElementById('admin-mesas-controls');
 
             if (!name) return;
+            
+            if (!state.currentUser) {
+                openLoginModal();
+                return;
+            }
+
             const role = state.currentUser.role;
-            const isSuperAdmin = role === 'admin' && (state.currentUser.nombre === 'servipicho' || state.currentUser.nombre.toLowerCase().includes('servipicho'));
+            const isSuperAdmin = role === 'admin' && state.currentUser.nombre === 'servipicho';
 
             if (resetBtn) {
                 if (isSuperAdmin) resetBtn.classList.remove('hidden');
@@ -1076,6 +1064,11 @@
             if (usersBtn) {
                 if (role === 'admin') usersBtn.classList.remove('hidden');
                 else usersBtn.classList.add('hidden');
+            }
+
+            if (adminMesasControls) {
+                if (role === 'admin') adminMesasControls.classList.remove('hidden');
+                else adminMesasControls.classList.add('hidden');
             }
 
             if (role === 'admin') {
@@ -1110,11 +1103,8 @@
                 if (!btn) return;
 
                 if (role === 'cliente') {
-                    if (t.name === 'menu') {
-                        btn.classList.remove('hidden');
-                    } else {
-                        btn.classList.add('hidden');
-                    }
+                    if (t.name === 'menu') btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
                 } else if (role === 'mesero') {
                     if (['parallevar', 'mesas', 'pos', 'menu', 'reservaciones'].includes(t.name)) btn.classList.remove('hidden');
                     else btn.classList.add('hidden');
@@ -1139,7 +1129,10 @@
             const modal = document.getElementById('modal-login');
             if (modal) {
                 modal.classList.remove('hidden');
-                toggleLoginInputs();
+                const userInp = document.getElementById('login-username');
+                const passInp = document.getElementById('login-pass');
+                if (userInp) userInp.value = '';
+                if (passInp) passInp.value = '';
             }
         }
 
@@ -1148,33 +1141,7 @@
             if (modal) modal.classList.add('hidden');
         }
 
-        function toggleLoginInputs() {
-            const rolSelect = document.getElementById('login-tipo-rol');
-            const passGroup = document.getElementById('login-pass-group');
-            const userContainer = document.getElementById('login-user-container');
-            const meseroGroup = document.getElementById('login-mesero-group');
-            if (!rolSelect) return;
-
-            if (rolSelect.value === 'cliente') {
-                passGroup.classList.add('hidden');
-                meseroGroup.classList.add('hidden');
-            } else if (rolSelect.value === 'admin') {
-                passGroup.classList.remove('hidden');
-                if (userContainer) userContainer.classList.remove('hidden');
-                meseroGroup.classList.add('hidden');
-            } else {
-                passGroup.classList.add('hidden');
-                meseroGroup.classList.remove('hidden');
-            }
-        }
-
-        function renderListaMeserosLoginSelect() {
-            const sel = document.getElementById('login-mesero-select');
-            if (!sel) return;
-            sel.innerHTML = state.usuarios.map(u => `<option value="${u.id}">[${u.rol.toUpperCase()}] ${u.nombre}</option>`).join('');
-        }
-
-        function ingresarComoCliente() {
+        function ingresarComoClienteDirecto() {
             state.currentUser = { role: 'cliente', nombre: 'Visitante' };
             showToast("Modo Cliente (Menú Digital) activado", "success");
             closeLoginModal();
@@ -1184,57 +1151,36 @@
 
         function autenticarUsuario(e) {
             e.preventDefault();
-            const rolSelect = document.getElementById('login-tipo-rol');
-            if (!rolSelect) return;
-            const rol = rolSelect.value;
+            const usernameInput = document.getElementById('login-username').value.trim().toLowerCase();
+            const passVal = document.getElementById('login-pass').value.trim();
 
-            if (rol === 'cliente') {
-                ingresarComoCliente();
+            if (!usernameInput || !passVal) {
+                showToast("Por favor ingrese usuario y contraseña", "error");
                 return;
             }
 
-            if (rol === 'admin') {
-                const userVal = document.getElementById('login-user').value.trim();
-                const passVal = document.getElementById('login-pass').value.trim();
+            const user = state.usuarios.find(u => u.nombre.toLowerCase() === usernameInput);
 
-                if (userVal === 'servipicho' && passVal === '16112021Alo') {
-                    state.currentUser = { role: 'admin', nombre: 'servipicho' };
-                    showToast("Bienvenido, Super Administrador servipicho", "success");
-                    closeLoginModal();
-                    renderUserSession();
-                    renderPosMeseroSelector();
-                    renderMenuTable();
-                    renderInventario();
-                    switchTab('parallevar');
-                } else {
-                    showToast("Usuario o contraseña de Administrador incorrectos", "error");
-                }
+            if (user && user.password === passVal) {
+                state.currentUser = { role: user.rol, nombre: user.nombre };
+                showToast(`Sesión iniciada como ${user.rol.toUpperCase()}: ${user.nombre}`, "success");
+                closeLoginModal();
+                renderUserSession();
+                renderPosMeseroSelector();
+                renderMenuTable();
+
+                if (user.rol === 'cocinero') switchTab('cocina');
+                else if (user.rol === 'barista') switchTab('barra');
+                else switchTab('parallevar');
             } else {
-                const userId = parseInt(document.getElementById('login-mesero-select').value);
-                const passVal = document.getElementById('login-mesero-pass').value.trim();
-                const user = state.usuarios.find(u => u.id === userId);
-
-                if (user && (user.password === passVal || (!user.password && passVal === '123'))) {
-                    state.currentUser = { role: user.rol, nombre: user.nombre };
-                    showToast(`Sesión iniciada como ${user.rol.toUpperCase()}: ${user.nombre}`, "success");
-                    closeLoginModal();
-                    renderUserSession();
-                    renderPosMeseroSelector();
-                    renderMenuTable();
-
-                    if (user.rol === 'cocinero') switchTab('cocina');
-                    else if (user.rol === 'barista') switchTab('barra');
-                    else switchTab('parallevar');
-                } else {
-                    showToast("Contraseña / PIN incorrecto", "error");
-                }
+                showToast("Usuario o contraseña incorrectos", "error");
             }
         }
 
         function restablecerSistema() {
-            const isSuperAdmin = state.currentUser.role === 'admin' && (state.currentUser.nombre === 'servipicho' || state.currentUser.nombre.toLowerCase().includes('servipicho'));
+            const isSuperAdmin = state.currentUser && state.currentUser.role === 'admin' && state.currentUser.nombre === 'servipicho';
             if (!isSuperAdmin) {
-                showToast("Acceso denegado: solo el Super Administrador (servipicho) puede restablecer el sistema por completo", "error");
+                showToast("Acceso denegado: solo el Super Administrador (servipicho) puede restablecer el sistema", "error");
                 return;
             }
 
@@ -1257,10 +1203,10 @@
             const actions = document.getElementById('admin-menu-actions');
             if (!grid) return;
 
-            const isClient = state.currentUser.role === 'cliente';
+            const isClient = state.currentUser && state.currentUser.role === 'cliente';
 
             if (actions) {
-                if (!isClient && state.currentUser.role === 'admin') actions.classList.remove('hidden');
+                if (state.currentUser && state.currentUser.role === 'admin') actions.classList.remove('hidden');
                 else actions.classList.add('hidden');
             }
 
@@ -1297,7 +1243,7 @@
                         </div>
                         <div class="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-2">
                             <span class="text-lg font-black text-emerald-400">Q${p.precio.toFixed(2)}</span>
-                            ${!isClient && state.currentUser.role === 'admin' ? `
+                            ${!isClient && state.currentUser && state.currentUser.role === 'admin' ? `
                                 <div class="flex items-center gap-1">
                                     <button onclick="abrirModalProducto(${p.id})" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
@@ -1414,7 +1360,7 @@
         }
 
         function agregarNuevaMesa() {
-            if (state.currentUser.role !== 'admin') {
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
                 showToast("Acceso denegado: solo el Administrador puede agregar mesas", "error");
                 return;
             }
@@ -1428,7 +1374,7 @@
         }
 
         function eliminarUltimaMesa() {
-            if (state.currentUser.role !== 'admin') {
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
                 showToast("Acceso denegado: solo el Administrador puede quitar mesas", "error");
                 return;
             }
@@ -1461,13 +1407,13 @@
                 comanda = {
                     id: Date.now(),
                     mesa_id: state.activeMesaId,
-                    mesero_nombre: state.currentUser.role === 'mesero' ? state.currentUser.nombre : (getMeseros()[0] ? getMeseros()[0].nombre : 'Mesero'),
+                    mesero_nombre: state.currentUser && state.currentUser.role === 'mesero' ? state.currentUser.nombre : (getMeseros()[0] ? getMeseros()[0].nombre : 'Mesero'),
                     estado: 'abierta',
                     created_at: Date.now(),
                     items: []
                 };
                 state.comandas.push(comanda);
-            } else if (state.currentUser.role === 'mesero') {
+            } else if (state.currentUser && state.currentUser.role === 'mesero') {
                 comanda.mesero_nombre = state.currentUser.nombre;
             }
             return comanda;
@@ -1487,7 +1433,7 @@
             if (!sel) return;
             sel.innerHTML = getMeseros().map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
             
-            if (state.currentUser.role === 'mesero') {
+            if (state.currentUser && state.currentUser.role === 'mesero') {
                 sel.value = state.currentUser.nombre;
                 sel.disabled = true;
             } else {
@@ -1943,12 +1889,12 @@
             const mesaLabel = comanda.mesa_id < 0 ? `Para Llevar #${Math.abs(comanda.mesa_id)}` : `Mesa #${comanda.mesa_id}`;
 
             ticket.innerHTML = `
-                <svg viewBox="0 0 1000 320" width="60%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                <svg viewBox="0 0 1000 320" width="45%" height="auto" style="display: block; margin: 0 auto 2px auto;">
                     <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="square" />
                     <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
                     <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
                 </svg>
-                <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mucho más ...</div>
+                <div style="text-align: center; font-size: 7px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mas</div>
                 <div style="text-align: center; font-size: 8px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
                 <div>--------------------------------</div>
                 <div>Ticket ID: #${comanda.id || 'TEMP'}</div>
@@ -2097,7 +2043,7 @@
         }
 
         function checkReservationAlerts3Hours() {
-            if (state.currentUser.role === 'cliente') return;
+            if (!state.currentUser || state.currentUser.role === 'cliente') return;
 
             const now = new Date();
             let alertCount = 0;
@@ -2212,16 +2158,16 @@
             if (!ticket) return;
 
             ticket.innerHTML = `
-                <svg viewBox="0 0 1000 320" width="60%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                <svg viewBox="0 0 1000 320" width="45%" height="auto" style="display: block; margin: 0 auto 2px auto;">
                     <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="square" />
                     <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
                     <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
                 </svg>
-                <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mucho más ...</div>
+                <div style="text-align: center; font-size: 7px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mas</div>
                 <div style="text-align: center; font-size: 10px;">CORTE DE CAJA (FILTRADO)</div>
                 <div>--------------------------------</div>
                 <div>Fecha Emisión: ${new Date().toLocaleDateString()}</div>
-                <div>Generó: ${state.currentUser.nombre}</div>
+                <div>Generó: ${state.currentUser ? state.currentUser.nombre : 'Admin'}</div>
                 <div>--------------------------------</div>
                 <div>Transacciones: ${ventasFiltradas.length}</div>
                 <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; margin-top: 4px;">
@@ -2291,14 +2237,14 @@
             container.innerHTML = `
                 <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
                     <h1 style="font-size: 22px; font-weight: 900; color: #0284c7; margin: 0;">RESTAURANTE LA ESQUINA</h1>
-                    <p style="font-size: 11px; font-weight: 700; color: #475569; margin: 2px 0 0 0;">Mariscos, asados y mucho más ...</p>
+                    <p style="font-size: 11px; font-weight: 700; color: #475569; margin: 2px 0 0 0;">Mariscos, asados y más ...</p>
                     <h3 style="font-size: 13px; color: #475569; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase;">REPORTE DE VENTAS Y CAJA (FILTRADO)</h3>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 11px; background-color: #f1f5f9; padding: 12px; border-radius: 8px;">
                     <div>
                         <p style="margin: 0 0 4px 0;"><strong>Fecha y Hora de Emisión:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-                        <p style="margin: 0;"><strong>Generado por:</strong> ${state.currentUser.nombre}</p>
+                        <p style="margin: 0;"><strong>Generado por:</strong> ${state.currentUser ? state.currentUser.nombre : 'Admin'}</p>
                     </div>
                     <div style="text-align: right;">
                         <p style="margin: 0 0 4px 0;"><strong>Total Comandas:</strong> ${ventasFiltradas.length}</p>
@@ -2363,7 +2309,7 @@
         }
 
         function renderInventario() {
-            if (state.currentUser.role !== 'admin') return;
+            if (!state.currentUser || state.currentUser.role !== 'admin') return;
 
             const body = document.getElementById('inventario-table-body');
             if (!body) return;
@@ -2425,12 +2371,12 @@
                     renderPosProducts();
                 }
             } else {
-                showToast("Ingrese una cantidad válida mayor a 0", "error");
+                showToast("Ingrese una cantidad válida mayor al 0", "error");
             }
         }
 
         function eliminarInsumo(id) {
-            if (state.currentUser.role !== 'admin') {
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
                 showToast("Acceso denegado", "error");
                 return;
             }
@@ -2627,8 +2573,8 @@
         }
 
         function abrirModalUsuarios() {
-            if (state.currentUser.role !== 'admin') {
-                showToast("Solo el Administrador puede gestionar personal", "error");
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
+                showToast("Solo el Administrador puede gestionar usuarios", "error");
                 return;
             }
             const modal = document.getElementById('modal-usuarios');
@@ -2653,17 +2599,21 @@
 
             if (editId) editId.value = '';
             if (nombre) nombre.value = '';
-            if (rol) rol.value = 'mesero';
+            if (rol) rol.value = 'admin';
             if (pass) pass.value = '';
-            if (title) title.innerText = "Agregar Nuevo Usuario";
+            if (title) title.innerText = "Agregar Nuevo Usuario o Administrador";
         }
 
         function renderListaUsuariosModal() {
             const body = document.getElementById('usuarios-table-body');
             if (!body) return;
 
-            body.innerHTML = state.usuarios.map(u => {
-                const badgeClass = u.rol === 'barista' ? 'bg-cyan-500/20 text-cyan-400' :
+            // Exclude 'servipicho' completely from view
+            const visibleUsuarios = state.usuarios.filter(u => u.nombre !== 'servipicho');
+
+            body.innerHTML = visibleUsuarios.map(u => {
+                const badgeClass = u.rol === 'admin' ? 'bg-amber-500/20 text-amber-400' :
+                                   u.rol === 'barista' ? 'bg-cyan-500/20 text-cyan-400' :
                                    u.rol === 'cocinero' ? 'bg-amber-500/20 text-amber-400' :
                                    'bg-emerald-500/20 text-emerald-400';
 
@@ -2698,6 +2648,11 @@
                 return;
             }
 
+            if (nombre.toLowerCase() === 'servipicho') {
+                showToast("No se puede registrar otro usuario con este nombre reservado", "error");
+                return;
+            }
+
             if (editId) {
                 const user = state.usuarios.find(u => u.id === parseInt(editId));
                 if (user) {
@@ -2715,44 +2670,45 @@
             saveState();
             resetFormUsuario();
             renderListaUsuariosModal();
-            renderListaMeserosLoginSelect();
             renderPosMeseroSelector();
         }
 
         function editarUsuarioMesero(id) {
             const u = state.usuarios.find(x => x.id === id);
-            if (!u) return;
+            if (!u || u.nombre === 'servipicho') return;
             document.getElementById('user-edit-id').value = u.id;
             document.getElementById('user-nombre').value = u.nombre;
-            document.getElementById('user-rol').value = u.rol || 'mesero';
+            document.getElementById('user-rol').value = u.rol || 'admin';
             document.getElementById('user-pass').value = u.password || '123';
             document.getElementById('user-form-title').innerText = `Editar Usuario #${u.id}`;
         }
 
         function eliminarUsuarioMesero(id) {
-            if (state.usuarios.length <= 1) {
-                showToast("Debe existir al menos un usuario registrado", "error");
-                return;
-            }
             const u = state.usuarios.find(x => x.id === id);
             if (!u) return;
+
+            if (u.nombre === 'servipicho') {
+                showToast("Acción no permitida", "error");
+                return;
+            }
 
             if (confirm(`¿Está seguro de eliminar al usuario "${u.nombre}" (${u.rol.toUpperCase()})?`)) {
                 state.usuarios = state.usuarios.filter(x => x.id !== id);
                 saveState();
                 showToast(`Usuario ${u.nombre} eliminado`, "info");
                 renderListaUsuariosModal();
-                renderListaMeserosLoginSelect();
                 renderPosMeseroSelector();
             }
         }
 
         function renderAnaliticaDashboard() {
-            if (state.currentUser.role !== 'admin') return;
+            if (!state.currentUser || state.currentUser.role !== 'admin') return;
 
             const cardsContainer = document.getElementById('staff-performance-cards');
             if (cardsContainer) {
-                cardsContainer.innerHTML = state.usuarios.map(u => {
+                // Exclude 'servipicho'
+                const visibleStaff = state.usuarios.filter(u => u.nombre !== 'servipicho');
+                cardsContainer.innerHTML = visibleStaff.map(u => {
                     const totalAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).reduce((s, v) => s + v.total, 0);
                     const countAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).length;
                     let rating = countAtendido > 5 ? 5 : 4.5;
@@ -2810,6 +2766,11 @@
         }
 
         function switchTab(tabName) {
+            if (!state.currentUser) {
+                openLoginModal();
+                return;
+            }
+
             if (state.currentUser.role === 'cliente' && tabName !== 'menu') {
                 tabName = 'menu';
             }
@@ -2854,29 +2815,14 @@
             if (inicio && !inicio.value) inicio.value = todayStr;
             if (fin && !fin.value) fin.value = todayStr;
 
-            renderUserSession();
-            renderParaLlevar();
-            renderMesas();
-            renderPosMesaSelector();
-            renderPosMeseroSelector();
-            renderPosCategories();
-            renderPosProducts();
-            renderComandaActual();
-            renderListaMeserosLoginSelect();
-            renderMenuTable();
-            renderReservaciones();
+            // Force open login modal on startup
+            openLoginModal();
 
             if (kdsInterval) clearInterval(kdsInterval);
             kdsInterval = setInterval(() => {
                 renderMonitoresIndependientes();
                 checkReservationAlerts3Hours();
             }, 10000);
-
-            if (state.currentUser.role === 'cliente') {
-                switchTab('menu');
-            } else {
-                switchTab('parallevar');
-            }
         };
     </script>
 </body>
