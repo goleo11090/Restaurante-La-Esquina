@@ -1,0 +1,2910 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GastroControl POS - LA ESQUINA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2pdf.js for PDF Reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Chart.js for Visual Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        @media print {
+            body * { visibility: hidden !important; }
+            #printable-ticket, #printable-ticket * { 
+                visibility: visible !important; 
+                display: block !important;
+            }
+            #printable-ticket {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm;
+                padding: 4px;
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 11px;
+                line-height: 1.2;
+                color: #000;
+                background: #fff;
+            }
+            #printable-ticket svg {
+                max-width: 80% !important;
+                height: auto !important;
+                display: block !important;
+                margin: 0 auto 2px auto !important;
+                filter: grayscale(100%) contrast(200%);
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        @keyframes pulse-red {
+            0%, 100% { border-color: rgba(244, 63, 94, 0.8); box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); }
+            50% { border-color: rgba(225, 29, 72, 1); box-shadow: 0 0 25px rgba(225, 29, 72, 0.8); }
+        }
+        .kds-alert-overdue {
+            animation: pulse-red 1.5s infinite ease-in-out;
+            background-color: rgba(136, 19, 55, 0.25) !important;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 antialiased select-none">
+
+    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-500/20">
+                E
+            </div>
+            <div>
+                <h1 class="font-black text-base tracking-wide text-white leading-tight">LA ESQUINA</h1>
+                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Sistema POS & Control</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs: Ordered per specifications -->
+        <nav id="main-nav-tabs" class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/80 overflow-x-auto max-w-full custom-scrollbar">
+            <button id="tab-btn-parallevar" onclick="switchTab('parallevar')" class="nav-tab bg-brand-500 text-white shadow-md px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-bag-shopping text-purple-400"></i> Para Llevar
+            </button>
+            <button id="tab-btn-mesas" onclick="switchTab('mesas')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-table-cells"></i> Mesas
+            </button>
+            <button id="tab-btn-pos" onclick="switchTab('pos')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-receipt"></i> Pedido (POS)
+            </button>
+            <button id="tab-btn-menu" onclick="switchTab('menu')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-book-open"></i> Menú & Recetas
+            </button>
+            <button id="tab-btn-reservaciones" onclick="switchTab('reservaciones')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-calendar-check text-emerald-400"></i> Reservaciones <span id="reservations-badge" class="hidden bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">0</span>
+            </button>
+            <button id="tab-btn-cocina" onclick="switchTab('cocina')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-fire-burner text-amber-400"></i> Cocina
+            </button>
+            <button id="tab-btn-barra" onclick="switchTab('barra')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-martini-glass-citrus text-cyan-400"></i> Barra
+            </button>
+            <button id="tab-btn-reportes" onclick="switchTab('reportes')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
+                <i class="fa-solid fa-chart-pie"></i> Ventas & Caja
+            </button>
+            <button id="tab-btn-inventario" onclick="switchTab('inventario')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap hidden">
+                <i class="fa-solid fa-boxes-stacked text-emerald-400"></i> Inventario
+            </button>
+            <button id="tab-btn-analitica" onclick="switchTab('analitica')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap hidden">
+                <i class="fa-solid fa-chart-line text-purple-400"></i> Resultados & Rendimiento
+            </button>
+        </nav>
+
+        <!-- User Session Indicator & Admin Actions -->
+        <div class="flex items-center gap-2 sm:gap-3">
+            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Reiniciar Sistema / Restablecer Datos de Fábrica">
+                <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
+            </button>
+            <button id="admin-btn-usuarios" onclick="abrirModalUsuarios()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 hidden" title="Gestionar Personal">
+                <i class="fa-solid fa-users-gear text-brand-400"></i> <span class="hidden md:inline">Usuarios</span>
+            </button>
+            <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
+                <i id="user-session-icon" class="fa-solid fa-utensils text-brand-400"></i>
+                <span id="user-session-name" class="font-bold text-slate-200">Menú Digital</span>
+            </div>
+            <button onclick="openLoginModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition border border-brand-500 flex items-center gap-1.5 shadow-md shadow-brand-600/20" title="Iniciar Sesión / Cambiar Usuario">
+                <i class="fa-solid fa-right-to-bracket"></i>
+                <span id="login-btn-text">Iniciar Sesión</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar max-w-7xl w-full mx-auto">
+        
+        <!-- PARA LLEVAR VIEW -->
+        <section id="view-parallevar" class="view-panel space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-bag-shopping text-purple-400"></i> Órdenes Para Llevar
+                    </h2>
+                    <p class="text-xs text-slate-400">El personal y el administrador pueden abrir e ingresar nuevas órdenes de consumo para llevar</p>
+                </div>
+                <button onclick="crearNuevaOrdenParaLlevar()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/25 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-sm"></i> + Nueva Orden Para Llevar
+                </button>
+            </div>
+            
+            <div id="parallevar-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            </div>
+        </section>
+
+        <!-- MESAS VIEW -->
+        <section id="view-mesas" class="view-panel hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-xl font-black text-white">Plano de Mesas</h2>
+                    <p class="text-xs text-slate-400">Seleccione una mesa para abrir o atender una comanda presencial</p>
+                </div>
+                <div id="admin-mesas-controls" class="flex items-center gap-2 hidden">
+                    <button onclick="eliminarUltimaMesa()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-minus"></i> Quitar Mesa
+                    </button>
+                    <button onclick="agregarNuevaMesa()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-2 rounded-xl transition shadow-lg shadow-brand-600/20 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> + Agregar Mesa
+                    </button>
+                </div>
+            </div>
+            <div id="mesas-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            </div>
+        </section>
+
+        <!-- POS VIEW -->
+        <section id="view-pos" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+                <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-400">Atendiendo:</span>
+                        <select id="pos-mesa-select" onchange="changePosActiveTable(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-slate-400">Atiende:</span>
+                        <select id="pos-mesero-select" onchange="changeComandaMesero(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60">
+                        </select>
+                    </div>
+                    <div class="flex-1 max-w-xs">
+                        <input id="pos-search-input" type="text" oninput="renderPosProducts()" placeholder="🔍 Buscar platillo o bebida..." class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div id="pos-categories-pills" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+                </div>
+
+                <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[calc(100vh-140px)] sticky top-20 shadow-xl">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div>
+                        <h3 id="comanda-mesa-title" class="font-black text-white text-base">Comanda Mesa #1</h3>
+                        <p id="comanda-mesero-subtitle" class="text-xs text-slate-400">Mesero: --</p>
+                    </div>
+                    <span id="comanda-status-badge" class="bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-500/20">Abierta</span>
+                </div>
+
+                <div id="comanda-items-list" class="flex-1 overflow-y-auto py-3 space-y-2.5 custom-scrollbar">
+                </div>
+
+                <div class="pt-3 border-t border-slate-800 space-y-3">
+                    <div class="flex items-center justify-between font-black text-lg text-white">
+                        <span>TOTAL:</span>
+                        <span id="comanda-total-monto" class="text-brand-400">Q0.00</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="enviarEstacionesSinImprimir()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs py-2.5 px-3 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20">
+                            <i class="fa-solid fa-paper-plane"></i> Enviar Cocina/Bar
+                        </button>
+                        <button onclick="verPrecuentaTicket()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 px-3 rounded-xl transition border border-slate-700 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-print"></i> Pre-Cuenta
+                        </button>
+                    </div>
+
+                    <button onclick="abrirModalCobro()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm py-3 px-4 rounded-xl transition shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-cash-register"></i> COBRAR ORDEN
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- MENU & RECETAS VIEW -->
+        <section id="view-menu" class="view-panel hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-brand-400"></i> Menú Digital & Recetario
+                    </h2>
+                    <p class="text-xs text-slate-400">Gestione platillos, precios, tiempos de preparación y consumo de insumos</p>
+                </div>
+                <div id="admin-menu-actions" class="flex gap-2">
+                    <button onclick="abrirModalCategoria()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-folder-plus text-brand-400"></i> + Categoría
+                    </button>
+                    <button onclick="abrirModalProducto()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-lg shadow-brand-600/20 flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> + Nuevo Producto
+                    </button>
+                </div>
+            </div>
+
+            <div id="menu-categories-pills" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+            </div>
+
+            <div id="menu-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            </div>
+        </section>
+
+        <!-- RESERVACIONES VIEW -->
+        <section id="view-reservaciones" class="view-panel hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-check text-emerald-400"></i> Control de Reservaciones
+                    </h2>
+                    <p class="text-xs text-slate-400">Consulte y registre reservaciones de mesas con alerta automática 3 horas antes</p>
+                </div>
+                <button onclick="abrirModalReservacion()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-calendar-plus"></i> + Nueva Reservación
+                </button>
+            </div>
+
+            <div id="reservations-alerts-container" class="space-y-2 hidden">
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
+                    <h3 class="text-xs font-black text-white uppercase tracking-wider">Próximas Reservaciones</h3>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Mesa #</th>
+                                <th class="p-3">Cliente / Titular</th>
+                                <th class="p-3">Teléfono</th>
+                                <th class="p-3">Personas</th>
+                                <th class="p-3">Fecha & Hora</th>
+                                <th class="p-3">Estado & Alerta</th>
+                                <th class="p-3 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reservaciones-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- COCINA VIEW -->
+        <section id="view-cocina" class="view-panel hidden space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-fire-burner text-amber-400"></i> Monitor de Cocina (KDS)
+                    </h2>
+                    <p class="text-xs text-slate-400">Órdenes de platillos con cronómetro de tiempo de preparación</p>
+                </div>
+            </div>
+            <div id="kds-cocina-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </section>
+
+        <!-- BARRA VIEW -->
+        <section id="view-barra" class="view-panel hidden space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-martini-glass-citrus text-cyan-400"></i> Monitor de Barra (KDS)
+                    </h2>
+                    <p class="text-xs text-slate-400">Órdenes de bebidas y cocteles con cronómetro de preparación</p>
+                </div>
+            </div>
+            <div id="kds-barra-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </section>
+
+        <!-- VENTAS & CAJA VIEW -->
+        <section id="view-reportes" class="view-panel hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-brand-400"></i> Ventas & Caja Chica
+                    </h2>
+                    <p class="text-xs text-slate-400">Resumen acumulado e historial de transacciones con correlativo DDMM-N</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="imprimirCorte58mm()" class="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-sky-600/20">
+                        <i class="fa-solid fa-print"></i> Corte 58mm (Filtro)
+                    </button>
+                    <button onclick="exportarCortePDF()" class="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-rose-600/20">
+                        <i class="fa-solid fa-file-pdf"></i> Exportar Corte PDF
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 shadow-lg">
+                <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-300">
+                    <span class="text-brand-400 font-black uppercase text-[11px] flex items-center gap-1.5">
+                        <i class="fa-solid fa-filter"></i> Filtrar por Fechas:
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <label for="rep-fecha-inicio" class="text-slate-400">Desde:</label>
+                        <input id="rep-fecha-inicio" type="date" onchange="renderReportes()" class="bg-slate-800 border border-slate-700 text-white rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <label for="rep-fecha-fin" class="text-slate-400">Hasta:</label>
+                        <input id="rep-fecha-fin" type="date" onchange="renderReportes()" class="bg-slate-800 border border-slate-700 text-white rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                    <button onclick="filtrarRangoRapido('hoy')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition">Hoy</button>
+                    <button onclick="filtrarRangoRapido('semana')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition">Esta Semana</button>
+                    <button onclick="filtrarRangoRapido('mes')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition">Este Mes</button>
+                    <button onclick="filtrarRangoRapido('todos')" class="bg-brand-600/30 hover:bg-brand-600/50 text-brand-300 font-bold px-3 py-1.5 rounded-xl border border-brand-500/40 transition">Ver Todo</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ventas Totales</span>
+                    <h3 id="rep-total-ventas" class="text-2xl font-black text-emerald-400 mt-1">Q0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Efectivo en Caja</span>
+                    <h3 id="rep-efectivo" class="text-2xl font-black text-brand-400 mt-1">Q0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tarjeta Débito/Crédito</span>
+                    <h3 id="rep-tarjeta" class="text-2xl font-black text-sky-400 mt-1">Q0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">QR / Transferencia</span>
+                    <h3 id="rep-transferencia" class="text-2xl font-black text-purple-400 mt-1">Q0.00</h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
+                    <h3 class="text-xs font-black text-white uppercase tracking-wider">Historial de Comandas Cobradas</h3>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Correlativo (ID)</th>
+                                <th class="p-3">Mesa / Pedido</th>
+                                <th class="p-3">Mesero</th>
+                                <th class="p-3">Fecha & Hora</th>
+                                <th class="p-3">Método Pago</th>
+                                <th class="p-3">Total (Q)</th>
+                                <th class="p-3 text-right">Re-imprimir</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ventas-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- INVENTARIO VIEW -->
+        <section id="view-inventario" class="view-panel hidden space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-emerald-400"></i> Control de Inventario
+                    </h2>
+                    <p class="text-xs text-slate-400">Gestión de materia prima en onzas (oz) y unidades exclusiva del Administrador</p>
+                </div>
+                <button onclick="abrirModalInsumo()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                    <i class="fa-solid fa-plus"></i> + Nuevo Insumo
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Total Insumos</span>
+                    <h3 id="inv-kpi-total" class="text-xl font-black text-white mt-1">0</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Stock Saludable</span>
+                    <h3 id="inv-kpi-saludable" class="text-xl font-black text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Alertas (&lt;= 10)</span>
+                    <h3 id="inv-kpi-alerta" class="text-xl font-black text-amber-400 mt-1">0</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Agotados</span>
+                    <h3 id="inv-kpi-agotado" class="text-xl font-black text-rose-400 mt-1">0</h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Insumo / Materia Prima</th>
+                                <th class="p-3">Unidad Medida</th>
+                                <th class="p-3">Stock Actual</th>
+                                <th class="p-3">Estado</th>
+                                <th class="p-3 text-right">Reabastecer / Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventario-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ANALITICA VIEW -->
+        <section id="view-analitica" class="view-panel hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                <div>
+                    <h2 class="text-lg font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-purple-400"></i> Dashboard de Resultados & Rendimiento
+                    </h2>
+                    <p class="text-xs text-slate-400">Comparativa mensual de ventas y evaluación de productividad del personal</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+                <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-chart-column text-brand-400"></i> Comparativa de Ventas: Mes Anterior vs. Mes Actual
+                </h3>
+                <div class="h-64 relative w-full">
+                    <canvas id="monthly-sales-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl space-y-3 p-4">
+                <h3 class="text-xs font-black text-white uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-800">
+                    <i class="fa-solid fa-award text-amber-400"></i> Calificación de Rendimiento del Personal (KPIs)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="staff-performance-cards">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL RESERVACION -->
+    <div id="modal-reservacion" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-plus text-emerald-400"></i> Nueva Reservación
+                </h3>
+                <button onclick="cerrarModalReservacion()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarReservacion(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Mesa a Reservar</label>
+                    <select id="res-mesa-select" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Nombre del Cliente / Titular</label>
+                    <input id="res-cliente" type="text" required placeholder="Ej. Lic. Roberto Gómez" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Teléfono</label>
+                        <input id="res-telefono" type="tel" required placeholder="5555-1234" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">No. Personas</label>
+                        <input id="res-personas" type="number" min="1" required placeholder="4" value="2" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Fecha</label>
+                        <input id="res-fecha" type="date" required class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Hora</label>
+                        <input id="res-hora" type="time" required class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Notas / Ocasión Especial</label>
+                    <textarea id="res-notas" rows="2" placeholder="Cumpleaños, preferencia de área, etc." class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-emerald-600/20">
+                    Confirmar Reservación
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL LOGIN -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30 mb-2">
+                    E
+                </div>
+                <h3 class="text-lg font-black text-white">Inicio de Sesión</h3>
+                <p class="text-xs text-slate-400">Seleccione su perfil de acceso en LA ESQUINA</p>
+            </div>
+
+            <form onsubmit="autenticarUsuario(event)" class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo de Perfil</label>
+                    <select id="login-tipo-rol" onchange="toggleLoginInputs()" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="admin">Administrador (LA ESQUINA)</option>
+                        <option value="mesero">Personal (Mesero, Cocina, Bar)</option>
+                        <option value="cliente">Cliente (Ver Menú Digital)</option>
+                    </select>
+                </div>
+
+                <div id="login-pass-group" class="space-y-2">
+                    <div id="login-user-container">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
+                        <input id="login-user" type="text" value="LA ESQUINA" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña</label>
+                        <input id="login-pass" type="password" placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div id="login-mesero-group" class="space-y-2 hidden">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Seleccionar Usuario</label>
+                        <select id="login-mesero-select" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña / PIN</label>
+                        <input id="login-mesero-pass" type="password" placeholder="Clave personal (ej. 123)" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <button id="login-submit-btn" type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-brand-600/25">
+                    Ingresar al Sistema
+                </button>
+
+                <div class="pt-2 border-t border-slate-800/80">
+                    <button type="button" onclick="ingresarComoCliente()" class="w-full bg-slate-800 hover:bg-slate-700 text-brand-400 font-bold text-xs py-2.5 rounded-xl transition border border-brand-500/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-book-open"></i> Ver Menú Digital (Clientes)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL COBRO -->
+    <div id="modal-cobro" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base">Cobrar Comanda</h3>
+                <button onclick="cerrarModalCobro()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 text-center space-y-1">
+                <span class="text-xs font-bold text-slate-400 uppercase">Total a Liquidar</span>
+                <h2 id="cobro-total-display" class="text-3xl font-black text-emerald-400">Q0.00</h2>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-xs font-bold text-slate-300">Método de Pago</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="pay-btn-efectivo" onclick="setMetodoPago('efectivo')" class="pay-method-btn bg-brand-600 text-white font-bold text-xs py-2.5 rounded-xl border border-brand-500">
+                        Efectivo
+                    </button>
+                    <button id="pay-btn-tarjeta" onclick="setMetodoPago('tarjeta')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700">
+                        Tarjeta
+                    </button>
+                    <button id="pay-btn-transferencia" onclick="setMetodoPago('transferencia')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700">
+                        QR / Transf
+                    </button>
+                </div>
+
+                <div id="cobro-efectivo-group" class="space-y-2">
+                    <label class="block text-[11px] font-bold text-slate-400">Paga con (Quetzales):</label>
+                    <input id="cobro-monto-recibido" type="number" step="0.01" oninput="calcularCambioCobro()" placeholder="Monto recibido" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button onclick="setQuickCash(20)" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold py-1.5 rounded-lg border border-slate-700">Q20</button>
+                        <button onclick="setQuickCash(50)" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold py-1.5 rounded-lg border border-slate-700">Q50</button>
+                        <button onclick="setQuickCash(100)" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold py-1.5 rounded-lg border border-slate-700">Q100</button>
+                        <button onclick="setQuickCash(200)" class="bg-slate-800 hover:bg-slate-700 text-xs font-bold py-1.5 rounded-lg border border-slate-700">Q200</button>
+                    </div>
+                    <div class="flex items-center justify-between font-bold text-xs text-slate-300 pt-1">
+                        <span>Cambio:</span>
+                        <span id="cobro-cambio-display" class="text-amber-400 font-black">Q0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="confirmarPagoYFinalizar()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm py-3 rounded-xl transition shadow-lg shadow-emerald-600/25">
+                Confirmar Pago & Cerrar Comanda
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO & RECETA -->
+    <div id="modal-producto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 id="modal-prod-title" class="font-black text-white text-base">Nuevo Producto</h3>
+                <button onclick="cerrarModalProducto()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarProducto(event)" class="space-y-3 text-xs">
+                <input id="prod-edit-id" type="hidden" value="">
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Nombre del Platillo / Bebida</label>
+                    <input id="prod-nombre" type="text" required placeholder="Ej. Hamburguesa Doble Queso" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Precio (Q)</label>
+                        <input id="prod-precio" type="number" step="0.01" required placeholder="45.00" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Prep. Est. (Min)</label>
+                        <input id="prod-tiempo" type="number" min="1" required placeholder="12" value="10" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Estación KDS</label>
+                        <select id="prod-estacion" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="cocina">Cocina</option>
+                            <option value="barra">Barra</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Categoría</label>
+                    <select id="prod-categoria" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">URL de Fotografía</label>
+                    <input id="prod-imagen" type="url" placeholder="https://images.unsplash.com/photo-..." class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Descripción / Detalle</label>
+                    <textarea id="prod-descripcion" rows="2" placeholder="Describa ingredientes, acompañamientos..." class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500 custom-scrollbar"></textarea>
+                </div>
+
+                <div class="border-t border-slate-800 pt-3 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <label class="block font-black text-amber-400 uppercase text-[11px]">Receta & Consumo de Insumos</label>
+                        <button type="button" onclick="agregarFilaInsumoReceta()" class="text-brand-400 hover:text-brand-300 font-bold text-xs">
+                            + Agregar Insumo
+                        </button>
+                    </div>
+                    <div id="receta-rows-container" class="space-y-2">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-brand-600/20">
+                    Guardar Producto y Receta
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL INSUMO -->
+    <div id="modal-insumo" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base">Nuevo Insumo / Materia Prima</h3>
+                <button onclick="cerrarModalInsumo()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarInsumoNuevo(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Nombre del Insumo</label>
+                    <input id="insumo-nombre" type="text" required placeholder="Ej. Queso Cheddar, Limón..." class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Unidad de Medida</label>
+                    <select id="insumo-unidad" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="oz">Onzas (oz)</option>
+                        <option value="unidades">Unidades (unidades)</option>
+                        <option value="porciones">Porciones</option>
+                        <option value="lbs">Libras (lbs)</option>
+                        <option value="g">Gramos (g)</option>
+                        <option value="ml">Mililitros (ml)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Stock Inicial</label>
+                    <input id="insumo-stock" type="number" step="0.01" min="0" required placeholder="100" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition shadow-lg shadow-emerald-600/20">
+                    Guardar Insumo
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CATEGORIA -->
+    <div id="modal-categoria" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base">Nueva Categoría</h3>
+                <button onclick="cerrarModalCategoria()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarCategoria(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Nombre de Categoría</label>
+                    <input id="cat-nombre" type="text" required placeholder="Ej. Sopas, Cocteles..." class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl transition">
+                    Guardar Categoría
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL USUARIOS -->
+    <div id="modal-usuarios" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-users-gear text-brand-400"></i> Gestión de Personal
+                </h3>
+                <button onclick="cerrarModalUsuarios()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form onsubmit="guardarUsuarioMesero(event)" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
+                <input id="user-edit-id" type="hidden" value="">
+                <h4 id="user-form-title" class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Agregar Nuevo Usuario</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-1">
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Nombre Completo</label>
+                        <input id="user-nombre" type="text" required placeholder="Ej. Juan Pérez" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">Rol / Puesto</label>
+                        <select id="user-rol" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="mesero">Mesero</option>
+                            <option value="barista">Barista</option>
+                            <option value="cocinero">Cocinero</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-400 uppercase mb-1">PIN / Clave</label>
+                        <input id="user-pass" type="password" required placeholder="Ej. 123" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-500 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-brand-600/20">
+                        Guardar Usuario
+                    </button>
+                    <button type="button" onclick="resetFormUsuario()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-3 py-2.5 rounded-xl transition border border-slate-700">
+                        Limpiar
+                    </button>
+                </div>
+            </form>
+
+            <div class="space-y-2">
+                <h4 class="font-bold text-slate-400 text-xs uppercase tracking-wider">Personal Registrado</h4>
+                <div class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-800 rounded-2xl bg-slate-950">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-900 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-800 sticky top-0">
+                            <tr>
+                                <th class="p-2.5">ID</th>
+                                <th class="p-2.5">Nombre</th>
+                                <th class="p-2.5">Rol</th>
+                                <th class="p-2.5">PIN</th>
+                                <th class="p-2.5 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuarios-table-body" class="divide-y divide-slate-800 text-slate-300">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Printable Thermal Ticket Container with EMBEDDED LOGO LA ESQUINA -->
+    <div id="printable-ticket" class="hidden"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        const defaultState = {
+            currentUser: { role: 'cliente', nombre: 'Cliente' },
+            activeMesaId: -1,
+            activeCategory: 'Todos',
+            activeMenuCategory: 'Todos',
+            metodoPagoSel: 'efectivo',
+            dailyCorrelative: 1,
+            lastCorrelativeDate: new Date().toLocaleDateString(),
+            categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
+            usuarios: [
+                { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
+                { id: 2, nombre: 'Luis Méndez', rol: 'barista', password: '123' },
+                { id: 3, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' }
+            ],
+            takeoutCount: 3,
+            mesas: [
+                { id: -1, numero: 'Para Llevar #1', estado: 'libre', esParaLlevar: true },
+                { id: -2, numero: 'Para Llevar #2', estado: 'libre', esParaLlevar: true },
+                { id: -3, numero: 'Para Llevar #3', estado: 'libre', esParaLlevar: true },
+                ...Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: i + 1, estado: 'libre' }))
+            ],
+            reservaciones: [
+                {
+                    id: 101,
+                    mesa_id: 3,
+                    cliente: 'María Fernanda López',
+                    telefono: '5412-8899',
+                    personas: 4,
+                    fecha: new Date(Date.now() + 2 * 3600 * 1000).toISOString().split('T')[0],
+                    hora: new Date(Date.now() + 2 * 3600 * 1000).toTimeString().substring(0, 5),
+                    notas: 'Aniversario - Solicita mesa limpia con copa de bienvenida',
+                    estado: 'confirmada',
+                    alertNotified: false
+                }
+            ],
+            comandas: [],
+            ventas: [
+                { id: '1509-001', fecha: '2026-09-15', mesa_id: 1, mesero_nombre: 'Carlos Ruiz', total: 185.00, metodo_pago: 'efectivo', hora: '12:30 PM', items: [] },
+                { id: '1509-002', fecha: '2026-09-20', mesa_id: 2, mesero_nombre: 'Carlos Ruiz', total: 240.00, metodo_pago: 'tarjeta', hora: '02:15 PM', items: [] },
+                { id: '1509-003', fecha: '2026-09-28', mesa_id: -1, mesero_nombre: 'Carlos Ruiz', total: 120.00, metodo_pago: 'efectivo', hora: '07:45 PM', items: [] }
+            ],
+            insumos: [
+                { id: 1, nombre: 'Carne Puyaso', unidad: 'oz', stock: 250 },
+                { id: 2, nombre: 'Papas Cortadas', unidad: 'oz', stock: 300 },
+                { id: 3, nombre: 'Pan de Hamburguesa', unidad: 'unidades', stock: 50 },
+                { id: 4, nombre: 'Torta Carne Premium', unidad: 'unidades', stock: 40 },
+                { id: 5, nombre: 'Queso Cheddar', unidad: 'oz', stock: 80 },
+                { id: 6, nombre: 'Tocino', unidad: 'oz', stock: 60 },
+                { id: 7, nombre: 'Cerveza Gallo 350ml', unidad: 'unidades', stock: 48 },
+                { id: 8, nombre: 'Jugo de Limón', unidad: 'oz', stock: 150 },
+                { id: 9, nombre: 'Leche Condensada', unidad: 'oz', stock: 100 }
+            ],
+            menu: [
+                { 
+                    id: 1, 
+                    nombre: 'Puyaso Importado 10oz', 
+                    precio: 95.00, 
+                    tiempo_estimado: 20,
+                    categoria: 'Carnes', 
+                    estacion: 'cocina', 
+                    imagen: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', 
+                    descripcion: 'Corte magro a la parrilla con papas fritas y guacamol',
+                    receta: [
+                        { insumo_id: 1, cantidad: 10 },
+                        { insumo_id: 2, cantidad: 6 }
+                    ]
+                },
+                { 
+                    id: 2, 
+                    nombre: 'Hamburguesa La Esquina', 
+                    precio: 55.00, 
+                    tiempo_estimado: 12,
+                    categoria: 'Platillos', 
+                    estacion: 'cocina', 
+                    imagen: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80', 
+                    descripcion: 'Torta de carne premium, queso cheddar, tocino y aderezo especial',
+                    receta: [
+                        { insumo_id: 3, cantidad: 1 },
+                        { insumo_id: 4, cantidad: 1 },
+                        { insumo_id: 5, cantidad: 1.5 },
+                        { insumo_id: 6, cantidad: 1 }
+                    ]
+                },
+                { 
+                    id: 3, 
+                    nombre: 'Cerveza Gallo 350ml', 
+                    precio: 20.00, 
+                    tiempo_estimado: 3,
+                    categoria: 'Bebidas', 
+                    estacion: 'barra', 
+                    imagen: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=400&q=80', 
+                    descripcion: 'Cerveza nacional fría de frasco de vidrio',
+                    receta: [
+                        { insumo_id: 7, cantidad: 1 }
+                    ]
+                },
+                { 
+                    id: 4, 
+                    nombre: 'Limonada Natural', 
+                    precio: 15.00, 
+                    tiempo_estimado: 5,
+                    categoria: 'Bebidas', 
+                    estacion: 'barra', 
+                    imagen: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80', 
+                    descripcion: 'Jugo de limón recién exprimido con jarabe de la casa',
+                    receta: [
+                        { insumo_id: 8, cantidad: 3 }
+                    ]
+                },
+                { 
+                    id: 5, 
+                    nombre: 'Flan de la Casa', 
+                    precio: 25.00, 
+                    tiempo_estimado: 5,
+                    categoria: 'Postres', 
+                    estacion: 'cocina', 
+                    imagen: 'https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?auto=format&fit=crop&w=400&q=80', 
+                    descripcion: 'Flan artesanal de leche condensada con caramelo líquido',
+                    receta: [
+                        { insumo_id: 9, cantidad: 2 }
+                    ]
+                }
+            ]
+        };
+
+        let state = JSON.parse(JSON.stringify(defaultState));
+        let kdsInterval = null;
+        let chartInstance = null;
+
+        function getMeseros() {
+            return state.usuarios ? state.usuarios.filter(u => u.rol === 'mesero') : [];
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem('gastrocontrol_esquina_v5_state', JSON.stringify(state));
+            } catch (e) {
+                console.error("Error guardando en localStorage:", e);
+            }
+        }
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem('gastrocontrol_esquina_v5_state');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    state = Object.assign({}, defaultState, parsed);
+                }
+            } catch (e) {
+                console.error("Error cargando de localStorage:", e);
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bg = type === 'error' ? 'bg-rose-600 border-rose-500' :
+                       type === 'success' ? 'bg-emerald-600 border-emerald-500' :
+                       'bg-brand-600 border-brand-500';
+
+            const icon = type === 'error' ? 'fa-circle-exclamation' :
+                         type === 'success' ? 'fa-circle-check' :
+                         'fa-circle-info';
+
+            toast.className = `${bg} border text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 transition duration-300 pointer-events-auto transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base"></i> <span class="leading-tight">${message}</span>`;
+            
+            container.appendChild(toast);
+
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(type === 'error' ? 220 : type === 'success' ? 587.33 : 440, ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            } catch (e) {}
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function renderUserSession() {
+            const icon = document.getElementById('user-session-icon');
+            const name = document.getElementById('user-session-name');
+            const paraLlevarTab = document.getElementById('tab-btn-parallevar');
+            const mesasTab = document.getElementById('tab-btn-mesas');
+            const posTab = document.getElementById('tab-btn-pos');
+            const menuTab = document.getElementById('tab-btn-menu');
+            const resTab = document.getElementById('tab-btn-reservaciones');
+            const cocinaTab = document.getElementById('tab-btn-cocina');
+            const barraTab = document.getElementById('tab-btn-barra');
+            const repTab = document.getElementById('tab-btn-reportes');
+            const invTab = document.getElementById('tab-btn-inventario');
+            const analiticaTab = document.getElementById('tab-btn-analitica');
+            const adminUsersBtn = document.getElementById('admin-btn-usuarios');
+            const adminResetBtn = document.getElementById('admin-reset-btn');
+            const adminMesasControls = document.getElementById('admin-mesas-controls');
+            const loginBtnText = document.getElementById('login-btn-text');
+
+            if (!name) return;
+
+            const role = state.currentUser.role;
+
+            [paraLlevarTab, mesasTab, posTab, cocinaTab, barraTab, menuTab, resTab, repTab, invTab, analiticaTab].forEach(t => t && t.classList.remove('hidden'));
+
+            if (role === 'cliente') {
+                if (icon) icon.className = 'fa-solid fa-utensils text-brand-400';
+                name.innerText = 'Menú Digital';
+                if (loginBtnText) loginBtnText.innerText = 'Iniciar Sesión';
+                
+                // Hide ALL tabs EXCEPT menu
+                [paraLlevarTab, mesasTab, posTab, cocinaTab, barraTab, resTab, repTab, invTab, analiticaTab].forEach(t => t && t.classList.add('hidden'));
+                if (adminUsersBtn) adminUsersBtn.classList.add('hidden');
+                if (adminResetBtn) adminResetBtn.classList.add('hidden');
+                if (adminMesasControls) adminMesasControls.classList.add('hidden');
+
+                switchTab('menu');
+            } else if (role === 'admin') {
+                if (icon) icon.className = 'fa-solid fa-user-shield text-amber-400';
+                name.innerText = `Admin: ${state.currentUser.nombre}`;
+                if (loginBtnText) loginBtnText.innerText = 'Cambiar Usuario';
+                if (adminUsersBtn) adminUsersBtn.classList.remove('hidden');
+                if (adminResetBtn) adminResetBtn.classList.remove('hidden');
+                if (adminMesasControls) adminMesasControls.classList.remove('hidden');
+            } else {
+                if (icon) icon.className = 'fa-solid fa-user text-emerald-400';
+                name.innerText = `${role.toUpperCase()}: ${state.currentUser.nombre}`;
+                if (loginBtnText) loginBtnText.innerText = 'Cambiar Usuario';
+                if (invTab) invTab.classList.add('hidden');
+                if (analiticaTab) analiticaTab.classList.add('hidden');
+                if (adminUsersBtn) adminUsersBtn.classList.add('hidden');
+                if (adminResetBtn) adminResetBtn.classList.add('hidden');
+                if (adminMesasControls) adminMesasControls.classList.add('hidden');
+            }
+        }
+
+        function openLoginModal() {
+            const modal = document.getElementById('modal-login');
+            if (modal) {
+                modal.classList.remove('hidden');
+                toggleLoginInputs();
+            }
+        }
+
+        function closeLoginModal() {
+            const modal = document.getElementById('modal-login');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function toggleLoginInputs() {
+            const rolSelect = document.getElementById('login-tipo-rol');
+            const passGroup = document.getElementById('login-pass-group');
+            const userContainer = document.getElementById('login-user-container');
+            const meseroGroup = document.getElementById('login-mesero-group');
+            const submitBtn = document.getElementById('login-submit-btn');
+            if (!rolSelect) return;
+
+            if (rolSelect.value === 'cliente') {
+                passGroup.classList.add('hidden');
+                meseroGroup.classList.add('hidden');
+                if (submitBtn) submitBtn.innerText = "Ingresar como Cliente";
+            } else if (rolSelect.value === 'admin') {
+                passGroup.classList.remove('hidden');
+                if (userContainer) userContainer.classList.remove('hidden');
+                meseroGroup.classList.add('hidden');
+                if (submitBtn) submitBtn.innerText = "Ingresar al Sistema";
+            } else {
+                passGroup.classList.add('hidden');
+                meseroGroup.classList.remove('hidden');
+                if (submitBtn) submitBtn.innerText = "Ingresar al Sistema";
+            }
+        }
+
+        function renderListaMeserosLoginSelect() {
+            const sel = document.getElementById('login-mesero-select');
+            if (!sel) return;
+            sel.innerHTML = state.usuarios.map(u => `<option value="${u.id}">[${u.rol.toUpperCase()}] ${u.nombre}</option>`).join('');
+        }
+
+        function ingresarComoCliente() {
+            state.currentUser = { role: 'cliente', nombre: 'Cliente' };
+            showToast("Bienvenido al Menú Digital de LA ESQUINA", "success");
+            closeLoginModal();
+            renderUserSession();
+            renderMenuTable();
+        }
+
+        function autenticarUsuario(e) {
+            e.preventDefault();
+            const rolSelect = document.getElementById('login-tipo-rol');
+            if (!rolSelect) return;
+            const rol = rolSelect.value;
+
+            if (rol === 'cliente') {
+                ingresarComoCliente();
+                return;
+            }
+
+            if (rol === 'admin') {
+                const userVal = document.getElementById('login-user').value.trim();
+                const passVal = document.getElementById('login-pass').value.trim();
+
+                if (userVal === 'LA ESQUINA' && passVal === 'Coban2026') {
+                    state.currentUser = { role: 'admin', nombre: 'LA ESQUINA' };
+                    showToast("Bienvenido, Administrador LA ESQUINA", "success");
+                    closeLoginModal();
+                    renderUserSession();
+                    renderPosMeseroSelector();
+                    renderMenuTable();
+                    renderInventario();
+                    switchTab('parallevar');
+                } else {
+                    showToast("Usuario o contraseña de Administrador incorrectos", "error");
+                }
+            } else {
+                const userId = parseInt(document.getElementById('login-mesero-select').value);
+                const passVal = document.getElementById('login-mesero-pass').value.trim();
+                const user = state.usuarios.find(u => u.id === userId);
+
+                if (user && (user.password === passVal || (!user.password && passVal === '123'))) {
+                    state.currentUser = { role: user.rol, nombre: user.nombre };
+                    showToast(`Sesión iniciada como ${user.rol.toUpperCase()}: ${user.nombre}`, "success");
+                    closeLoginModal();
+                    renderUserSession();
+                    renderPosMeseroSelector();
+                    renderMenuTable();
+
+                    if (user.rol === 'cocinero') {
+                        switchTab('cocina');
+                    } else if (user.rol === 'barista') {
+                        switchTab('barra');
+                    } else {
+                        switchTab('parallevar');
+                    }
+                } else {
+                    showToast("Contraseña / PIN incorrecto", "error");
+                }
+            }
+        }
+
+        function restablecerSistema() {
+            if (state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado: solo el Administrador puede restablecer el sistema", "error");
+                return;
+            }
+
+            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas y reservaciones.\n\nIngrese la contraseña maestra de seguridad para confirmar:");
+            
+            if (clave === '16112021Alondra') {
+                localStorage.removeItem('gastrocontrol_esquina_v5_state');
+                state = JSON.parse(JSON.stringify(defaultState));
+                saveState();
+                showToast("Sistema restablecido con éxito a valores de fábrica", "success");
+                setTimeout(() => window.location.reload(), 1000);
+            } else if (clave !== null) {
+                showToast("Contraseña de seguridad incorrecta. Operación cancelada", "error");
+            }
+        }
+
+        function renderMenuTable() {
+            const grid = document.getElementById('menu-cards-grid');
+            const pillsContainer = document.getElementById('menu-categories-pills');
+            const actions = document.getElementById('admin-menu-actions');
+            if (!grid) return;
+
+            if (actions) {
+                if (state.currentUser.role === 'admin') actions.classList.remove('hidden');
+                else actions.classList.add('hidden');
+            }
+
+            if (pillsContainer) {
+                const currentCat = state.activeMenuCategory || 'Todos';
+                const allCats = ['Todos', ...state.categorias];
+                pillsContainer.innerHTML = allCats.map(cat => `
+                    <button onclick="setMenuCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${currentCat === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">
+                        ${cat}
+                    </button>
+                `).join('');
+            }
+
+            const currentCat = state.activeMenuCategory || 'Todos';
+            const filtered = currentCat === 'Todos' ? state.menu : state.menu.filter(p => p.categoria === currentCat);
+
+            const isCliente = state.currentUser.role === 'cliente';
+
+            grid.innerHTML = filtered.map(p => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-slate-700">
+                    <div class="relative">
+                        <img src="${p.imagen || 'https://placehold.co/400x250/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-full h-44 object-cover">
+                        <span class="absolute top-2.5 right-2.5 bg-slate-950/80 backdrop-blur-md text-brand-400 border border-brand-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
+                            ${p.categoria}
+                        </span>
+                        ${!isCliente ? `
+                            <span class="absolute bottom-2.5 left-2.5 bg-slate-950/80 backdrop-blur-md text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
+                                ⏱️ ${p.tiempo_estimado || 10} min prep.
+                            </span>
+                        ` : ''}
+                    </div>
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-2">
+                        <div>
+                            <h3 class="font-black text-white text-base leading-snug">${p.nombre}</h3>
+                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">${p.descripcion || 'Sin descripción detallada'}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-2">
+                            <span class="text-lg font-black text-emerald-400">Q${p.precio.toFixed(2)}</span>
+                            ${state.currentUser.role === 'admin' ? `
+                                <div class="flex items-center gap-1">
+                                    <button onclick="abrirModalProducto(${p.id})" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Editar">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    <button onclick="eliminarProducto(${p.id})" class="bg-slate-800 hover:bg-slate-700 text-rose-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Eliminar">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            ` : (!isCliente ? `
+                                <span class="text-[10px] bg-slate-800 text-slate-400 font-bold px-2.5 py-1 rounded-lg uppercase">Estación: ${p.estacion}</span>
+                            ` : '')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setMenuCategory(cat) {
+            state.activeMenuCategory = cat;
+            renderMenuTable();
+        }
+
+        function renderParaLlevar() {
+            const grid = document.getElementById('parallevar-grid');
+            if (!grid) return;
+
+            const takeoutSlots = state.mesas.filter(m => m.id < 0);
+
+            grid.innerHTML = takeoutSlots.map(m => {
+                const comanda = state.comandas.find(c => c.mesa_id === m.id && c.estado === 'abierta');
+                const tienePendientes = comanda && comanda.items.length > 0;
+                const total = comanda ? comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0) : 0;
+                const takeoutNum = Math.abs(m.id);
+
+                const bg = tienePendientes ? 'bg-purple-900/60 border-purple-500 text-purple-100 shadow-purple-900/30' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-purple-500/50';
+
+                return `
+                    <div class="${bg} border rounded-2xl p-4 flex flex-col justify-between h-40 shadow-xl transition transform hover:-translate-y-1">
+                        <div class="flex items-center justify-between pb-2 border-b border-purple-500/20">
+                            <span class="font-black text-sm text-white flex items-center gap-2">
+                                <i class="fa-solid fa-bag-shopping text-purple-400"></i> Para Llevar #${takeoutNum}
+                            </span>
+                            <span class="${tienePendientes ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400'} text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+                                ${tienePendientes ? 'Ocupado' : 'Disponible'}
+                            </span>
+                        </div>
+                        <div class="my-2">
+                            ${tienePendientes ? `
+                                <div class="text-[11px] text-purple-300 font-bold truncate">Atiende: ${comanda.mesero_nombre || 'Mesero'}</div>
+                                <div class="text-xl font-black text-white mt-1">Q${total.toFixed(2)}</div>
+                                <p class="text-[10px] text-slate-400 mt-0.5">${comanda.items.length} productos en orden</p>
+                            ` : `
+                                <div class="text-xs text-slate-500 font-bold uppercase">Listo para nuevo pedido</div>
+                            `}
+                        </div>
+                        <div class="pt-2 border-t border-slate-800 flex items-center gap-2">
+                            <button onclick="seleccionarMesaParaPOS(${m.id})" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs py-1.5 rounded-xl transition shadow-md flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-receipt"></i> ${tienePendientes ? 'Atender POS' : 'Abrir Pedido'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function crearNuevaOrdenParaLlevar() {
+            state.takeoutCount = (state.takeoutCount || 3) + 1;
+            const newId = -(state.takeoutCount);
+            const newSlot = {
+                id: newId,
+                numero: `Para Llevar #${state.takeoutCount}`,
+                estado: 'libre',
+                esParaLlevar: true
+            };
+
+            state.mesas.unshift(newSlot);
+            saveState();
+            renderParaLlevar();
+            renderPosMesaSelector();
+
+            showToast(`Nueva orden Para Llevar #${state.takeoutCount} creada`, "success");
+            seleccionarMesaParaPOS(newId);
+        }
+
+        function renderMesas() {
+            const grid = document.getElementById('mesas-grid');
+            if (!grid) return;
+
+            const regularMesas = state.mesas.filter(m => m.id > 0);
+
+            grid.innerHTML = regularMesas.map(m => {
+                const comanda = state.comandas.find(c => c.mesa_id === m.id && c.estado === 'abierta');
+                const tienePendientes = comanda && comanda.items.length > 0;
+                const total = comanda ? comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0) : 0;
+
+                const bg = tienePendientes ? 'bg-amber-500/10 border-amber-500/40 text-amber-300' : 
+                           'bg-slate-900 border-slate-800 text-slate-300 hover:border-brand-500/50';
+
+                return `
+                    <div onclick="seleccionarMesaParaPOS(${m.id})" class="${bg} border rounded-2xl p-4 flex flex-col justify-between h-32 cursor-pointer transition transform hover:-translate-y-1 shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <span class="font-black text-sm">Mesa #${m.numero}</span>
+                            <i class="fa-solid fa-utensils ${tienePendientes ? 'text-amber-400' : 'text-slate-600'}"></i>
+                        </div>
+                        <div>
+                            ${tienePendientes ? `
+                                <div class="text-[10px] text-amber-400 font-bold uppercase truncate">Atiende: ${comanda.mesero_nombre || 'Mesero'}</div>
+                                <div class="text-base font-black text-white mt-0.5">Q${total.toFixed(2)}</div>
+                            ` : `
+                                <div class="text-[10px] text-slate-500 font-bold uppercase">Disponible</div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function agregarNuevaMesa() {
+            const regularMesas = state.mesas.filter(m => m.id > 0);
+            const nextNum = regularMesas.length + 1;
+            state.mesas.push({ id: nextNum, numero: nextNum, estado: 'libre' });
+            saveState();
+            renderMesas();
+            renderPosMesaSelector();
+            showToast(`Mesa #${nextNum} agregada al plano`, "success");
+        }
+
+        function eliminarUltimaMesa() {
+            const regularMesas = state.mesas.filter(m => m.id > 0);
+            if (regularMesas.length <= 1) {
+                showToast("Debe existir al menos una mesa en el restaurante", "error");
+                return;
+            }
+            const lastMesa = regularMesas[regularMesas.length - 1];
+            const tieneComanda = state.comandas.some(c => c.mesa_id === lastMesa.id && c.estado === 'abierta' && c.items.length > 0);
+            if (tieneComanda) {
+                showToast(`No se puede eliminar la Mesa #${lastMesa.numero} porque tiene una comanda abierta`, "error");
+                return;
+            }
+            state.mesas = state.mesas.filter(m => m.id !== lastMesa.id);
+            saveState();
+            renderMesas();
+            renderPosMesaSelector();
+            showToast(`Mesa #${lastMesa.numero} eliminada del plano`, "info");
+        }
+
+        function seleccionarMesaParaPOS(mesaId) {
+            state.activeMesaId = mesaId;
+            switchTab('pos');
+        }
+
+        function getOrCreateComandaActiva() {
+            let comanda = state.comandas.find(c => c.mesa_id === state.activeMesaId && c.estado === 'abierta');
+            if (!comanda) {
+                comanda = {
+                    id: Date.now(),
+                    mesa_id: state.activeMesaId,
+                    mesero_nombre: state.currentUser.role === 'mesero' ? state.currentUser.nombre : (getMeseros()[0] ? getMeseros()[0].nombre : 'Mesero'),
+                    estado: 'abierta',
+                    created_at: Date.now(),
+                    items: []
+                };
+                state.comandas.push(comanda);
+            } else if (state.currentUser.role === 'mesero') {
+                comanda.mesero_nombre = state.currentUser.nombre;
+            }
+            return comanda;
+        }
+
+        function renderPosMesaSelector() {
+            const sel = document.getElementById('pos-mesa-select');
+            if (!sel) return;
+            sel.innerHTML = state.mesas.map(m => {
+                const label = m.id < 0 ? `🛍️ Para Llevar #${Math.abs(m.id)}` : `Mesa #${m.numero}`;
+                return `<option value="${m.id}" ${m.id === state.activeMesaId ? 'selected' : ''}>${label}</option>`;
+            }).join('');
+        }
+
+        function renderPosMeseroSelector() {
+            const sel = document.getElementById('pos-mesero-select');
+            if (!sel) return;
+            sel.innerHTML = getMeseros().map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
+            
+            if (state.currentUser.role === 'mesero') {
+                sel.value = state.currentUser.nombre;
+                sel.disabled = true;
+            } else {
+                sel.disabled = false;
+            }
+        }
+
+        function changePosActiveTable(mesaId) {
+            state.activeMesaId = parseInt(mesaId);
+            renderComandaActual();
+        }
+
+        function changeComandaMesero(meseroNombre) {
+            const comanda = getOrCreateComandaActiva();
+            if (comanda) comanda.mesero_nombre = meseroNombre;
+            renderComandaActual();
+        }
+
+        function renderPosCategories() {
+            const container = document.getElementById('pos-categories-pills');
+            if (!container) return;
+
+            const allCats = ['Todos', ...state.categorias];
+            container.innerHTML = allCats.map(cat => `
+                <button onclick="setPosCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ${state.activeCategory === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function setPosCategory(cat) {
+            state.activeCategory = cat;
+            renderPosCategories();
+            renderPosProducts();
+        }
+
+        function calcularStockDisponibleProducto(prod) {
+            if (!prod.receta || prod.receta.length === 0) return 999;
+            
+            let maxPortions = Infinity;
+            prod.receta.forEach(r => {
+                const insumo = state.insumos.find(i => i.id === r.insumo_id);
+                if (insumo) {
+                    const possible = Math.floor(insumo.stock / r.cantidad);
+                    if (possible < maxPortions) maxPortions = possible;
+                } else {
+                    maxPortions = 0;
+                }
+            });
+            return maxPortions === Infinity ? 0 : maxPortions;
+        }
+
+        function renderPosProducts() {
+            const grid = document.getElementById('pos-products-grid');
+            const searchVal = (document.getElementById('pos-search-input')?.value || '').toLowerCase().trim();
+            if (!grid) return;
+
+            let filtered = state.activeCategory === 'Todos' ? state.menu : state.menu.filter(p => p.categoria === state.activeCategory);
+
+            if (searchVal) {
+                filtered = filtered.filter(p => p.nombre.toLowerCase().includes(searchVal) || (p.descripcion && p.descripcion.toLowerCase().includes(searchVal)));
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                const stockDisponible = calcularStockDisponibleProducto(p);
+                const isAgotado = stockDisponible <= 0;
+
+                return `
+                    <div onclick="${isAgotado ? '' : `agregarProductoAComanda(${p.id})`}" class="bg-slate-900 border border-slate-800 rounded-2xl p-2.5 flex flex-col justify-between ${isAgotado ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-brand-500/50'} transition shadow-md">
+                        <img src="${p.imagen || 'https://placehold.co/200x150/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-full h-24 object-cover rounded-xl mb-2">
+                        <div>
+                            <h4 class="font-bold text-xs text-white line-clamp-1">${p.nombre}</h4>
+                            <p class="text-[10px] text-slate-400 line-clamp-2 mt-0.5">${p.descripcion || ''}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800">
+                            <span class="font-black text-xs text-brand-400">Q${p.precio.toFixed(2)}</span>
+                            ${isAgotado ? '<span class="text-[9px] bg-rose-500/20 text-rose-400 px-1.5 py-0.5 rounded font-bold">AGOTADO</span>' : `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-mono font-bold px-1.5 py-0.5 rounded">${stockDisponible} disps.</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function agregarProductoAComanda(prodId) {
+            const prod = state.menu.find(p => p.id === prodId);
+            const stockDisponible = calcularStockDisponibleProducto(prod);
+
+            if (!prod || stockDisponible <= 0) {
+                showToast("Producto agotado por falta de insumos", "error");
+                return;
+            }
+
+            const comanda = getOrCreateComandaActiva();
+            const item = comanda.items.find(i => i.producto_id === prodId && !i.enviado);
+
+            if (item) {
+                if (item.cantidad + 1 > stockDisponible) {
+                    showToast(`Insumos insuficientes (Máximo ${stockDisponible} porciones)`, "error");
+                    return;
+                }
+                item.cantidad++;
+            } else {
+                comanda.items.push({
+                    producto_id: prod.id,
+                    nombre: prod.nombre,
+                    precio: prod.precio,
+                    tiempo_estimado: prod.tiempo_estimado || 10,
+                    estacion: prod.estacion,
+                    cantidad: 1,
+                    preparado: 0,
+                    enviado: false
+                });
+            }
+
+            saveState();
+            renderComandaActual();
+            renderParaLlevar();
+            renderMesas();
+        }
+
+        function renderComandaActual() {
+            const comanda = getOrCreateComandaActiva();
+            const list = document.getElementById('comanda-items-list');
+            const totalDisplay = document.getElementById('comanda-total-monto');
+            const title = document.getElementById('comanda-mesa-title');
+            const sub = document.getElementById('comanda-mesero-subtitle');
+
+            const mesaLabel = state.activeMesaId < 0 ? `🛍️ Para Llevar #${Math.abs(state.activeMesaId)}` : `Mesa #${state.activeMesaId}`;
+            if (title) title.innerText = `Comanda ${mesaLabel}`;
+            if (sub) sub.innerText = `Mesero: ${comanda.mesero_nombre}`;
+
+            let total = 0;
+            if (list) {
+                list.innerHTML = comanda.items.map((item, idx) => {
+                    const itemSubtotal = item.precio * item.cantidad;
+                    total += itemSubtotal;
+
+                    return `
+                        <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="font-bold text-xs text-white">${item.nombre}</span>
+                                    ${item.enviado ? '<i class="fa-solid fa-check-double text-amber-400 text-[10px]" title="Enviado a cocina/barra"></i>' : ''}
+                                </div>
+                                <span class="text-[10px] text-slate-400">Q${item.precio.toFixed(2)} c/u</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                ${!item.enviado ? `
+                                    <button onclick="modificarCantidadItem(${idx}, -1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">-</button>
+                                    <span class="font-bold text-xs text-white px-1">${item.cantidad}</span>
+                                    <button onclick="modificarCantidadItem(${idx}, 1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">+</button>
+                                ` : `
+                                    <span class="font-bold text-xs text-amber-400">x${item.cantidad}</span>
+                                `}
+                                <button onclick="eliminarItemComandaDirecto(${idx})" class="text-rose-400 hover:text-rose-300 p-1 text-xs" title="Eliminar ítem">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            if (totalDisplay) totalDisplay.innerText = `Q${total.toFixed(2)}`;
+        }
+
+        function modificarCantidadItem(idx, delta) {
+            const comanda = getOrCreateComandaActiva();
+            if (!comanda || !comanda.items[idx]) return;
+
+            const item = comanda.items[idx];
+            if (item.enviado) return;
+
+            item.cantidad += delta;
+            if (item.cantidad <= 0) {
+                comanda.items.splice(idx, 1);
+            }
+            saveState();
+            renderComandaActual();
+            renderParaLlevar();
+            renderMesas();
+        }
+
+        function eliminarItemComandaDirecto(idx) {
+            const comanda = getOrCreateComandaActiva();
+            if (!comanda || !comanda.items[idx]) return;
+
+            const item = comanda.items[idx];
+            if (item.enviado) {
+                if (confirm(`El ítem "${item.nombre}" ya fue enviado a preparación. ¿Desea eliminarlo de la comanda?`)) {
+                    comanda.items.splice(idx, 1);
+                    saveState();
+                    renderComandaActual();
+                    renderParaLlevar();
+                    renderMesas();
+                }
+            } else {
+                comanda.items.splice(idx, 1);
+                saveState();
+                renderComandaActual();
+                renderParaLlevar();
+                renderMesas();
+            }
+        }
+
+        function getItemEstacion(item) {
+            if (item.estacion) return item.estacion;
+            const prod = state.menu.find(p => p.id === item.producto_id);
+            return prod ? prod.estacion : 'cocina';
+        }
+
+        function descontarInsumosReceta(productoId, cantidad) {
+            const prod = state.menu.find(p => p.id === productoId);
+            if (!prod || !prod.receta) return;
+
+            prod.receta.forEach(r => {
+                const insumo = state.insumos.find(i => i.id === r.insumo_id);
+                if (insumo) {
+                    const totalConsumido = r.cantidad * cantidad;
+                    insumo.stock = Math.max(0, insumo.stock - totalConsumido);
+                    if (insumo.stock <= 10) {
+                        showToast(`⚠️ Alerta: Stock bajo de insumo "${insumo.nombre}" (${insumo.stock} ${insumo.unidad})`, "info");
+                    }
+                }
+            });
+        }
+
+        function enviarEstacionesSinImprimir() {
+            const comanda = getOrCreateComandaActiva();
+            if (!comanda || comanda.items.length === 0) {
+                showToast("Comanda vacía", "error");
+                return;
+            }
+
+            let enviadosCount = 0;
+            comanda.items.forEach(item => {
+                if (!item.enviado) {
+                    item.enviado = true;
+                    descontarInsumosReceta(item.producto_id, item.cantidad);
+                    enviadosCount++;
+                }
+            });
+
+            saveState();
+            showToast("Órdenes enviadas digitalmente a Cocina/Barra", "success");
+            renderComandaActual();
+            renderParaLlevar();
+            renderMesas();
+            renderPosProducts();
+            renderInventario();
+        }
+
+        function renderMonitoresIndependientes() {
+            const gridCocina = document.getElementById('kds-cocina-grid');
+            const gridBarra = document.getElementById('kds-barra-grid');
+
+            const comandasActivas = state.comandas.filter(c => c.estado === 'abierta');
+
+            const renderGrid = (estacion, targetGrid) => {
+                if (!targetGrid) return;
+                const html = comandasActivas.map(c => {
+                    const itemsEstacion = c.items.filter(i => i.enviado && getItemEstacion(i) === estacion && (i.cantidad - (i.preparado || 0)) > 0);
+                    if (itemsEstacion.length === 0) return '';
+
+                    const elapsedMins = c.created_at ? Math.floor((Date.now() - c.created_at) / 60000) : 0;
+                    const maxEstimatedTime = Math.max(...itemsEstacion.map(i => i.tiempo_estimado || 10));
+                    const isOverdue = elapsedMins > maxEstimatedTime;
+                    const isWarning = !isOverdue && elapsedMins >= Math.floor(maxEstimatedTime * 0.8);
+
+                    const cardAlertClass = isOverdue ? 'kds-alert-overdue border-rose-600' :
+                                           isWarning ? 'border-amber-500/60 bg-amber-950/20' :
+                                           'border-slate-800 bg-slate-900';
+
+                    const timeBadgeClass = isOverdue ? 'bg-rose-600 text-white font-black animate-pulse' :
+                                           isWarning ? 'bg-amber-500 text-slate-950 font-black' :
+                                           'bg-slate-800 text-slate-300 font-bold';
+
+                    const mesaLabel = c.mesa_id < 0 ? `🛍️ Para Llevar #${Math.abs(c.mesa_id)}` : `Mesa #${c.mesa_id}`;
+
+                    return `
+                        <div class="${cardAlertClass} border rounded-2xl p-4 space-y-3 shadow-xl transition-all duration-300">
+                            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                                <div>
+                                    <h4 class="font-black text-sm text-white">${mesaLabel}</h4>
+                                    <p class="text-[10px] text-slate-400">Mesero: ${c.mesero_nombre}</p>
+                                </div>
+                                <span class="${timeBadgeClass} text-[10px] px-2.5 py-1 rounded-xl flex items-center gap-1 font-mono">
+                                    ⏱️ ${elapsedMins}/${maxEstimatedTime}m ${isOverdue ? '⚠️ RETRASADO' : ''}
+                                </span>
+                            </div>
+                            <div class="space-y-1.5">
+                                ${itemsEstacion.map(i => `
+                                    <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/50">
+                                        <span class="font-bold text-slate-200">${i.nombre}</span>
+                                        <span class="font-black text-amber-400">x${i.cantidad - (i.preparado || 0)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button onclick="marcarEstacionLista(${c.id}, '${estacion}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 rounded-xl transition shadow-lg shadow-emerald-600/20">
+                                ¡Marcar Listo!
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                targetGrid.innerHTML = html || '<div class="col-span-full text-center py-8 text-slate-500 font-bold text-xs">Sin órdenes pendientes</div>';
+            };
+
+            renderGrid('cocina', gridCocina);
+            renderGrid('barra', gridBarra);
+        }
+
+        function marcarEstacionLista(comandaId, estacion) {
+            const comanda = state.comandas.find(c => c.id === comandaId);
+            if (!comanda) return;
+
+            comanda.items.forEach(i => {
+                if (getItemEstacion(i) === estacion) {
+                    i.preparado = i.cantidad;
+                }
+            });
+
+            saveState();
+            showToast(`Ítems despachados en ${estacion.toUpperCase()}`, "success");
+            renderMonitoresIndependientes();
+        }
+
+        function abrirModalCobro() {
+            const comanda = getOrCreateComandaActiva();
+            if (!comanda || comanda.items.length === 0) {
+                showToast("No hay consumo para cobrar", "error");
+                return;
+            }
+
+            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+            const display = document.getElementById('cobro-total-display');
+            if (display) display.innerText = `Q${total.toFixed(2)}`;
+
+            const modal = document.getElementById('modal-cobro');
+            if (modal) modal.classList.remove('hidden');
+            setMetodoPago('efectivo');
+        }
+
+        function cerrarModalCobro() {
+            const modal = document.getElementById('modal-cobro');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function setMetodoPago(metodo) {
+            state.metodoPagoSel = metodo;
+            document.querySelectorAll('.pay-method-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-600', 'text-white');
+                btn.classList.add('bg-slate-800', 'text-slate-400');
+            });
+            const activeBtn = document.getElementById(`pay-btn-${metodo}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
+                activeBtn.classList.add('bg-brand-600', 'text-white');
+            }
+
+            const cashGroup = document.getElementById('cobro-efectivo-group');
+            if (cashGroup) {
+                if (metodo === 'efectivo') cashGroup.classList.remove('hidden');
+                else cashGroup.classList.add('hidden');
+            }
+        }
+
+        function setQuickCash(amount) {
+            const input = document.getElementById('cobro-monto-recibido');
+            if (input) {
+                input.value = amount;
+                calcularCambioCobro();
+            }
+        }
+
+        function calcularCambioCobro() {
+            const comanda = getOrCreateComandaActiva();
+            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+            const recibido = parseFloat(document.getElementById('cobro-monto-recibido').value) || 0;
+            const cambioDisplay = document.getElementById('cobro-cambio-display');
+
+            const cambio = Math.max(0, recibido - total);
+            if (cambioDisplay) cambioDisplay.innerText = `Q${cambio.toFixed(2)}`;
+        }
+
+        function generarCorrelativoVenta() {
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const todayStr = today.toLocaleDateString();
+
+            if (state.lastCorrelativeDate !== todayStr) {
+                state.dailyCorrelative = 1;
+                state.lastCorrelativeDate = todayStr;
+            }
+
+            const corrNum = String(state.dailyCorrelative).padStart(3, '0');
+            state.dailyCorrelative++;
+            return `${dd}${mm}-${corrNum}`;
+        }
+
+        function confirmarPagoYFinalizar() {
+            const comanda = getOrCreateComandaActiva();
+            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+
+            if (state.metodoPagoSel === 'efectivo') {
+                const recibido = parseFloat(document.getElementById('cobro-monto-recibido').value) || 0;
+                if (recibido < total) {
+                    showToast("El monto recibido es menor al total", "error");
+                    return;
+                }
+            }
+
+            // Deduct unsent items
+            comanda.items.forEach(item => {
+                if (!item.enviado) {
+                    descontarInsumosReceta(item.producto_id, item.cantidad);
+                    item.enviado = true;
+                }
+            });
+
+            const ventaId = generarCorrelativoVenta();
+            const now = new Date();
+
+            const ventaFinal = {
+                id: ventaId,
+                fecha: now.toISOString().split('T')[0],
+                mesa_id: comanda.mesa_id,
+                mesero_nombre: comanda.mesero_nombre,
+                estado: 'cerrada',
+                total: total,
+                metodo_pago: state.metodoPagoSel,
+                hora: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                items: JSON.parse(JSON.stringify(comanda.items))
+            };
+
+            comanda.estado = 'cerrada';
+            state.ventas.unshift(ventaFinal);
+
+            saveState();
+            imprimirTicketFinal58mm(ventaFinal);
+            cerrarModalCobro();
+            showToast(`Venta #${ventaId} completada e impresa con éxito`, "success");
+
+            renderParaLlevar();
+            renderMesas();
+            renderComandaActual();
+            renderPosProducts();
+            renderInventario();
+        }
+
+        function imprimirTicketFinal58mm(comanda) {
+            const ticket = document.getElementById('printable-ticket');
+            if (!ticket) return;
+
+            const mesaLabel = comanda.mesa_id < 0 ? `Para Llevar #${Math.abs(comanda.mesa_id)}` : `Mesa #${comanda.mesa_id}`;
+
+            ticket.innerHTML = `
+                <svg viewBox="0 0 1000 320" width="100%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="20" stroke-linecap="square" />
+                    <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
+                    <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
+                </svg>
+                <div style="text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px;">Mariscos, Asados y Mas</div>
+                <div style="text-align: center; font-size: 9px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
+                <div>--------------------------------</div>
+                <div>Ticket ID: #${comanda.id || 'TEMP'}</div>
+                <div>Lugar: ${mesaLabel}</div>
+                <div>Atendió: ${comanda.mesero_nombre || 'Mesero'}</div>
+                <div>Hora: ${comanda.hora || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div>--------------------------------</div>
+                ${comanda.items.map(i => `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>${i.cantidad}x ${i.nombre}</span>
+                        <span>Q${(i.precio * i.cantidad).toFixed(2)}</span>
+                    </div>
+                `).join('')}
+                <div>--------------------------------</div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                    <span>TOTAL:</span>
+                    <span>Q${comanda.total.toFixed(2)}</span>
+                </div>
+                <div>Pago: ${(comanda.metodo_pago || 'efectivo').toUpperCase()}</div>
+                <div>--------------------------------</div>
+                <div style="text-align: center; margin-top: 6px;">¡Gracias por su preferencia!</div>
+            `;
+
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        function reimprimirVenta(ventaId) {
+            const venta = state.ventas.find(v => v.id === ventaId);
+            if (!venta) {
+                showToast("Venta no encontrada", "error");
+                return;
+            }
+            imprimirTicketFinal58mm(venta);
+        }
+
+        function verPrecuentaTicket() {
+            const comanda = getOrCreateComandaActiva();
+            if (!comanda || comanda.items.length === 0) {
+                showToast("Sin ítems en comanda", "error");
+                return;
+            }
+            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+            const precuentaComanda = {
+                ...comanda,
+                id: 'PRE-CUENTA',
+                total: total,
+                hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            imprimirTicketFinal58mm(precuentaComanda);
+            showToast("Pre-cuenta enviada a impresión", "info");
+        }
+
+        function renderReservaciones() {
+            const body = document.getElementById('reservaciones-table-body');
+            const sel = document.getElementById('res-mesa-select');
+            if (!body) return;
+
+            if (sel) {
+                sel.innerHTML = state.mesas.filter(m => m.id > 0).map(m => `<option value="${m.id}">Mesa #${m.numero}</option>`).join('');
+            }
+
+            body.innerHTML = state.reservaciones.map(r => {
+                const mesa = state.mesas.find(m => m.id === r.mesa_id);
+                const mesaNum = mesa ? mesa.numero : r.mesa_id;
+
+                const resTime = new Date(`${r.fecha}T${r.hora}:00`);
+                const diffHours = (resTime - new Date()) / (1000 * 3600);
+                const isUpcoming3Hours = diffHours >= 0 && diffHours <= 3;
+
+                return `
+                    <tr>
+                        <td class="p-3 font-bold text-white">Mesa #${mesaNum}</td>
+                        <td class="p-3 font-bold text-slate-200">${r.cliente}</td>
+                        <td class="p-3 font-mono text-slate-400">${r.telefono}</td>
+                        <td class="p-3 font-bold text-brand-400">${r.personas} pers.</td>
+                        <td class="p-3 font-mono text-slate-300">${r.fecha} @ ${r.hora}</td>
+                        <td class="p-3">
+                            ${isUpcoming3Hours ? 
+                                `<span class="bg-amber-500/20 text-amber-400 font-black px-2.5 py-1 rounded-full border border-amber-500/30 text-[10px] animate-pulse">
+                                    ⏰ RECORDATORIO (EN ${Math.round(diffHours * 60)} MIN)
+                                </span>` : 
+                                `<span class="bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
+                                    ${r.estado}
+                                </span>`
+                            }
+                        </td>
+                        <td class="p-3 text-right">
+                            <button onclick="eliminarReservacion(${r.id})" class="text-rose-400 hover:text-rose-300 p-1 font-bold" title="Cancelar Reservación">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function abrirModalReservacion() {
+            const modal = document.getElementById('modal-reservacion');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function cerrarModalReservacion() {
+            const modal = document.getElementById('modal-reservacion');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function guardarReservacion(e) {
+            e.preventDefault();
+            const mesaId = parseInt(document.getElementById('res-mesa-select').value);
+            const cliente = document.getElementById('res-cliente').value.trim();
+            const telefono = document.getElementById('res-telefono').value.trim();
+            const personas = parseInt(document.getElementById('res-personas').value) || 1;
+            const fecha = document.getElementById('res-fecha').value;
+            const hora = document.getElementById('res-hora').value;
+            const notas = document.getElementById('res-notas').value.trim();
+
+            const newRes = {
+                id: Date.now(),
+                mesa_id: mesaId,
+                cliente,
+                telefono,
+                personas,
+                fecha,
+                hora,
+                notas,
+                estado: 'confirmada',
+                alertNotified: false
+            };
+
+            state.reservaciones.push(newRes);
+            saveState();
+            cerrarModalReservacion();
+            renderReservaciones();
+            showToast(`Reservación confirmada para ${cliente} (Mesa #${mesaId})`, "success");
+        }
+
+        function eliminarReservacion(id) {
+            if (confirm("¿Desea cancelar esta reservación?")) {
+                state.reservaciones = state.reservaciones.filter(r => r.id !== id);
+                saveState();
+                renderReservaciones();
+                showToast("Reservación eliminada", "info");
+            }
+        }
+
+        function checkReservationAlerts3Hours() {
+            if (state.currentUser.role === 'cliente') {
+                const badge = document.getElementById('reservations-badge');
+                if (badge) badge.classList.add('hidden');
+                return;
+            }
+
+            const now = new Date();
+            let alertCount = 0;
+
+            state.reservaciones.forEach(r => {
+                const resTime = new Date(`${r.fecha}T${r.hora}:00`);
+                const diffHours = (resTime - now) / (1000 * 3600);
+
+                if (diffHours >= 0 && diffHours <= 3) {
+                    alertCount++;
+                    if (!r.alertNotified) {
+                        r.alertNotified = true;
+                        showToast(`⏰ Recordatorio Reservación: ${r.cliente} en Mesa #${r.mesa_id} (${r.hora})`, "info");
+                    }
+                }
+            });
+
+            const badge = document.getElementById('reservations-badge');
+            if (badge) {
+                if (alertCount > 0) {
+                    badge.innerText = alertCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        function getVentasFiltradas() {
+            const inicio = document.getElementById('rep-fecha-inicio')?.value;
+            const fin = document.getElementById('rep-fecha-fin')?.value;
+
+            return state.ventas.filter(v => {
+                if (!v.fecha) return true;
+                if (inicio && v.fecha < inicio) return false;
+                if (fin && v.fecha > fin) return false;
+                return true;
+            });
+        }
+
+        function filtrarRangoRapido(tipo) {
+            const hoy = new Date();
+            const inicioInput = document.getElementById('rep-fecha-inicio');
+            const finInput = document.getElementById('rep-fecha-fin');
+            if (!inicioInput || !finInput) return;
+
+            if (tipo === 'hoy') {
+                const todayStr = hoy.toISOString().split('T')[0];
+                inicioInput.value = todayStr;
+                finInput.value = todayStr;
+            } else if (tipo === 'semana') {
+                const primerDia = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
+                const ultimoDia = new Date(hoy.setDate(hoy.getDate() - hoy.getDay() + 6));
+                inicioInput.value = primerDia.toISOString().split('T')[0];
+                finInput.value = ultimoDia.toISOString().split('T')[0];
+            } else if (tipo === 'mes') {
+                const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+                const ultimoDia = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+                inicioInput.value = primerDia.toISOString().split('T')[0];
+                finInput.value = ultimoDia.toISOString().split('T')[0];
+            } else if (tipo === 'todos') {
+                inicioInput.value = '';
+                finInput.value = '';
+            }
+            renderReportes();
+        }
+
+        function renderReportes() {
+            const body = document.getElementById('ventas-table-body');
+            if (!body) return;
+
+            const ventasFiltradas = getVentasFiltradas();
+
+            let totalVentas = 0, efectivo = 0, tarjeta = 0, transferencia = 0;
+
+            ventasFiltradas.forEach(v => {
+                totalVentas += v.total;
+                if (v.metodo_pago === 'efectivo') efectivo += v.total;
+                else if (v.metodo_pago === 'tarjeta') tarjeta += v.total;
+                else if (v.metodo_pago === 'transferencia') transferencia += v.total;
+            });
+
+            document.getElementById('rep-total-ventas').innerText = `Q${totalVentas.toFixed(2)}`;
+            document.getElementById('rep-efectivo').innerText = `Q${efectivo.toFixed(2)}`;
+            document.getElementById('rep-tarjeta').innerText = `Q${tarjeta.toFixed(2)}`;
+            document.getElementById('rep-transferencia').innerText = `Q${transferencia.toFixed(2)}`;
+
+            body.innerHTML = ventasFiltradas.map(v => {
+                const mesaLabel = v.mesa_id < 0 ? `🛍️ Para Llevar #${Math.abs(v.mesa_id)}` : `Mesa #${v.mesa_id}`;
+                return `
+                    <tr>
+                        <td class="p-3 font-mono font-bold text-brand-400">#${v.id}</td>
+                        <td class="p-3 font-bold text-white">${mesaLabel}</td>
+                        <td class="p-3">${v.mesero_nombre || 'Mesero'}</td>
+                        <td class="p-3 font-mono text-slate-400">${v.fecha || ''} ${v.hora}</td>
+                        <td class="p-3 uppercase font-bold text-[10px] text-brand-400">${v.metodo_pago}</td>
+                        <td class="p-3 font-black text-emerald-400">Q${v.total.toFixed(2)}</td>
+                        <td class="p-3 text-right">
+                            <button onclick="reimprimirVenta('${v.id}')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition" title="Reimprimir Ticket 58mm">
+                                <i class="fa-solid fa-print"></i> Reimprimir
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function imprimirCorte58mm() {
+            const ventasFiltradas = getVentasFiltradas();
+            const total = ventasFiltradas.reduce((s, v) => s + v.total, 0);
+            const ticket = document.getElementById('printable-ticket');
+            if (!ticket) return;
+
+            ticket.innerHTML = `
+                <svg viewBox="0 0 1000 320" width="100%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="20" stroke-linecap="square" />
+                    <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
+                    <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
+                </svg>
+                <div style="text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px;">Mariscos, Asados y Mas</div>
+                <div style="text-align: center; font-size: 11px;">CORTE DE CAJA (FILTRADO)</div>
+                <div>--------------------------------</div>
+                <div>Fecha Emisión: ${new Date().toLocaleDateString()}</div>
+                <div>Generó: ${state.currentUser.nombre}</div>
+                <div>--------------------------------</div>
+                <div>Transacciones: ${ventasFiltradas.length}</div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 4px;">
+                    <span>TOTAL GENERAL:</span>
+                    <span>Q${total.toFixed(2)}</span>
+                </div>
+                <div>--------------------------------</div>
+                <div style="text-align: center;">FIN DE REPORTE</div>
+            `;
+
+            window.print();
+        }
+
+        function exportarCortePDF() {
+            const ventasFiltradas = getVentasFiltradas();
+            let totalVentas = 0, efectivo = 0, tarjeta = 0, transferencia = 0;
+
+            ventasFiltradas.forEach(v => {
+                totalVentas += v.total;
+                if (v.metodo_pago === 'efectivo') efectivo += v.total;
+                else if (v.metodo_pago === 'tarjeta') tarjeta += v.total;
+                else if (v.metodo_pago === 'transferencia') transferencia += v.total;
+            });
+
+            const container = document.createElement('div');
+            container.style.padding = "24px";
+            container.style.fontFamily = "Inter, Arial, sans-serif";
+            container.style.color = "#0f172a";
+
+            const rowsComandas = ventasFiltradas.length === 0 ? `
+                <tr>
+                    <td colspan="5" style="padding: 12px; text-align: center; color: #64748b; font-style: italic;">No hay comandas registradas en este período.</td>
+                </tr>
+            ` : ventasFiltradas.map((v, index) => {
+                const mesaLabel = v.mesa_id < 0 ? `Para Llevar #${Math.abs(v.mesa_id)}` : `Mesa #${v.mesa_id}`;
+                const itemsHtml = v.items && v.items.length > 0 ? v.items.map(i => `
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #475569; padding: 2px 0;">
+                        <span>• ${i.cantidad}x ${i.nombre} (Q${i.precio.toFixed(2)} c/u)</span>
+                        <span style="font-weight: 600;">Q${(i.precio * i.cantidad).toFixed(2)}</span>
+                    </div>
+                `).join('') : '<div style="font-size: 10px; color: #94a3b8;">Sin ítems</div>';
+
+                return `
+                    <tr style="border-bottom: 1px solid #e2e8f0; ${index % 2 === 0 ? 'background-color: #f8fafc;' : ''}">
+                        <td style="padding: 8px; font-size: 11px; font-weight: bold; vertical-align: top;">#${v.id}<br><span style="font-size: 9px; color: #64748b;">${v.fecha || ''} ${v.hora}</span></td>
+                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
+                            <strong>${mesaLabel}</strong><br>
+                            <span style="font-size: 10px; color: #64748b;">Mesero: ${v.mesero_nombre || 'Mesero'}</span>
+                        </td>
+                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
+                            <span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; ${
+                                v.metodo_pago === 'efectivo' ? 'background: #dcfce7; color: #15803d;' :
+                                v.metodo_pago === 'tarjeta' ? 'background: #e0f2fe; color: #0369a1;' :
+                                'background: #f3e8ff; color: #6b21a8;'
+                            }">${v.metodo_pago}</span>
+                        </td>
+                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
+                            ${itemsHtml}
+                        </td>
+                        <td style="padding: 8px; font-size: 12px; font-weight: 800; text-align: right; color: #0f172a; vertical-align: top;">
+                            Q${v.total.toFixed(2)}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
+                    <h1 style="font-size: 22px; font-weight: 900; color: #0284c7; margin: 0;">RESTAURANTE LA ESQUINA</h1>
+                    <p style="font-size: 11px; font-weight: 700; color: #475569; margin: 2px 0 0 0;">Mariscos, Asados y Mas</p>
+                    <h3 style="font-size: 13px; color: #475569; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase;">REPORTE DE VENTAS Y CAJA (FILTRADO)</h3>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 11px; background-color: #f1f5f9; padding: 12px; border-radius: 8px;">
+                    <div>
+                        <p style="margin: 0 0 4px 0;"><strong>Fecha y Hora de Emisión:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+                        <p style="margin: 0;"><strong>Generado por:</strong> ${state.currentUser.nombre}</p>
+                    </div>
+                    <div style="text-align: right;">
+                        <p style="margin: 0 0 4px 0;"><strong>Total Comandas:</strong> ${ventasFiltradas.length}</p>
+                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #15803d;">TOTAL GENERAL: Q${totalVentas.toFixed(2)}</p>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 20px;">
+                    <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #334155; margin: 0 0 8px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Resumen por Forma de Pago</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #e2e8f0; color: #334155; text-align: left; font-size: 10px; text-transform: uppercase;">
+                                <th style="padding: 6px 8px;">Efectivo</th>
+                                <th style="padding: 6px 8px;">Tarjeta Débito/Crédito</th>
+                                <th style="padding: 6px 8px;">QR / Transferencia</th>
+                                <th style="padding: 6px 8px; text-align: right;">Total Recaudado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="font-weight: bold; font-size: 12px;">
+                                <td style="padding: 6px 8px; color: #16a34a;">Q${efectivo.toFixed(2)}</td>
+                                <td style="padding: 6px 8px; color: #0284c7;">Q${tarjeta.toFixed(2)}</td>
+                                <td style="padding: 6px 8px; color: #9333ea;">Q${transferencia.toFixed(2)}</td>
+                                <td style="padding: 6px 8px; text-align: right; color: #0f172a; font-size: 13px;">Q${totalVentas.toFixed(2)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #334155; margin: 0 0 8px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Detalle de Comandas Atendidas</h4>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                        <thead>
+                            <tr style="background-color: #0f172a; color: #ffffff; text-align: left; font-size: 10px; text-transform: uppercase;">
+                                <th style="padding: 8px; width: 14%;">ID / Hora</th>
+                                <th style="padding: 8px; width: 20%;">Mesa & Mesero</th>
+                                <th style="padding: 8px; width: 16%;">Pago</th>
+                                <th style="padding: 8px; width: 36%;">Productos</th>
+                                <th style="padding: 8px; width: 14%; text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsComandas}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            const opt = {
+                margin: 0.4,
+                filename: `Reporte_Ventas_LaEsquina_${new Date().toISOString().slice(0, 10)}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            if (window.html2pdf) {
+                window.html2pdf().set(opt).from(container).save().then(() => showToast("Reporte PDF descargado con éxito", "success"));
+            } else {
+                window.print();
+            }
+        }
+
+        function renderInventario() {
+            if (state.currentUser.role !== 'admin') return;
+
+            const body = document.getElementById('inventario-table-body');
+            if (!body) return;
+
+            let saludable = 0, alerta = 0, agotado = 0;
+
+            body.innerHTML = state.insumos.map(insumo => {
+                const isAgotado = insumo.stock <= 0;
+                const isAlerta = insumo.stock > 0 && insumo.stock <= 10;
+
+                if (isAgotado) agotado++;
+                else if (isAlerta) alerta++;
+                else saludable++;
+
+                const statusBadge = isAgotado ? '<span class="bg-rose-500/20 text-rose-400 font-bold px-2 py-0.5 rounded text-[10px]">AGOTADO</span>' :
+                                   isAlerta ? '<span class="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px]">ALERTA (&lt;=10)</span>' :
+                                   '<span class="bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px]">OK</span>';
+
+                return `
+                    <tr>
+                        <td class="p-3 font-bold text-white">${insumo.nombre}</td>
+                        <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-mono">${insumo.unidad}</span></td>
+                        <td class="p-3 font-black text-sm text-white">${insumo.stock} ${insumo.unidad}</td>
+                        <td class="p-3">${statusBadge}</td>
+                        <td class="p-3 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <input id="inv-input-${insumo.id}" type="number" step="0.01" min="1" placeholder="Cant." class="w-16 bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-lg p-1.5 text-center focus:outline-none">
+                                <button onclick="agregarStockInsumo(${insumo.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition" title="Reabastecer Stock">
+                                    +
+                                </button>
+                                <button onclick="eliminarInsumo(${insumo.id})" class="text-rose-400 hover:text-rose-300 p-1.5 font-bold text-xs" title="Eliminar Insumo">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('inv-kpi-total').innerText = state.insumos.length;
+            document.getElementById('inv-kpi-saludable').innerText = saludable;
+            document.getElementById('inv-kpi-alerta').innerText = alerta;
+            document.getElementById('inv-kpi-agotado').innerText = agotado;
+        }
+
+        function agregarStockInsumo(insumoId) {
+            const input = document.getElementById(`inv-input-${insumoId}`);
+            if (!input) return;
+            const cant = parseFloat(input.value);
+
+            if (cant && cant > 0) {
+                const insumo = state.insumos.find(i => i.id === insumoId);
+                if (insumo) {
+                    insumo.stock += cant;
+                    saveState();
+                    showToast(`Se reabastecieron +${cant} ${insumo.unidad} a ${insumo.nombre}`, "success");
+                    input.value = '';
+                    renderInventario();
+                    renderPosProducts();
+                }
+            } else {
+                showToast("Ingrese una cantidad válida mayor a 0", "error");
+            }
+        }
+
+        function eliminarInsumo(id) {
+            const insumo = state.insumos.find(i => i.id === id);
+            if (!insumo) return;
+
+            const productosAfectados = state.menu.filter(p => p.receta && p.receta.some(r => r.insumo_id === id));
+
+            let msg = `¿Está seguro de eliminar el insumo "${insumo.nombre}"?`;
+            if (productosAfectados.length > 0) {
+                const nombres = productosAfectados.map(p => p.nombre).join(', ');
+                msg += `\n\n⚠️ Este insumo está presente en las recetas de: ${nombres}. Se eliminará de sus ingredientes.`;
+            }
+
+            if (confirm(msg)) {
+                state.insumos = state.insumos.filter(i => i.id !== id);
+                state.menu.forEach(p => {
+                    if (p.receta) {
+                        p.receta = p.receta.filter(r => r.insumo_id !== id);
+                    }
+                });
+
+                saveState();
+                showToast(`Insumo "${insumo.nombre}" eliminado del inventario`, "info");
+                renderInventario();
+                renderPosProducts();
+            }
+        }
+
+        function abrirModalInsumo() {
+            const modal = document.getElementById('modal-insumo');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function cerrarModalInsumo() {
+            const modal = document.getElementById('modal-insumo');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function guardarInsumoNuevo(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('insumo-nombre').value.trim();
+            const unidad = document.getElementById('insumo-unidad').value;
+            const stock = parseFloat(document.getElementById('insumo-stock').value) || 0;
+
+            if (!nombre) return;
+
+            const newId = state.insumos.length > 0 ? Math.max(...state.insumos.map(i => i.id)) + 1 : 1;
+            state.insumos.push({
+                id: newId,
+                nombre,
+                unidad,
+                stock
+            });
+
+            saveState();
+            cerrarModalInsumo();
+            renderInventario();
+            showToast(`Insumo "${nombre}" agregado al Inventario`, "success");
+        }
+
+        function abrirModalProducto(id = null) {
+            const modal = document.getElementById('modal-producto');
+            const catSel = document.getElementById('prod-categoria');
+            const recetaContainer = document.getElementById('receta-rows-container');
+            if (!modal || !catSel) return;
+
+            catSel.innerHTML = state.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+            if (recetaContainer) recetaContainer.innerHTML = '';
+
+            if (id) {
+                const p = state.menu.find(x => x.id === id);
+                if (p) {
+                    document.getElementById('modal-prod-title').innerText = "Editar Producto";
+                    document.getElementById('prod-edit-id').value = p.id;
+                    document.getElementById('prod-nombre').value = p.nombre;
+                    document.getElementById('prod-precio').value = p.precio;
+                    document.getElementById('prod-tiempo').value = p.tiempo_estimado || 10;
+                    document.getElementById('prod-estacion').value = p.estacion;
+                    document.getElementById('prod-categoria').value = p.categoria;
+                    document.getElementById('prod-imagen').value = p.imagen || '';
+                    document.getElementById('prod-descripcion').value = p.descripcion || '';
+
+                    if (p.receta && p.receta.length > 0) {
+                        p.receta.forEach(r => agregarFilaInsumoReceta(r.insumo_id, r.cantidad));
+                    }
+                }
+            } else {
+                document.getElementById('modal-prod-title').innerText = "Nuevo Producto";
+                document.getElementById('prod-edit-id').value = '';
+                document.getElementById('prod-nombre').value = '';
+                document.getElementById('prod-precio').value = '';
+                document.getElementById('prod-tiempo').value = 10;
+                document.getElementById('prod-imagen').value = '';
+                document.getElementById('prod-descripcion').value = '';
+                agregarFilaInsumoReceta();
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function cerrarModalProducto() {
+            const modal = document.getElementById('modal-producto');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function agregarFilaInsumoReceta(selectedInsumoId = null, cantidad = '') {
+            const container = document.getElementById('receta-rows-container');
+            if (!container) return;
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 receta-row';
+
+            const options = state.insumos.map(i => `<option value="${i.id}" ${i.id === selectedInsumoId ? 'selected' : ''}>${i.nombre} (${i.unidad})</option>`).join('');
+
+            row.innerHTML = `
+                <select class="receta-insumo-select flex-1 bg-slate-800 border border-slate-700 text-white rounded-xl p-2 focus:outline-none">
+                    ${options}
+                </select>
+                <input type="number" step="0.01" min="0.01" value="${cantidad}" placeholder="Cant." class="receta-insumo-cant w-24 bg-slate-800 border border-slate-700 text-white rounded-xl p-2 font-bold focus:outline-none">
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-400 hover:text-rose-300 p-2 font-bold">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            container.appendChild(row);
+        }
+
+        function guardarProducto(e) {
+            e.preventDefault();
+            const editId = document.getElementById('prod-edit-id').value;
+            const nombre = document.getElementById('prod-nombre').value.trim();
+            const precio = parseFloat(document.getElementById('prod-precio').value) || 0;
+            const tiempo = parseInt(document.getElementById('prod-tiempo').value) || 10;
+            const estacion = document.getElementById('prod-estacion').value;
+            const categoria = document.getElementById('prod-categoria').value;
+            const imagen = document.getElementById('prod-imagen').value.trim();
+            const descripcion = document.getElementById('prod-descripcion').value.trim();
+
+            const recetaRows = document.querySelectorAll('.receta-row');
+            const receta = [];
+
+            recetaRows.forEach(row => {
+                const insumoId = parseInt(row.querySelector('.receta-insumo-select').value);
+                const cant = parseFloat(row.querySelector('.receta-insumo-cant').value);
+                if (insumoId && cant > 0) {
+                    receta.push({ insumo_id: insumoId, cantidad: cant });
+                }
+            });
+
+            if (editId) {
+                const p = state.menu.find(x => x.id === parseInt(editId));
+                if (p) {
+                    p.nombre = nombre;
+                    p.precio = precio;
+                    p.tiempo_estimado = tiempo;
+                    p.estacion = estacion;
+                    p.categoria = categoria;
+                    p.imagen = imagen;
+                    p.descripcion = descripcion;
+                    p.receta = receta;
+                }
+            } else {
+                state.menu.push({
+                    id: Date.now(),
+                    nombre,
+                    precio,
+                    tiempo_estimado: tiempo,
+                    estacion,
+                    categoria,
+                    imagen,
+                    descripcion,
+                    receta
+                });
+            }
+
+            saveState();
+            cerrarModalProducto();
+            renderMenuTable();
+            renderPosProducts();
+            showToast("Producto y receta guardados correctamente", "success");
+        }
+
+        function eliminarProducto(id) {
+            if (confirm("¿Desea eliminar este producto del menú?")) {
+                state.menu = state.menu.filter(p => p.id !== id);
+                saveState();
+                renderMenuTable();
+                renderPosProducts();
+                showToast("Producto eliminado", "info");
+            }
+        }
+
+        function abrirModalCategoria() {
+            const modal = document.getElementById('modal-categoria');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function cerrarModalCategoria() {
+            const modal = document.getElementById('modal-categoria');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function guardarCategoria(e) {
+            e.preventDefault();
+            const name = document.getElementById('cat-nombre').value.trim();
+            if (name && !state.categorias.includes(name)) {
+                state.categorias.push(name);
+                saveState();
+                showToast(`Categoría "${name}" creada`, "success");
+                document.getElementById('cat-nombre').value = '';
+                cerrarModalCategoria();
+                renderPosCategories();
+            }
+        }
+
+        function abrirModalUsuarios() {
+            if (state.currentUser.role !== 'admin') {
+                showToast("Solo el Administrador puede gestionar personal", "error");
+                return;
+            }
+            const modal = document.getElementById('modal-usuarios');
+            if (modal) {
+                modal.classList.remove('hidden');
+                resetFormUsuario();
+                renderListaUsuariosModal();
+            }
+        }
+
+        function cerrarModalUsuarios() {
+            const modal = document.getElementById('modal-usuarios');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        function resetFormUsuario() {
+            const editId = document.getElementById('user-edit-id');
+            const nombre = document.getElementById('user-nombre');
+            const rol = document.getElementById('user-rol');
+            const pass = document.getElementById('user-pass');
+            const title = document.getElementById('user-form-title');
+
+            if (editId) editId.value = '';
+            if (nombre) nombre.value = '';
+            if (rol) rol.value = 'mesero';
+            if (pass) pass.value = '';
+            if (title) title.innerText = "Agregar Nuevo Usuario";
+        }
+
+        function renderListaUsuariosModal() {
+            const body = document.getElementById('usuarios-table-body');
+            if (!body) return;
+
+            body.innerHTML = state.usuarios.map(u => {
+                const badgeClass = u.rol === 'barista' ? 'bg-cyan-500/20 text-cyan-400' :
+                                   u.rol === 'cocinero' ? 'bg-amber-500/20 text-amber-400' :
+                                   'bg-emerald-500/20 text-emerald-400';
+
+                return `
+                    <tr>
+                        <td class="p-2.5 font-bold text-slate-400">#${u.id}</td>
+                        <td class="p-2.5 font-bold text-white">${u.nombre}</td>
+                        <td class="p-2.5"><span class="${badgeClass} px-2 py-0.5 rounded font-black text-[9px] uppercase">${u.rol}</span></td>
+                        <td class="p-2.5 font-mono text-slate-400">•••• (${u.password || '123'})</td>
+                        <td class="p-2.5 text-right space-x-1">
+                            <button onclick="editarUsuarioMesero(${u.id})" class="text-brand-400 hover:text-brand-300 p-1 font-bold" title="Editar">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="eliminarUsuarioMesero(${u.id})" class="text-rose-400 hover:text-rose-300 p-1 font-bold" title="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function guardarUsuarioMesero(e) {
+            e.preventDefault();
+            const editId = document.getElementById('user-edit-id').value;
+            const nombre = document.getElementById('user-nombre').value.trim();
+            const rol = document.getElementById('user-rol').value;
+            const password = document.getElementById('user-pass').value.trim();
+
+            if (!nombre || !password) {
+                showToast("Por favor complete el nombre y la contraseña", "error");
+                return;
+            }
+
+            if (editId) {
+                const user = state.usuarios.find(u => u.id === parseInt(editId));
+                if (user) {
+                    user.nombre = nombre;
+                    user.rol = rol;
+                    user.password = password;
+                    showToast(`Usuario ${nombre} (${rol.toUpperCase()}) actualizado`, "success");
+                }
+            } else {
+                const newId = state.usuarios.length > 0 ? Math.max(...state.usuarios.map(u => u.id)) + 1 : 1;
+                state.usuarios.push({
+                    id: newId,
+                    nombre: nombre,
+                    rol: rol,
+                    password: password
+                });
+                showToast(`Usuario ${nombre} (${rol.toUpperCase()}) registrado con éxito`, "success");
+            }
+
+            saveState();
+            resetFormUsuario();
+            renderListaUsuariosModal();
+            renderListaMeserosLoginSelect();
+            renderPosMeseroSelector();
+        }
+
+        function editarUsuarioMesero(id) {
+            const u = state.usuarios.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('user-edit-id').value = u.id;
+            document.getElementById('user-nombre').value = u.nombre;
+            document.getElementById('user-rol').value = u.rol || 'mesero';
+            document.getElementById('user-pass').value = u.password || '123';
+            document.getElementById('user-form-title').innerText = `Editar Usuario #${u.id}`;
+        }
+
+        function eliminarUsuarioMesero(id) {
+            if (state.usuarios.length <= 1) {
+                showToast("Debe existir al menos un usuario registrado", "error");
+                return;
+            }
+            const u = state.usuarios.find(x => x.id === id);
+            if (!u) return;
+
+            if (confirm(`¿Está seguro de eliminar al usuario "${u.nombre}" (${u.rol.toUpperCase()})?`)) {
+                state.usuarios = state.usuarios.filter(x => x.id !== id);
+                saveState();
+                showToast(`Usuario ${u.nombre} eliminado`, "info");
+                renderListaUsuariosModal();
+                renderListaMeserosLoginSelect();
+                renderPosMeseroSelector();
+            }
+        }
+
+        function renderAnaliticaDashboard() {
+            if (state.currentUser.role !== 'admin') return;
+
+            const cardsContainer = document.getElementById('staff-performance-cards');
+            if (cardsContainer) {
+                cardsContainer.innerHTML = state.usuarios.map(u => {
+                    const totalAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).reduce((s, v) => s + v.total, 0);
+                    const countAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).length;
+
+                    let rating = 5;
+                    if (countAtendido === 0) rating = 3.5;
+                    else if (countAtendido > 5) rating = 5;
+
+                    return `
+                        <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-black text-sm text-white">${u.nombre}</span>
+                                <span class="bg-brand-500/20 text-brand-400 text-[10px] font-black px-2 py-0.5 rounded uppercase">${u.rol}</span>
+                            </div>
+                            <div class="text-xs text-slate-400">
+                                <div>Órdenes Atendidas: <strong class="text-white">${countAtendido}</strong></div>
+                                <div>Ventas Generadas: <strong class="text-emerald-400">Q${totalAtendido.toFixed(2)}</strong></div>
+                            </div>
+                            <div class="text-amber-400 text-xs pt-1 flex items-center justify-between border-t border-slate-800">
+                                <span class="text-[10px] text-slate-500 uppercase font-bold">Rendimiento:</span>
+                                <div>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star"></i>
+                                    <i class="fa-solid fa-star-half-stroke"></i>
+                                    <span class="font-bold text-white ml-1">${rating}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const canvas = document.getElementById('monthly-sales-chart');
+            if (!canvas) return;
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                    datasets: [
+                        {
+                            label: 'Mes Anterior (Q)',
+                            data: [1200, 1800, 1400, 2100],
+                            backgroundColor: 'rgba(100, 116, 139, 0.6)',
+                            borderRadius: 8
+                        },
+                        {
+                            label: 'Mes Actual (Q)',
+                            data: [1500, 2200, 1900, 2800],
+                            backgroundColor: 'rgba(2, 132, 199, 0.8)',
+                            borderRadius: 8
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', weight: 'bold' } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } },
+                        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } }
+                    }
+                }
+            });
+        }
+
+        // Switch View Controller with Strict Client Tab Protection
+        function switchTab(tabName) {
+            if (state.currentUser.role === 'cliente') {
+                if (tabName !== 'menu') {
+                    showToast("Acceso restringido únicamente al Menú Digital para Clientes", "error");
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+            
+            const targetPanel = document.getElementById(`view-${tabName}`);
+            if (targetPanel) targetPanel.classList.remove('hidden');
+
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('bg-brand-500', 'text-white', 'shadow-md');
+                btn.classList.add('text-slate-400');
+            });
+            const activeBtn = document.getElementById(`tab-btn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('bg-brand-500', 'text-white', 'shadow-md');
+            }
+
+            if (tabName === 'parallevar') renderParaLlevar();
+            else if (tabName === 'mesas') renderMesas();
+            else if (tabName === 'pos') { 
+                renderPosMesaSelector(); 
+                renderPosMeseroSelector(); 
+                renderComandaActual(); 
+                renderPosProducts();
+            }
+            else if (tabName === 'cocina' || tabName === 'barra') renderMonitoresIndependientes();
+            else if (tabName === 'menu') renderMenuTable();
+            else if (tabName === 'reservaciones') renderReservaciones();
+            else if (tabName === 'reportes') renderReportes();
+            else if (tabName === 'inventario') renderInventario();
+            else if (tabName === 'analitica') renderAnaliticaDashboard();
+        }
+
+        // Execute initialization on Window Load
+        window.onload = function() {
+            loadState();
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const inicio = document.getElementById('rep-fecha-inicio');
+            const fin = document.getElementById('rep-fecha-fin');
+            if (inicio && !inicio.value) inicio.value = todayStr;
+            if (fin && !fin.value) fin.value = todayStr;
+
+            renderUserSession();
+            renderParaLlevar();
+            renderMesas();
+            renderPosMesaSelector();
+            renderPosMeseroSelector();
+            renderPosCategories();
+            renderPosProducts();
+            renderComandaActual();
+            renderListaMeserosLoginSelect();
+            renderMenuTable();
+            renderReservaciones();
+
+            if (kdsInterval) clearInterval(kdsInterval);
+            kdsInterval = setInterval(() => {
+                renderMonitoresIndependientes();
+                checkReservationAlerts3Hours();
+            }, 10000);
+
+            if (state.currentUser.role === 'cliente') {
+                switchTab('menu');
+            } else {
+                switchTab('parallevar');
+            }
+        };
+    </script>
+</body>
+</html>
