@@ -58,7 +58,7 @@
                 background: #fff;
             }
             #printable-ticket svg {
-                max-width: 80% !important;
+                max-width: 75% !important;
                 height: auto !important;
                 display: block !important;
                 margin: 0 auto 2px auto !important;
@@ -81,18 +81,22 @@
 </head>
 <body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 antialiased select-none">
 
-    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md">
+    <header id="staff-header" class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md">
         <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-brand-500/20">
-                E
+            <div class="bg-gradient-to-tr from-amber-600 to-amber-400 p-2 rounded-xl shadow-lg flex items-center justify-center">
+                <!-- Exact Restaurant Logo LA ESQUINA -->
+                <svg viewBox="0 0 1000 320" width="120" height="auto" class="text-slate-950 fill-current">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square" />
+                    <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
+                    <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
+                </svg>
             </div>
             <div>
-                <h1 class="font-black text-base tracking-wide text-white leading-tight">LA ESQUINA</h1>
-                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Sistema POS & Control</p>
+                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">Sistema POS & Control</h1>
+                <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más...</p>
             </div>
         </div>
 
-        <!-- Navigation Tabs: Ordered per specifications -->
         <nav id="main-nav-tabs" class="flex items-center gap-1.5 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/80 overflow-x-auto max-w-full custom-scrollbar">
             <button id="tab-btn-parallevar" onclick="switchTab('parallevar')" class="nav-tab bg-brand-500 text-white shadow-md px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-bag-shopping text-purple-400"></i> Para Llevar
@@ -126,21 +130,21 @@
             </button>
         </nav>
 
-        <!-- User Session Indicator & Admin Actions -->
+        <!-- User Session Indicator & Super Admin Controls -->
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Reiniciar Sistema / Restablecer Datos de Fábrica">
-                <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
+            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema (Solo Super Admin servipicho)">
+                <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer Sistema</span>
             </button>
             <button id="admin-btn-usuarios" onclick="abrirModalUsuarios()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 hidden" title="Gestionar Personal">
                 <i class="fa-solid fa-users-gear text-brand-400"></i> <span class="hidden md:inline">Usuarios</span>
             </button>
             <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs">
                 <i id="user-session-icon" class="fa-solid fa-utensils text-brand-400"></i>
-                <span id="user-session-name" class="font-bold text-slate-200">Menú Digital</span>
+                <span id="user-session-name" class="font-bold text-slate-200">Administrador</span>
             </div>
-            <button onclick="openLoginModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition border border-brand-500 flex items-center gap-1.5 shadow-md shadow-brand-600/20" title="Iniciar Sesión / Cambiar Usuario">
+            <button onclick="openLoginModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-3 py-1.5 rounded-xl transition border border-brand-500 flex items-center gap-1.5 shadow-md shadow-brand-600/20" title="Cambiar Usuario">
                 <i class="fa-solid fa-right-to-bracket"></i>
-                <span id="login-btn-text">Iniciar Sesión</span>
+                <span id="login-btn-text">Cambiar Usuario</span>
             </button>
         </div>
     </header>
@@ -154,7 +158,7 @@
                     <h2 class="text-xl font-black text-white flex items-center gap-2">
                         <i class="fa-solid fa-bag-shopping text-purple-400"></i> Órdenes Para Llevar
                     </h2>
-                    <p class="text-xs text-slate-400">El personal y el administrador pueden abrir e ingresar nuevas órdenes de consumo para llevar</p>
+                    <p class="text-xs text-slate-400">Gestión de comandas y pedidos rápidos para llevar</p>
                 </div>
                 <button onclick="crearNuevaOrdenParaLlevar()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/25 flex items-center gap-2">
                     <i class="fa-solid fa-plus-circle text-sm"></i> + Nueva Orden Para Llevar
@@ -172,7 +176,7 @@
                     <h2 class="text-xl font-black text-white">Plano de Mesas</h2>
                     <p class="text-xs text-slate-400">Seleccione una mesa para abrir o atender una comanda presencial</p>
                 </div>
-                <div id="admin-mesas-controls" class="flex items-center gap-2 hidden">
+                <div id="admin-mesas-controls" class="flex items-center gap-2">
                     <button onclick="eliminarUltimaMesa()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 font-bold text-xs px-3 py-2 rounded-xl transition flex items-center gap-1.5">
                         <i class="fa-solid fa-minus"></i> Quitar Mesa
                     </button>
@@ -563,10 +567,14 @@
     <div id="modal-login" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div class="text-center space-y-1">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30 mb-2">
-                    E
+                <div class="bg-gradient-to-tr from-amber-600 to-amber-400 p-2 rounded-2xl shadow-lg inline-flex items-center justify-center mb-2">
+                    <svg viewBox="0 0 1000 320" width="100" height="auto" class="text-slate-950 fill-current">
+                        <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square" />
+                        <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
+                        <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
+                    </svg>
                 </div>
-                <h3 class="text-lg font-black text-white">Inicio de Sesión</h3>
+                <h3 class="text-lg font-black text-white">Cambiar de Usuario</h3>
                 <p class="text-xs text-slate-400">Seleccione su perfil de acceso en LA ESQUINA</p>
             </div>
 
@@ -574,16 +582,16 @@
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Tipo de Perfil</label>
                     <select id="login-tipo-rol" onchange="toggleLoginInputs()" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        <option value="admin">Administrador (LA ESQUINA)</option>
+                        <option value="admin">Administrador / Super Admin</option>
                         <option value="mesero">Personal (Mesero, Cocina, Bar)</option>
-                        <option value="cliente">Cliente (Ver Menú Digital)</option>
+                        <option value="cliente">Cliente (Menú Digital)</option>
                     </select>
                 </div>
 
                 <div id="login-pass-group" class="space-y-2">
                     <div id="login-user-container">
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
-                        <input id="login-user" type="text" value="LA ESQUINA" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario / ID</label>
+                        <input id="login-user" type="text" value="servipicho" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña</label>
@@ -606,12 +614,6 @@
                 <button id="login-submit-btn" type="submit" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-brand-600/25">
                     Ingresar al Sistema
                 </button>
-
-                <div class="pt-2 border-t border-slate-800/80">
-                    <button type="button" onclick="ingresarComoCliente()" class="w-full bg-slate-800 hover:bg-slate-700 text-brand-400 font-bold text-xs py-2.5 rounded-xl transition border border-brand-500/30 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-book-open"></i> Ver Menú Digital (Clientes)
-                    </button>
-                </div>
             </form>
         </div>
     </div>
@@ -855,7 +857,7 @@
         </div>
     </div>
 
-    <!-- Hidden Printable Thermal Ticket Container with EMBEDDED LOGO LA ESQUINA -->
+    <!-- Hidden Printable Thermal Ticket Container with LOGO LA ESQUINA -->
     <div id="printable-ticket" class="hidden"></div>
 
     <!-- Toast Notification Container -->
@@ -863,7 +865,7 @@
 
     <script>
         const defaultState = {
-            currentUser: { role: 'cliente', nombre: 'Cliente' },
+            currentUser: { role: 'admin', nombre: 'servipicho' },
             activeMesaId: -1,
             activeCategory: 'Todos',
             activeMenuCategory: 'Todos',
@@ -878,9 +880,6 @@
             ],
             takeoutCount: 3,
             mesas: [
-                { id: -1, numero: 'Para Llevar #1', estado: 'libre', esParaLlevar: true },
-                { id: -2, numero: 'Para Llevar #2', estado: 'libre', esParaLlevar: true },
-                { id: -3, numero: 'Para Llevar #3', estado: 'libre', esParaLlevar: true },
                 ...Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: i + 1, estado: 'libre' }))
             ],
             reservaciones: [
@@ -1058,58 +1057,82 @@
         }
 
         function renderUserSession() {
+            const staffHeader = document.getElementById('staff-header');
             const icon = document.getElementById('user-session-icon');
             const name = document.getElementById('user-session-name');
-            const paraLlevarTab = document.getElementById('tab-btn-parallevar');
-            const mesasTab = document.getElementById('tab-btn-mesas');
-            const posTab = document.getElementById('tab-btn-pos');
-            const menuTab = document.getElementById('tab-btn-menu');
-            const resTab = document.getElementById('tab-btn-reservaciones');
-            const cocinaTab = document.getElementById('tab-btn-cocina');
-            const barraTab = document.getElementById('tab-btn-barra');
-            const repTab = document.getElementById('tab-btn-reportes');
-            const invTab = document.getElementById('tab-btn-inventario');
-            const analiticaTab = document.getElementById('tab-btn-analitica');
-            const adminUsersBtn = document.getElementById('admin-btn-usuarios');
-            const adminResetBtn = document.getElementById('admin-reset-btn');
-            const adminMesasControls = document.getElementById('admin-mesas-controls');
             const loginBtnText = document.getElementById('login-btn-text');
+            const resetBtn = document.getElementById('admin-reset-btn');
+            const usersBtn = document.getElementById('admin-btn-usuarios');
 
             if (!name) return;
-
             const role = state.currentUser.role;
+            const isSuperAdmin = role === 'admin' && (state.currentUser.nombre === 'servipicho' || state.currentUser.nombre.toLowerCase().includes('servipicho'));
 
-            [paraLlevarTab, mesasTab, posTab, cocinaTab, barraTab, menuTab, resTab, repTab, invTab, analiticaTab].forEach(t => t && t.classList.remove('hidden'));
+            if (resetBtn) {
+                if (isSuperAdmin) resetBtn.classList.remove('hidden');
+                else resetBtn.classList.add('hidden');
+            }
 
-            if (role === 'cliente') {
-                if (icon) icon.className = 'fa-solid fa-utensils text-brand-400';
-                name.innerText = 'Menú Digital';
-                if (loginBtnText) loginBtnText.innerText = 'Iniciar Sesión';
-                
-                // Hide ALL tabs EXCEPT menu
-                [paraLlevarTab, mesasTab, posTab, cocinaTab, barraTab, resTab, repTab, invTab, analiticaTab].forEach(t => t && t.classList.add('hidden'));
-                if (adminUsersBtn) adminUsersBtn.classList.add('hidden');
-                if (adminResetBtn) adminResetBtn.classList.add('hidden');
-                if (adminMesasControls) adminMesasControls.classList.add('hidden');
+            if (usersBtn) {
+                if (role === 'admin') usersBtn.classList.remove('hidden');
+                else usersBtn.classList.add('hidden');
+            }
 
-                switchTab('menu');
-            } else if (role === 'admin') {
+            if (role === 'admin') {
                 if (icon) icon.className = 'fa-solid fa-user-shield text-amber-400';
                 name.innerText = `Admin: ${state.currentUser.nombre}`;
                 if (loginBtnText) loginBtnText.innerText = 'Cambiar Usuario';
-                if (adminUsersBtn) adminUsersBtn.classList.remove('hidden');
-                if (adminResetBtn) adminResetBtn.classList.remove('hidden');
-                if (adminMesasControls) adminMesasControls.classList.remove('hidden');
+            } else if (role === 'cliente') {
+                if (icon) icon.className = 'fa-solid fa-user-tag text-purple-400';
+                name.innerText = 'Cliente (Menú Digital)';
+                if (loginBtnText) loginBtnText.innerText = 'Iniciar Sesión';
             } else {
                 if (icon) icon.className = 'fa-solid fa-user text-emerald-400';
                 name.innerText = `${role.toUpperCase()}: ${state.currentUser.nombre}`;
                 if (loginBtnText) loginBtnText.innerText = 'Cambiar Usuario';
-                if (invTab) invTab.classList.add('hidden');
-                if (analiticaTab) analiticaTab.classList.add('hidden');
-                if (adminUsersBtn) adminUsersBtn.classList.add('hidden');
-                if (adminResetBtn) adminResetBtn.classList.add('hidden');
-                if (adminMesasControls) adminMesasControls.classList.add('hidden');
             }
+
+            const tabs = [
+                { id: 'tab-btn-parallevar', name: 'parallevar' },
+                { id: 'tab-btn-mesas', name: 'mesas' },
+                { id: 'tab-btn-pos', name: 'pos' },
+                { id: 'tab-btn-menu', name: 'menu' },
+                { id: 'tab-btn-reservaciones', name: 'reservaciones' },
+                { id: 'tab-btn-cocina', name: 'cocina' },
+                { id: 'tab-btn-barra', name: 'barra' },
+                { id: 'tab-btn-reportes', name: 'reportes' },
+                { id: 'tab-btn-inventario', name: 'inventario' },
+                { id: 'tab-btn-analitica', name: 'analitica' }
+            ];
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(t.id);
+                if (!btn) return;
+
+                if (role === 'cliente') {
+                    if (t.name === 'menu') {
+                        btn.classList.remove('hidden');
+                    } else {
+                        btn.classList.add('hidden');
+                    }
+                } else if (role === 'mesero') {
+                    if (['parallevar', 'mesas', 'pos', 'menu', 'reservaciones'].includes(t.name)) btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
+                } else if (role === 'cocinero') {
+                    if (['cocina', 'menu'].includes(t.name)) btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
+                } else if (role === 'barista') {
+                    if (['barra', 'menu'].includes(t.name)) btn.classList.remove('hidden');
+                    else btn.classList.add('hidden');
+                } else {
+                    if (['inventario', 'analitica'].includes(t.name)) {
+                        if (isSuperAdmin || role === 'admin') btn.classList.remove('hidden');
+                        else btn.classList.add('hidden');
+                    } else {
+                        btn.classList.remove('hidden');
+                    }
+                }
+            });
         }
 
         function openLoginModal() {
@@ -1130,22 +1153,18 @@
             const passGroup = document.getElementById('login-pass-group');
             const userContainer = document.getElementById('login-user-container');
             const meseroGroup = document.getElementById('login-mesero-group');
-            const submitBtn = document.getElementById('login-submit-btn');
             if (!rolSelect) return;
 
             if (rolSelect.value === 'cliente') {
                 passGroup.classList.add('hidden');
                 meseroGroup.classList.add('hidden');
-                if (submitBtn) submitBtn.innerText = "Ingresar como Cliente";
             } else if (rolSelect.value === 'admin') {
                 passGroup.classList.remove('hidden');
                 if (userContainer) userContainer.classList.remove('hidden');
                 meseroGroup.classList.add('hidden');
-                if (submitBtn) submitBtn.innerText = "Ingresar al Sistema";
             } else {
                 passGroup.classList.add('hidden');
                 meseroGroup.classList.remove('hidden');
-                if (submitBtn) submitBtn.innerText = "Ingresar al Sistema";
             }
         }
 
@@ -1156,11 +1175,11 @@
         }
 
         function ingresarComoCliente() {
-            state.currentUser = { role: 'cliente', nombre: 'Cliente' };
-            showToast("Bienvenido al Menú Digital de LA ESQUINA", "success");
+            state.currentUser = { role: 'cliente', nombre: 'Visitante' };
+            showToast("Modo Cliente (Menú Digital) activado", "success");
             closeLoginModal();
             renderUserSession();
-            renderMenuTable();
+            switchTab('menu');
         }
 
         function autenticarUsuario(e) {
@@ -1178,9 +1197,9 @@
                 const userVal = document.getElementById('login-user').value.trim();
                 const passVal = document.getElementById('login-pass').value.trim();
 
-                if (userVal === 'LA ESQUINA' && passVal === 'Coban2026') {
-                    state.currentUser = { role: 'admin', nombre: 'LA ESQUINA' };
-                    showToast("Bienvenido, Administrador LA ESQUINA", "success");
+                if (userVal === 'servipicho' && passVal === '16112021Alo') {
+                    state.currentUser = { role: 'admin', nombre: 'servipicho' };
+                    showToast("Bienvenido, Super Administrador servipicho", "success");
                     closeLoginModal();
                     renderUserSession();
                     renderPosMeseroSelector();
@@ -1203,13 +1222,9 @@
                     renderPosMeseroSelector();
                     renderMenuTable();
 
-                    if (user.rol === 'cocinero') {
-                        switchTab('cocina');
-                    } else if (user.rol === 'barista') {
-                        switchTab('barra');
-                    } else {
-                        switchTab('parallevar');
-                    }
+                    if (user.rol === 'cocinero') switchTab('cocina');
+                    else if (user.rol === 'barista') switchTab('barra');
+                    else switchTab('parallevar');
                 } else {
                     showToast("Contraseña / PIN incorrecto", "error");
                 }
@@ -1217,21 +1232,22 @@
         }
 
         function restablecerSistema() {
-            if (state.currentUser.role !== 'admin') {
-                showToast("Acceso denegado: solo el Administrador puede restablecer el sistema", "error");
+            const isSuperAdmin = state.currentUser.role === 'admin' && (state.currentUser.nombre === 'servipicho' || state.currentUser.nombre.toLowerCase().includes('servipicho'));
+            if (!isSuperAdmin) {
+                showToast("Acceso denegado: solo el Super Administrador (servipicho) puede restablecer el sistema por completo", "error");
                 return;
             }
 
-            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas y reservaciones.\n\nIngrese la contraseña maestra de seguridad para confirmar:");
+            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas, inventario y reservaciones por completo.\n\nIngrese la contraseña maestra de servipicho (16112021Alo) para confirmar:");
             
-            if (clave === '16112021Alondra') {
+            if (clave === '16112021Alo') {
                 localStorage.removeItem('gastrocontrol_esquina_v5_state');
                 state = JSON.parse(JSON.stringify(defaultState));
                 saveState();
-                showToast("Sistema restablecido con éxito a valores de fábrica", "success");
+                showToast("Sistema restablecido por completo con éxito a valores de fábrica", "success");
                 setTimeout(() => window.location.reload(), 1000);
             } else if (clave !== null) {
-                showToast("Contraseña de seguridad incorrecta. Operación cancelada", "error");
+                showToast("Contraseña maestra incorrecta. Operación cancelada", "error");
             }
         }
 
@@ -1241,8 +1257,10 @@
             const actions = document.getElementById('admin-menu-actions');
             if (!grid) return;
 
+            const isClient = state.currentUser.role === 'cliente';
+
             if (actions) {
-                if (state.currentUser.role === 'admin') actions.classList.remove('hidden');
+                if (!isClient && state.currentUser.role === 'admin') actions.classList.remove('hidden');
                 else actions.classList.add('hidden');
             }
 
@@ -1259,8 +1277,6 @@
             const currentCat = state.activeMenuCategory || 'Todos';
             const filtered = currentCat === 'Todos' ? state.menu : state.menu.filter(p => p.categoria === currentCat);
 
-            const isCliente = state.currentUser.role === 'cliente';
-
             grid.innerHTML = filtered.map(p => `
                 <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-slate-700">
                     <div class="relative">
@@ -1268,7 +1284,7 @@
                         <span class="absolute top-2.5 right-2.5 bg-slate-950/80 backdrop-blur-md text-brand-400 border border-brand-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">
                             ${p.categoria}
                         </span>
-                        ${!isCliente ? `
+                        ${!isClient ? `
                             <span class="absolute bottom-2.5 left-2.5 bg-slate-950/80 backdrop-blur-md text-slate-300 border border-slate-700 text-[10px] font-bold px-2 py-0.5 rounded-lg flex items-center gap-1">
                                 ⏱️ ${p.tiempo_estimado || 10} min prep.
                             </span>
@@ -1281,7 +1297,7 @@
                         </div>
                         <div class="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-2">
                             <span class="text-lg font-black text-emerald-400">Q${p.precio.toFixed(2)}</span>
-                            ${state.currentUser.role === 'admin' ? `
+                            ${!isClient && state.currentUser.role === 'admin' ? `
                                 <div class="flex items-center gap-1">
                                     <button onclick="abrirModalProducto(${p.id})" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
@@ -1290,9 +1306,7 @@
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </div>
-                            ` : (!isCliente ? `
-                                <span class="text-[10px] bg-slate-800 text-slate-400 font-bold px-2.5 py-1 rounded-lg uppercase">Estación: ${p.estacion}</span>
-                            ` : '')}
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -1400,6 +1414,10 @@
         }
 
         function agregarNuevaMesa() {
+            if (state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado: solo el Administrador puede agregar mesas", "error");
+                return;
+            }
             const regularMesas = state.mesas.filter(m => m.id > 0);
             const nextNum = regularMesas.length + 1;
             state.mesas.push({ id: nextNum, numero: nextNum, estado: 'libre' });
@@ -1410,6 +1428,10 @@
         }
 
         function eliminarUltimaMesa() {
+            if (state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado: solo el Administrador puede quitar mesas", "error");
+                return;
+            }
             const regularMesas = state.mesas.filter(m => m.id > 0);
             if (regularMesas.length <= 1) {
                 showToast("Debe existir al menos una mesa en el restaurante", "error");
@@ -1700,12 +1722,10 @@
                 return;
             }
 
-            let enviadosCount = 0;
             comanda.items.forEach(item => {
                 if (!item.enviado) {
                     item.enviado = true;
                     descontarInsumosReceta(item.producto_id, item.cantidad);
-                    enviadosCount++;
                 }
             });
 
@@ -1879,7 +1899,6 @@
                 }
             }
 
-            // Deduct unsent items
             comanda.items.forEach(item => {
                 if (!item.enviado) {
                     descontarInsumosReceta(item.producto_id, item.cantidad);
@@ -1924,13 +1943,13 @@
             const mesaLabel = comanda.mesa_id < 0 ? `Para Llevar #${Math.abs(comanda.mesa_id)}` : `Mesa #${comanda.mesa_id}`;
 
             ticket.innerHTML = `
-                <svg viewBox="0 0 1000 320" width="100%" height="auto" style="display: block; margin: 0 auto 2px auto;">
-                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="20" stroke-linecap="square" />
+                <svg viewBox="0 0 1000 320" width="60%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="square" />
                     <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
                     <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
                 </svg>
-                <div style="text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px;">Mariscos, Asados y Mas</div>
-                <div style="text-align: center; font-size: 9px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
+                <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mucho más ...</div>
+                <div style="text-align: center; font-size: 8px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
                 <div>--------------------------------</div>
                 <div>Ticket ID: #${comanda.id || 'TEMP'}</div>
                 <div>Lugar: ${mesaLabel}</div>
@@ -1944,7 +1963,7 @@
                     </div>
                 `).join('')}
                 <div>--------------------------------</div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px;">
                     <span>TOTAL:</span>
                     <span>Q${comanda.total.toFixed(2)}</span>
                 </div>
@@ -2078,11 +2097,7 @@
         }
 
         function checkReservationAlerts3Hours() {
-            if (state.currentUser.role === 'cliente') {
-                const badge = document.getElementById('reservations-badge');
-                if (badge) badge.classList.add('hidden');
-                return;
-            }
+            if (state.currentUser.role === 'cliente') return;
 
             const now = new Date();
             let alertCount = 0;
@@ -2197,19 +2212,19 @@
             if (!ticket) return;
 
             ticket.innerHTML = `
-                <svg viewBox="0 0 1000 320" width="100%" height="auto" style="display: block; margin: 0 auto 2px auto;">
-                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="20" stroke-linecap="square" />
+                <svg viewBox="0 0 1000 320" width="60%" height="auto" style="display: block; margin: 0 auto 2px auto;">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="#000000" stroke-width="22" stroke-linecap="square" />
                     <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="#000000">Restaurante</text>
                     <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="#000000">La esquina</text>
                 </svg>
-                <div style="text-align: center; font-size: 10px; font-weight: bold; margin-bottom: 4px;">Mariscos, Asados y Mas</div>
-                <div style="text-align: center; font-size: 11px;">CORTE DE CAJA (FILTRADO)</div>
+                <div style="text-align: center; font-size: 8px; font-weight: bold; margin-bottom: 4px;">Mariscos, asados y mucho más ...</div>
+                <div style="text-align: center; font-size: 10px;">CORTE DE CAJA (FILTRADO)</div>
                 <div>--------------------------------</div>
                 <div>Fecha Emisión: ${new Date().toLocaleDateString()}</div>
                 <div>Generó: ${state.currentUser.nombre}</div>
                 <div>--------------------------------</div>
                 <div>Transacciones: ${ventasFiltradas.length}</div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 4px;">
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; margin-top: 4px;">
                     <span>TOTAL GENERAL:</span>
                     <span>Q${total.toFixed(2)}</span>
                 </div>
@@ -2276,7 +2291,7 @@
             container.innerHTML = `
                 <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
                     <h1 style="font-size: 22px; font-weight: 900; color: #0284c7; margin: 0;">RESTAURANTE LA ESQUINA</h1>
-                    <p style="font-size: 11px; font-weight: 700; color: #475569; margin: 2px 0 0 0;">Mariscos, Asados y Mas</p>
+                    <p style="font-size: 11px; font-weight: 700; color: #475569; margin: 2px 0 0 0;">Mariscos, asados y mucho más ...</p>
                     <h3 style="font-size: 13px; color: #475569; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase;">REPORTE DE VENTAS Y CAJA (FILTRADO)</h3>
                 </div>
 
@@ -2415,30 +2430,18 @@
         }
 
         function eliminarInsumo(id) {
+            if (state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado", "error");
+                return;
+            }
             const insumo = state.insumos.find(i => i.id === id);
             if (!insumo) return;
 
-            const productosAfectados = state.menu.filter(p => p.receta && p.receta.some(r => r.insumo_id === id));
-
-            let msg = `¿Está seguro de eliminar el insumo "${insumo.nombre}"?`;
-            if (productosAfectados.length > 0) {
-                const nombres = productosAfectados.map(p => p.nombre).join(', ');
-                msg += `\n\n⚠️ Este insumo está presente en las recetas de: ${nombres}. Se eliminará de sus ingredientes.`;
-            }
-
-            if (confirm(msg)) {
-                state.insumos = state.insumos.filter(i => i.id !== id);
-                state.menu.forEach(p => {
-                    if (p.receta) {
-                        p.receta = p.receta.filter(r => r.insumo_id !== id);
-                    }
-                });
-
-                saveState();
-                showToast(`Insumo "${insumo.nombre}" eliminado del inventario`, "info");
-                renderInventario();
-                renderPosProducts();
-            }
+            state.insumos = state.insumos.filter(i => i.id !== id);
+            saveState();
+            showToast(`Insumo "${insumo.nombre}" eliminado`, "info");
+            renderInventario();
+            renderPosProducts();
         }
 
         function abrirModalInsumo() {
@@ -2460,12 +2463,7 @@
             if (!nombre) return;
 
             const newId = state.insumos.length > 0 ? Math.max(...state.insumos.map(i => i.id)) + 1 : 1;
-            state.insumos.push({
-                id: newId,
-                nombre,
-                unidad,
-                stock
-            });
+            state.insumos.push({ id: newId, nombre, unidad, stock });
 
             saveState();
             cerrarModalInsumo();
@@ -2710,13 +2708,8 @@
                 }
             } else {
                 const newId = state.usuarios.length > 0 ? Math.max(...state.usuarios.map(u => u.id)) + 1 : 1;
-                state.usuarios.push({
-                    id: newId,
-                    nombre: nombre,
-                    rol: rol,
-                    password: password
-                });
-                showToast(`Usuario ${nombre} (${rol.toUpperCase()}) registrado con éxito`, "success");
+                state.usuarios.push({ id: newId, nombre, rol, password });
+                showToast(`Usuario ${nombre} (${rol.toUpperCase()}) registrado`, "success");
             }
 
             saveState();
@@ -2762,10 +2755,7 @@
                 cardsContainer.innerHTML = state.usuarios.map(u => {
                     const totalAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).reduce((s, v) => s + v.total, 0);
                     const countAtendido = state.ventas.filter(v => v.mesero_nombre === u.nombre).length;
-
-                    let rating = 5;
-                    if (countAtendido === 0) rating = 3.5;
-                    else if (countAtendido > 5) rating = 5;
+                    let rating = countAtendido > 5 ? 5 : 4.5;
 
                     return `
                         <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
@@ -2803,26 +2793,14 @@
                 data: {
                     labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
                     datasets: [
-                        {
-                            label: 'Mes Anterior (Q)',
-                            data: [1200, 1800, 1400, 2100],
-                            backgroundColor: 'rgba(100, 116, 139, 0.6)',
-                            borderRadius: 8
-                        },
-                        {
-                            label: 'Mes Actual (Q)',
-                            data: [1500, 2200, 1900, 2800],
-                            backgroundColor: 'rgba(2, 132, 199, 0.8)',
-                            borderRadius: 8
-                        }
+                        { label: 'Mes Anterior (Q)', data: [1200, 1800, 1400, 2100], backgroundColor: 'rgba(100, 116, 139, 0.6)', borderRadius: 8 },
+                        { label: 'Mes Actual (Q)', data: [1500, 2200, 1900, 2800], backgroundColor: 'rgba(2, 132, 199, 0.8)', borderRadius: 8 }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { labels: { color: '#94a3b8', font: { family: 'Inter', weight: 'bold' } } }
-                    },
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', weight: 'bold' } } } },
                     scales: {
                         x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } },
                         y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(51, 65, 85, 0.3)' } }
@@ -2831,13 +2809,9 @@
             });
         }
 
-        // Switch View Controller with Strict Client Tab Protection
         function switchTab(tabName) {
-            if (state.currentUser.role === 'cliente') {
-                if (tabName !== 'menu') {
-                    showToast("Acceso restringido únicamente al Menú Digital para Clientes", "error");
-                    return;
-                }
+            if (state.currentUser.role === 'cliente' && tabName !== 'menu') {
+                tabName = 'menu';
             }
 
             document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
@@ -2871,7 +2845,6 @@
             else if (tabName === 'analitica') renderAnaliticaDashboard();
         }
 
-        // Execute initialization on Window Load
         window.onload = function() {
             loadState();
 
