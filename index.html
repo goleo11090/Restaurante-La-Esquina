@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GastroControl POS - LA ESQUINA (Optimized Auto-Sync)</title>
+    <title>GastroControl POS - LA ESQUINA (Instant Sync & KDS)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -124,8 +124,8 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <div id="sync-status-indicator" class="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-[10px] font-bold px-2.5 py-1.5 rounded-xl" title="Sincronización automática optimizada cada 10 segundos">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Sync
+            <div id="sync-status-indicator" class="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-[10px] font-bold px-2.5 py-1.5 rounded-xl" title="Sincronización instantánea activa">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Instant-Sync
             </div>
             <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
@@ -905,7 +905,6 @@
         let kdsInterval = null;
         let syncInterval = null;
         let chartInstance = null;
-        let isSyncing = false;
 
         function initSupabaseConnection() {
             if (window.supabase) {
@@ -921,13 +920,10 @@
         }
 
         async function cargarDatosSupabase() {
-            if (!supabaseClient || isSyncing) return;
-            isSyncing = true;
+            if (!supabaseClient) return;
             try {
-                const { data: usuarios, error: errU } = await supabaseClient.from('usuarios').select('*');
-                if (!errU && usuarios && usuarios.length > 0) {
-                    window.state.usuarios = usuarios;
-                }
+                const { data: usuarios } = await supabaseClient.from('usuarios').select('*');
+                if (usuarios && usuarios.length > 0) window.state.usuarios = usuarios;
 
                 const { data: categorias } = await supabaseClient.from('categorias').select('*');
                 if (categorias && categorias.length > 0) window.state.categorias = categorias.map(c => c.nombre);
@@ -954,17 +950,17 @@
                 refreshAllViews();
             } catch (e) {
                 console.warn("Error cargando desde Supabase:", e);
-            } finally {
-                isSyncing = false;
             }
         }
 
         window.saveState = async function() {
             ensureServipichoAdmin();
+            refreshAllViews();
+
             try {
                 if (!supabaseClient) return;
 
-                // Guardar de forma asíncrona sin bloquear la interfaz
+                // Guardado asíncrono ultrarrápido para no bloquear UI
                 setTimeout(async () => {
                     try {
                         for (const u of window.state.usuarios) {
@@ -994,7 +990,7 @@
                     } catch (err) {
                         console.warn("Background sync error:", err);
                     }
-                }, 10);
+                }, 5);
             } catch (e) {
                 console.error("Error syncing to Supabase:", e);
             }
@@ -1652,12 +1648,13 @@
             });
 
             await window.saveState();
-            showToast("Órdenes enviadas digitalmente a Cocina/Barra", "success");
+            showToast("¡Orden enviada a Cocina/Barra de inmediato!", "success");
             renderComandaActual();
             renderParaLlevar();
             renderMesas();
             renderPosProducts();
             renderInventario();
+            renderMonitoresIndependientes();
         };
 
         window.renderMonitoresIndependientes = function() {
@@ -1831,13 +1828,14 @@
             await window.saveState();
             imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
-            showToast('Venta #' + ventaId + ' completada e impresa con éxito', "success");
+            showToast('¡Venta #' + ventaId + ' cobrada y cerrada exitosamente!', "success");
 
             renderParaLlevar();
             renderMesas();
             renderComandaActual();
             renderPosProducts();
             renderInventario();
+            renderMonitoresIndependientes();
         };
 
         window.imprimirTicketFinal58mm = function(comanda) {
@@ -2608,13 +2606,13 @@
             if (kdsInterval) clearInterval(kdsInterval);
             kdsInterval = setInterval(() => {
                 renderMonitoresIndependientes();
-            }, 10000);
+            }, 3000);
 
-            // Sincronización automática optimizada cada 10 segundos para máxima velocidad
+            // Sincronización automática optimizada cada 5 segundos para actualización rápida entre dispositivos
             if (syncInterval) clearInterval(syncInterval);
             syncInterval = setInterval(() => {
                 cargarDatosSupabase();
-            }, 10000);
+            }, 5000);
         };
     </script>
 </body>
