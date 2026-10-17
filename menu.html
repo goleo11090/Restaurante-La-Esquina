@@ -38,7 +38,6 @@
 </head>
 <body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 antialiased select-none">
 
-    <!-- Client Header with Large Restaurant Logo LA ESQUINA -->
     <header class="bg-slate-900 border-b border-slate-800 py-6 px-4 text-center sticky top-0 z-30 shadow-md">
         <div class="max-w-md mx-auto flex flex-col items-center justify-center space-y-2">
             <div class="bg-amber-500/10 p-3 rounded-2xl border border-amber-500/30 shadow-lg flex items-center justify-center">
@@ -53,7 +52,6 @@
     </header>
 
     <main class="flex-1 p-4 md:p-6 overflow-y-auto custom-scrollbar max-w-7xl w-full mx-auto space-y-6">
-        <!-- Search & Categories Bar -->
         <div class="space-y-4 max-w-2xl mx-auto">
             <div class="relative">
                 <input id="client-search-input" type="text" oninput="renderClientMenu()" placeholder="Buscar platillo, bebida o ingrediente..." class="w-full bg-slate-900 border border-slate-800 text-white font-bold text-sm rounded-2xl py-3 px-4 pl-11 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-lg">
@@ -63,7 +61,6 @@
             </div>
         </div>
 
-        <!-- Menu Cards Grid -->
         <div id="client-menu-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         </div>
     </main>
@@ -72,52 +69,72 @@
         Restaurante La Esquina © 2026 — Menú Digital en Tiempo Real
     </footer>
 
-    <script>
-        const defaultState = {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'la-esquina-pos-v5';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForStaticHosting",
+            authDomain: "la-esquina.firebaseapp.com",
+            projectId: "la-esquina"
+        };
+
+        let clientState = {
             activeMenuCategory: 'Todos',
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
-            menu: [
-                { 
-                    id: 1, 
-                    nombre: 'Puyaso Importado 10oz', 
-                    precio: 95.00, 
-                    categoria: 'Carnes', 
-                    imagen: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', 
-                    descripcion: 'Corte magro a la parrilla con papas fritas y guacamol'
-                },
-                { 
-                    id: 2, 
-                    nombre: 'Hamburguesa La Esquina', 
-                    precio: 55.00, 
-                    categoria: 'Platillos', 
-                    imagen: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80', 
-                    descripcion: 'Torta de carne premium, queso cheddar, tocino y aderezo especial'
-                }
-            ],
+            menu: [],
             insumos: []
         };
 
-        let state = JSON.parse(JSON.stringify(defaultState));
-
-        function loadStateFromStorage() {
+        async function initClientCloudSync() {
             try {
-                const saved = localStorage.getItem('gastrocontrol_esquina_v5_state');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.menu) state.menu = parsed.menu;
-                    if (parsed.categorias) state.categorias = parsed.categorias;
-                    if (parsed.insumos) state.insumos = parsed.insumos;
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+                await signInAnonymously(auth);
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'restaurant_state');
+                const snap = await getDoc(docRef);
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (data && data.state) {
+                        clientState = Object.assign(clientState, data.state);
+                    }
                 }
+                renderClientMenu();
+
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data && data.state) {
+                            clientState = Object.assign(clientState, data.state);
+                            renderClientMenu();
+                        }
+                    }
+                });
             } catch (e) {
-                console.error("Error cargando estado:", e);
+                console.warn("Cloud sync client fallback warning:", e);
+                // Fallback to local storage
+                const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.menu) clientState.menu = parsed.menu;
+                        if (parsed.categorias) clientState.categorias = parsed.categorias;
+                        if (parsed.insumos) clientState.insumos = parsed.insumos;
+                    } catch(err) {}
+                }
+                renderClientMenu();
             }
         }
 
         function calcularStockDisponibleProducto(prod) {
-            if (!state.insumos || state.insumos.length === 0 || !prod.receta || prod.receta.length === 0) return 999;
+            if (!clientState.insumos || clientState.insumos.length === 0 || !prod.receta || prod.receta.length === 0) return 999;
             let maxPortions = Infinity;
             prod.receta.forEach(r => {
-                const insumo = state.insumos.find(i => i.id === r.insumo_id);
+                const insumo = clientState.insumos.find(i => i.id === r.insumo_id);
                 if (insumo) {
                     const possible = Math.floor(insumo.stock / r.cantidad);
                     if (possible < maxPortions) maxPortions = possible;
@@ -128,22 +145,20 @@
             return maxPortions === Infinity ? 0 : maxPortions;
         }
 
-        function setClientCategory(cat) {
-            state.activeMenuCategory = cat;
+        window.setClientCategory = function(cat) {
+            clientState.activeMenuCategory = cat;
             renderClientMenu();
-        }
+        };
 
-        function renderClientMenu() {
-            loadStateFromStorage();
-
+        window.renderClientMenu = function() {
             const grid = document.getElementById('client-menu-grid');
             const pillsContainer = document.getElementById('client-categories-pills');
             const searchVal = (document.getElementById('client-search-input')?.value || '').toLowerCase().trim();
             if (!grid) return;
 
             if (pillsContainer) {
-                const currentCat = state.activeMenuCategory || 'Todos';
-                const allCats = ['Todos', ...state.categorias];
+                const currentCat = clientState.activeMenuCategory || 'Todos';
+                const allCats = ['Todos', ...clientState.categorias];
                 pillsContainer.innerHTML = allCats.map(cat => `
                     <button onclick="setClientCategory('${cat}')" class="px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${currentCat === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">
                         ${cat}
@@ -151,8 +166,8 @@
                 `).join('');
             }
 
-            const currentCat = state.activeMenuCategory || 'Todos';
-            let filtered = currentCat === 'Todos' ? state.menu : state.menu.filter(p => p.categoria === currentCat);
+            const currentCat = clientState.activeMenuCategory || 'Todos';
+            let filtered = currentCat === 'Todos' ? clientState.menu : clientState.menu.filter(p => p.categoria === currentCat);
 
             if (searchVal) {
                 filtered = filtered.filter(p => p.nombre.toLowerCase().includes(searchVal) || (p.descripcion && p.descripcion.toLowerCase().includes(searchVal)));
@@ -189,22 +204,22 @@
                     </div>
                 `;
             }).join('');
-        }
+        };
 
         window.onload = function() {
-            renderClientMenu();
-
-            // Real-time synchronization across browser tabs and storage updates
-            window.addEventListener('storage', (e) => {
-                if (e.key === 'gastrocontrol_esquina_v5_state') {
-                    renderClientMenu();
-                }
-            });
-
+            initClientCloudSync();
             setInterval(() => {
-                loadStateFromStorage();
-                renderClientMenu();
-            }, 1000);
+                const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (parsed.menu) clientState.menu = parsed.menu;
+                        if (parsed.categorias) clientState.categorias = parsed.categorias;
+                        if (parsed.insumos) clientState.insumos = parsed.insumos;
+                        renderClientMenu();
+                    } catch(err) {}
+                }
+            }, 1500);
         };
     </script>
 </body>
