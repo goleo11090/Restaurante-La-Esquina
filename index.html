@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GastroControl POS - LA ESQUINA</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- html2pdf & Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -94,9 +98,6 @@
             </button>
             <button id="tab-btn-pos" onclick="switchTab('pos')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-receipt"></i> Pedido (POS)
-            </button>
-            <button id="tab-btn-pedidosya" onclick="switchTab('pedidosya')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
-                <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> Pedidos Ya <span id="pedidosya-badge" class="hidden bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full animate-pulse">0</span>
             </button>
             <button id="tab-btn-menu" onclick="switchTab('menu')" class="nav-tab text-slate-400 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap">
                 <i class="fa-solid fa-book-open"></i> Menú & Recetas
@@ -237,23 +238,6 @@
             </div>
         </section>
 
-        <!-- PEDIDOS YA VIEW -->
-        <section id="view-pedidosya" class="view-panel hidden space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
-                <div>
-                    <h2 class="text-lg font-black text-white flex items-center gap-2">
-                        <i class="fa-solid fa-mobile-screen-button text-emerald-400"></i> Pedidos Ya (App Clientes)
-                    </h2>
-                    <p class="text-xs text-slate-400">Bandeja automática de pedidos recibidos en línea desde el menú digital</p>
-                </div>
-                <button onclick="renderPedidosYa()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl transition border border-slate-700 flex items-center gap-1.5">
-                    <i class="fa-solid fa-rotate text-brand-400"></i> Actualizar Bandeja
-                </button>
-            </div>
-            <div id="pedidosya-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            </div>
-        </section>
-
         <!-- MENU & RECETAS VIEW -->
         <section id="view-menu" class="view-panel hidden space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -387,7 +371,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ventas Totales</span>
                     <h3 id="rep-total-ventas" class="text-2xl font-black text-emerald-400 mt-1">Q0.00</h3>
@@ -403,6 +387,10 @@
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">QR / Transferencia</span>
                     <h3 id="rep-transferencia" class="text-2xl font-black text-purple-400 mt-1">Q0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pedidos Ya Online</span>
+                    <h3 id="rep-pedidosya" class="text-2xl font-black text-amber-400 mt-1">Q0.00</h3>
                 </div>
             </div>
 
@@ -614,7 +602,7 @@
 
             <div class="space-y-3">
                 <label class="block text-xs font-bold text-slate-300">Método de Pago</label>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <button id="pay-btn-efectivo" onclick="setMetodoPago('efectivo')" class="pay-method-btn bg-brand-600 text-white font-bold text-xs py-2.5 rounded-xl border border-brand-500">
                         Efectivo
                     </button>
@@ -623,6 +611,9 @@
                     </button>
                     <button id="pay-btn-transferencia" onclick="setMetodoPago('transferencia')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700">
                         QR / Transf
+                    </button>
+                    <button id="pay-btn-pedidosya" onclick="setMetodoPago('pedidosya')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700">
+                        Pedidos Ya
                     </button>
                 </div>
 
@@ -862,23 +853,6 @@
                 ...Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: i + 1, estado: 'libre' }))
             ],
             reservaciones: [],
-            pedidosya: [
-                {
-                    id: 901,
-                    cliente: 'Juan Pérez',
-                    telefono: '5511-2233',
-                    direccion: 'Zona 1, Cobán',
-                    notas: 'Sin cebolla por favor',
-                    total: 110.00,
-                    fecha: '2026-09-28',
-                    hora: '01:15 PM',
-                    estado: 'pendiente',
-                    items: [
-                        { producto_id: 1, nombre: 'Puyaso Importado 10oz', precio: 95.00, cantidad: 1, estacion: 'cocina', tiempo_estimado: 20 },
-                        { producto_id: 4, nombre: 'Limonada Natural', precio: 15.00, cantidad: 1, estacion: 'barra', tiempo_estimado: 5 }
-                    ]
-                }
-            ],
             comandas: [],
             ventas: [],
             insumos: [
@@ -1051,7 +1025,6 @@
                 { id: 'tab-btn-parallevar', name: 'parallevar' },
                 { id: 'tab-btn-mesas', name: 'mesas' },
                 { id: 'tab-btn-pos', name: 'pos' },
-                { id: 'tab-btn-pedidosya', name: 'pedidosya' },
                 { id: 'tab-btn-menu', name: 'menu' },
                 { id: 'tab-btn-reservaciones', name: 'reservaciones' },
                 { id: 'tab-btn-cocina', name: 'cocina' },
@@ -1066,13 +1039,13 @@
                 if (!btn) return;
 
                 if (role === 'mesero') {
-                    if (['parallevar', 'mesas', 'pos', 'pedidosya', 'menu', 'reservaciones'].includes(t.name)) btn.classList.remove('hidden');
+                    if (['parallevar', 'mesas', 'pos', 'menu', 'reservaciones'].includes(t.name)) btn.classList.remove('hidden');
                     else btn.classList.add('hidden');
                 } else if (role === 'cocinero') {
-                    if (['cocina', 'pedidosya', 'menu'].includes(t.name)) btn.classList.remove('hidden');
+                    if (['cocina', 'menu'].includes(t.name)) btn.classList.remove('hidden');
                     else btn.classList.add('hidden');
                 } else if (role === 'barista') {
-                    if (['barra', 'pedidosya', 'menu'].includes(t.name)) btn.classList.remove('hidden');
+                    if (['barra', 'menu'].includes(t.name)) btn.classList.remove('hidden');
                     else btn.classList.add('hidden');
                 } else {
                     if (['inventario', 'analitica'].includes(t.name)) {
@@ -1161,117 +1134,16 @@
             }
         }
 
-        function renderPedidosYa() {
-            const grid = document.getElementById('pedidosya-grid');
-            const badge = document.getElementById('pedidosya-badge');
-            if (!grid) return;
-
-            try {
-                const saved = localStorage.getItem('gastrocontrol_esquina_v5_state');
-                if (saved) {
-                    const parsed = JSON.parse(saved);
-                    if (parsed.pedidosya) state.pedidosya = parsed.pedidosya;
-                }
-            } catch (e) {}
-
-            const pendientes = state.pedidosya.filter(p => p.estado === 'pendiente');
-
-            if (badge) {
-                if (pendientes.length > 0) {
-                    badge.innerText = pendientes.length;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-            }
-
-            if (state.pedidosya.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500 font-bold text-xs">No hay pedidos recibidos de la aplicación.</div>';
-                return;
-            }
-
-            let htmlContent = '';
-            state.pedidosya.forEach(p => {
-                const isPendiente = p.estado === 'pendiente';
-                let itemsHtml = '';
-                if (p.items) {
-                    p.items.forEach(i => {
-                        itemsHtml += '<div class="flex items-center justify-between py-1 border-b border-slate-800/50"><span class="font-bold text-slate-200">' + i.cantidad + 'x ' + i.nombre + '</span><span class="font-mono text-brand-400">Q' + (i.precio * i.cantidad).toFixed(2) + '</span></div>';
-                    });
-                }
-                const notasHtml = p.notas ? '<p class="text-[10px] text-amber-400 bg-amber-500/10 p-2 rounded-xl mt-1"><strong>Nota:</strong> ' + p.notas + '</p>' : '';
-                const btnHtml = isPendiente ? '<button onclick="aceptarPedidoYa(' + p.id + ')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-lg shadow-emerald-600/20">Aceptar & Enviar a Cocina</button>' : '<span class="text-xs text-slate-500 font-bold">Procesado</span>';
-
-                htmlContent += '<div class="bg-slate-900 border ' + (isPendiente ? 'border-emerald-500/50 shadow-emerald-500/10' : 'border-slate-800') + ' rounded-2xl p-4 space-y-3 shadow-xl">' +
-                    '<div class="flex items-center justify-between pb-2 border-b border-slate-800">' +
-                        '<div>' +
-                            '<h4 class="font-black text-sm text-white">' + p.cliente + '</h4>' +
-                            '<p class="text-[10px] text-slate-400">Tel: ' + p.telefono + ' • Dir: ' + (p.direccion || 'Domicilio') + '</p>' +
-                        '</div>' +
-                        '<span class="' + (isPendiente ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-800 text-slate-400') + ' text-[10px] font-black px-2.5 py-1 rounded-full uppercase">' + p.estado + '</span>' +
-                    '</div>' +
-                    '<div class="space-y-1.5 text-xs">' + itemsHtml + notasHtml + '</div>' +
-                    '<div class="flex items-center justify-between pt-2 border-t border-slate-800">' +
-                        '<span class="font-black text-emerald-400 text-base">Q' + p.total.toFixed(2) + '</span>' +
-                        btnHtml +
-                    '</div>' +
-                '</div>';
-            });
-            grid.innerHTML = htmlContent;
-        }
-
-        function aceptarPedidoYa(pedidoId) {
-            const pedido = state.pedidosya.find(p => p.id === pedidoId);
-            if (!pedido) return;
-
-            pedido.estado = 'aceptado';
-            state.takeoutCount = (state.takeoutCount || 10) + 1;
-            const newMesaId = -(state.takeoutCount);
-
-            state.mesas.unshift({
-                id: newMesaId,
-                numero: 'PedidosYa #' + pedido.cliente,
-                estado: 'ocupado'
-            });
-
-            const nuevaComanda = {
-                id: Date.now(),
-                mesa_id: newMesaId,
-                mesero_nombre: 'Pedidos Ya',
-                estado: 'abierta',
-                created_at: Date.now(),
-                items: pedido.items.map(i => ({
-                    producto_id: i.producto_id,
-                    nombre: i.nombre,
-                    precio: i.precio,
-                    tiempo_estimado: i.tiempo_estimado || 15,
-                    estacion: i.estacion || 'cocina',
-                    cantidad: i.cantidad,
-                    preparado: 0,
-                    enviado: true
-                }))
-            };
-
-            pedido.items.forEach(i => {
-                descontarInsumosReceta(i.producto_id, i.cantidad);
-            });
-
-            state.comandas.push(nuevaComanda);
-            saveState();
-            renderPedidosYa();
-            renderParaLlevar();
-            renderMonitoresIndependientes();
-            showToast('Pedido de ' + pedido.cliente + ' aceptado y enviado a KDS', "success");
-        }
-
         function renderMenuTable() {
             const grid = document.getElementById('menu-cards-grid');
             const pillsContainer = document.getElementById('menu-categories-pills');
             const actions = document.getElementById('admin-menu-actions');
             if (!grid) return;
 
+            const isAdmin = state.currentUser && state.currentUser.role === 'admin';
+
             if (actions) {
-                if (state.currentUser && state.currentUser.role === 'admin') actions.classList.remove('hidden');
+                if (isAdmin) actions.classList.remove('hidden');
                 else actions.classList.add('hidden');
             }
 
@@ -1280,7 +1152,11 @@
                 const allCats = ['Todos', ...state.categorias];
                 let pillsHtml = '';
                 allCats.forEach(cat => {
-                    pillsHtml += '<button onclick="setMenuCategory(\'' + cat + '\')" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap ' + (currentCat === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white') + '">' + cat + '</button>';
+                    const deleteCatBtn = (isAdmin && cat !== 'Todos') ? ' <button onclick="eliminarCategoria(\'' + cat + '\')" class="text-rose-400 hover:text-rose-300 ml-1.5 p-0.5" title="Eliminar Categoría"><i class="fa-solid fa-xmark"></i></button>' : '';
+                    pillsHtml += '<div class="inline-flex items-center ' + (currentCat === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white') + ' rounded-xl px-3.5 py-1.5 text-xs font-bold transition whitespace-nowrap">' +
+                        '<button onclick="setMenuCategory(\'' + cat + '\')">' + cat + '</button>' +
+                        deleteCatBtn +
+                    '</div>';
                 });
                 pillsContainer.innerHTML = pillsHtml;
             }
@@ -1290,7 +1166,7 @@
 
             let gridHtml = '';
             filtered.forEach(p => {
-                const adminButtons = state.currentUser && state.currentUser.role === 'admin' ? '<div class="flex items-center gap-1"><button onclick="abrirModalProducto(' + p.id + ')" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarProducto(' + p.id + ')" class="bg-slate-800 hover:bg-slate-700 text-rose-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Eliminar"><i class="fa-solid fa-trash"></i></button></div>' : '';
+                const adminButtons = isAdmin ? '<div class="flex items-center gap-1"><button onclick="abrirModalProducto(' + p.id + ')" class="bg-slate-800 hover:bg-slate-700 text-brand-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Editar"><i class="fa-solid fa-pen"></i></button><button onclick="eliminarProducto(' + p.id + ')" class="bg-slate-800 hover:bg-slate-700 text-rose-400 p-2 rounded-xl text-xs transition border border-slate-700" title="Eliminar"><i class="fa-solid fa-trash"></i></button></div>' : '';
 
                 gridHtml += '<div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-slate-700">' +
                     '<div class="relative">' +
@@ -1329,12 +1205,11 @@
                 const comanda = state.comandas.find(c => c.mesa_id === m.id && c.estado === 'abierta');
                 const tienePendientes = comanda && comanda.items.length > 0;
                 const total = comanda ? comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0) : 0;
-                const takeoutNum = Math.abs(m.id);
                 const bg = tienePendientes ? 'bg-purple-900/60 border-purple-500 text-purple-100 shadow-purple-900/30' : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-purple-500/50';
 
                 html += '<div class="' + bg + ' border rounded-2xl p-4 flex flex-col justify-between h-40 shadow-xl transition transform hover:-translate-y-1">' +
                     '<div class="flex items-center justify-between pb-2 border-b border-purple-500/20">' +
-                        '<span class="font-black text-sm text-white flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-purple-400"></i> ' + (m.numero || 'Para Llevar #' + takeoutNum) + '</span>' +
+                        '<span class="font-black text-sm text-white flex items-center gap-2"><i class="fa-solid fa-bag-shopping text-purple-400"></i> ' + (m.numero || 'Para Llevar') + '</span>' +
                         '<span class="' + (tienePendientes ? 'bg-purple-500 text-white' : 'bg-slate-800 text-slate-400') + ' text-[10px] font-black px-2 py-0.5 rounded-full uppercase">' + (tienePendientes ? 'Ocupado' : 'Disponible') + '</span>' +
                     '</div>' +
                     '<div class="my-2">' +
@@ -1454,7 +1329,7 @@
             if (!sel) return;
             let optionsHtml = '';
             state.mesas.forEach(m => {
-                const label = m.id < 0 ? (m.numero || 'Para Llevar #' + Math.abs(m.id)) : 'Mesa #' + m.numero;
+                const label = m.id < 0 ? (m.numero || 'Para Llevar') : 'Mesa #' + m.numero;
                 optionsHtml += '<option value="' + m.id + '" ' + (m.id === state.activeMesaId ? 'selected' : '') + '>' + label + '</option>';
             });
             sel.innerHTML = optionsHtml;
@@ -1599,7 +1474,7 @@
             const sub = document.getElementById('comanda-mesero-subtitle');
 
             const activeMesaObj = state.mesas.find(m => m.id === state.activeMesaId);
-            const mesaLabel = state.activeMesaId < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar #' + Math.abs(state.activeMesaId)) : 'Mesa #' + state.activeMesaId;
+            const mesaLabel = state.activeMesaId < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar') : 'Mesa #' + state.activeMesaId;
             if (title) title.innerText = 'Comanda ' + mesaLabel;
             if (sub) sub.innerText = 'Mesero: ' + comanda.mesero_nombre;
 
@@ -1733,7 +1608,7 @@
                     const isWarning = !isOverdue && elapsedMins >= Math.floor(maxEstimatedTime * 0.8);
                     const cardClass = isOverdue ? 'kds-alert-overdue border-rose-600' : isWarning ? 'border-amber-500/60 bg-amber-950/20' : 'border-slate-800 bg-slate-900';
                     const activeMesaObj = state.mesas.find(m => m.id === c.mesa_id);
-                    const mesaLabel = c.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar #' + Math.abs(c.mesa_id)) : 'Mesa #' + c.mesa_id;
+                    const mesaLabel = c.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar') : 'Mesa #' + c.mesa_id;
 
                     let itemsHtml = '';
                     itemsEstacion.forEach(i => {
@@ -1898,7 +1773,7 @@
             if (!ticket) return;
 
             const activeMesaObj = state.mesas.find(m => m.id === comanda.mesa_id);
-            const mesaLabel = comanda.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar #' + Math.abs(comanda.mesa_id)) : 'Mesa #' + comanda.mesa_id;
+            const mesaLabel = comanda.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar') : 'Mesa #' + comanda.mesa_id;
 
             let itemsTicketHtml = '';
             comanda.items.forEach(i => {
@@ -2076,24 +1951,26 @@
             if (!body) return;
 
             const ventasFiltradas = getVentasFiltradas();
-            let totalVentas = 0, efectivo = 0, tarjeta = 0, transferencia = 0;
+            let totalVentas = 0, efectivo = 0, tarjeta = 0, transferencia = 0, pedidosya = 0;
 
             ventasFiltradas.forEach(v => {
                 totalVentas += v.total;
                 if (v.metodo_pago === 'efectivo') efectivo += v.total;
                 else if (v.metodo_pago === 'tarjeta') tarjeta += v.total;
                 else if (v.metodo_pago === 'transferencia') transferencia += v.total;
+                else if (v.metodo_pago === 'pedidosya') pedidosya += v.total;
             });
 
             document.getElementById('rep-total-ventas').innerText = 'Q' + totalVentas.toFixed(2);
             document.getElementById('rep-efectivo').innerText = 'Q' + efectivo.toFixed(2);
             document.getElementById('rep-tarjeta').innerText = 'Q' + tarjeta.toFixed(2);
             document.getElementById('rep-transferencia').innerText = 'Q' + transferencia.toFixed(2);
+            document.getElementById('rep-pedidosya').innerText = 'Q' + pedidosya.toFixed(2);
 
             let rowsHtml = '';
             ventasFiltradas.forEach(v => {
                 const activeMesaObj = state.mesas.find(m => m.id === v.mesa_id);
-                const mesaLabel = v.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar #' + Math.abs(v.mesa_id)) : 'Mesa #' + v.mesa_id;
+                const mesaLabel = v.mesa_id < 0 ? (activeMesaObj ? activeMesaObj.numero : 'Para Llevar') : 'Mesa #' + v.mesa_id;
                 rowsHtml += '<tr>' +
                     '<td class="p-3 font-mono font-bold text-brand-400">#' + v.id + '</td>' +
                     '<td class="p-3 font-bold text-white">' + mesaLabel + '</td>' +
@@ -2384,12 +2261,16 @@
         }
 
         function eliminarProducto(id) {
-            if (confirm("¿Desea eliminar este producto?")) {
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado: solo el administrador puede eliminar especialidades o productos", "error");
+                return;
+            }
+            if (confirm("¿Desea eliminar esta especialidad o producto del menú?")) {
                 state.menu = state.menu.filter(p => p.id !== id);
                 saveState();
                 renderMenuTable();
                 renderPosProducts();
-                showToast("Producto eliminado", "info");
+                showToast("Especialidad eliminada del menú", "info");
             }
         }
 
@@ -2413,6 +2294,30 @@
                 document.getElementById('cat-nombre').value = '';
                 cerrarModalCategoria();
                 renderPosCategories();
+                renderMenuTable();
+            }
+        }
+
+        function eliminarCategoria(catName) {
+            if (!state.currentUser || state.currentUser.role !== 'admin') {
+                showToast("Acceso denegado: solo el administrador puede eliminar categorías", "error");
+                return;
+            }
+
+            const tieneProductos = state.menu.some(p => p.categoria === catName);
+            if (tieneProductos) {
+                showToast('No se puede eliminar la categoría "' + catName + '" porque contiene platillos o bebidas asociados. Reasigne o elimine los productos primero.', "error");
+                return;
+            }
+
+            if (confirm('¿Está seguro de eliminar la categoría "' + catName + '"?')) {
+                state.categorias = state.categorias.filter(c => c !== catName);
+                if (state.activeMenuCategory === catName) state.activeMenuCategory = 'Todos';
+                if (state.activeCategory === catName) state.activeCategory = 'Todos';
+                saveState();
+                renderMenuTable();
+                renderPosCategories();
+                showToast('Categoría "' + catName + '" eliminada', "info");
             }
         }
 
@@ -2603,7 +2508,6 @@
             if (tabName === 'parallevar') renderParaLlevar();
             else if (tabName === 'mesas') renderMesas();
             else if (tabName === 'pos') { renderPosMesaSelector(); renderPosMeseroSelector(); renderComandaActual(); renderPosProducts(); }
-            else if (tabName === 'pedidosya') renderPedidosYa();
             else if (tabName === 'cocina' || tabName === 'barra') renderMonitoresIndependientes();
             else if (tabName === 'menu') renderMenuTable();
             else if (tabName === 'reservaciones') renderReservaciones();
@@ -2625,7 +2529,6 @@
             if (kdsInterval) clearInterval(kdsInterval);
             kdsInterval = setInterval(() => {
                 renderMonitoresIndependientes();
-                renderPedidosYa();
             }, 10000);
         };
     </script>
