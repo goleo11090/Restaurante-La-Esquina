@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GastroControl POS - LA ESQUINA</title>
+    <title>GastroControl POS - LA ESQUINA (Supabase)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -37,14 +37,6 @@
                 }
             }
         };
-
-        // Credenciales de Supabase integradas
-        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co/rest/v1/';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
-
-        // Inicializar cliente de Supabase (nota: la URL base para createClient no debe incluir '/rest/v1/')
-        const supabaseUrlClean = 'https://esrgrhfshzzvzriyynan.supabase.co';
-        const supabase = window.supabase.createClient(supabaseUrlClean, SUPABASE_ANON_KEY);
     </script>
 
     <style>
@@ -93,7 +85,7 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS</h1>
+                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS (Supabase)</h1>
                 <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más ...</p>
             </div>
         </div>
@@ -132,8 +124,11 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema (Super Admin)">
-                <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer Sistema</span>
+            <button id="supabase-config-btn" onclick="abrirModalSupabaseConfig()" class="bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Configurar Conexión Supabase">
+                <i class="fa-solid fa-database"></i> <span class="hidden xl:inline">Conexión Supabase</span>
+            </button>
+            <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
+                <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
             </button>
             <button id="admin-btn-usuarios" onclick="abrirModalUsuarios()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center gap-1.5 hidden" title="Gestionar Personal">
                 <i class="fa-solid fa-users-gear text-brand-400"></i> <span class="hidden md:inline">Usuarios</span>
@@ -509,6 +504,119 @@
         </section>
     </main>
 
+    <!-- MODAL SUPABASE CONFIG -->
+    <div id="modal-supabase" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+                <h3 class="font-black text-white text-base flex items-center gap-2">
+                    <i class="fa-solid fa-database text-cyan-400"></i> Configuración Supabase
+                </h3>
+                <button onclick="cerrarModalSupabaseConfig()" class="text-slate-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-300">Conecte su base de datos Supabase ingresando la URL del proyecto y su clave ANON/Public.</p>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Supabase Project URL</label>
+                    <input id="supabase-url-input" type="text" placeholder="https://xyzproject.supabase.co" class="w-full bg-slate-800 border border-slate-700 text-white font-mono rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-400 uppercase mb-1">Supabase Anon Key</label>
+                    <input id="supabase-key-input" type="password" placeholder="eyJhbGciOiJIUzI1Ni..." class="w-full bg-slate-800 border border-slate-700 text-white font-mono rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <button onclick="guardarYConectarSupabase()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-cyan-600/20">
+                    Conectar y Sincronizar Base de Datos
+                </button>
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+                <h4 class="font-black text-[11px] text-amber-400 uppercase mb-2">📋 Script SQL para Supabase (Ejecutar en Supabase SQL Editor):</h4>
+                <textarea readonly rows="8" class="w-full bg-slate-950 text-slate-300 font-mono text-[10px] p-2 rounded-xl border border-slate-800 custom-scrollbar">
+-- Tabla de Usuarios y Personal
+create table if not exists usuarios (
+    id serial primary key,
+    nombre text not null,
+    rol text not null,
+    password text not null
+);
+
+-- Tabla de Categorías de Menú
+create table if not exists categorias (
+    id serial primary key,
+    nombre text unique not null
+);
+
+-- Tabla de Materia Prima / Insumos
+create table if not exists insumos (
+    id serial primary key,
+    nombre text not null,
+    unidad text not null,
+    stock numeric default 0
+);
+
+-- Tabla de Platillos y Bebidas (Menú)
+create table if not exists menu (
+    id serial primary key,
+    nombre text not null,
+    precio numeric not null,
+    tiempo_estimado int default 10,
+    categoria text not null,
+    estacion text not null,
+    imagen text,
+    descripcion text,
+    receta jsonb default '[]'::jsonb
+);
+
+-- Tabla de Mesas y Para Llevar
+create table if not exists mesas (
+    id int primary key,
+    numero text not null,
+    estado text default 'libre'
+);
+
+-- Tabla de Reservaciones
+create table if not exists reservaciones (
+    id bigint primary key,
+    mesa_id int,
+    cliente text,
+    telefono text,
+    personas int,
+    fecha text,
+    hora text,
+    notas text,
+    estado text default 'confirmada'
+);
+
+-- Tabla de Comandas Activas
+create table if not exists comandas (
+    id bigint primary key,
+    mesa_id int,
+    mesero_nombre text,
+    estado text default 'abierta',
+    created_at bigint,
+    items jsonb default '[]'::jsonb
+);
+
+-- Tabla Historial de Ventas / Cobros
+create table if not exists ventas (
+    id text primary key,
+    fecha text,
+    mesa_id int,
+    mesero_nombre text,
+    estado text default 'cerrada',
+    total numeric,
+    metodo_pago text,
+    hora text,
+    items jsonb default '[]'::jsonb
+);
+
+-- Insertar Super Admin por defecto
+insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin', '16112021Alo') on conflict (id) do nothing;
+                </textarea>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL RESERVACION -->
     <div id="modal-reservacion" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
@@ -843,21 +951,12 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'la-esquina-pos-v5';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDummyKeyForStaticHosting",
-            authDomain: "la-esquina.firebaseapp.com",
-            projectId: "la-esquina"
+    <script>
+        let supabaseClient = null;
+        let supabaseConfig = {
+            url: localStorage.getItem('gastro_supabase_url') || '',
+            key: localStorage.getItem('gastro_supabase_key') || ''
         };
-
-        let db = null;
-        let auth = null;
-        let isCloudSynced = false;
 
         const defaultState = {
             currentUser: null,
@@ -874,7 +973,7 @@
             ],
             takeoutCount: 3,
             mesas: [
-                ...Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: i + 1, estado: 'libre' }))
+                ...Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: String(i + 1), estado: 'libre' }))
             ],
             reservaciones: [],
             comandas: [],
@@ -920,6 +1019,119 @@
         let kdsInterval = null;
         let chartInstance = null;
 
+        function initSupabaseConnection() {
+            if (supabaseConfig.url && supabaseConfig.key && window.supabase) {
+                try {
+                    supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.key);
+                    cargarDatosSupabase();
+                } catch (e) {
+                    console.warn("Supabase initialization error:", e);
+                }
+            }
+        }
+
+        window.abrirModalSupabaseConfig = function() {
+            document.getElementById('supabase-url-input').value = supabaseConfig.url;
+            document.getElementById('supabase-key-input').value = supabaseConfig.key;
+            document.getElementById('modal-supabase').classList.remove('hidden');
+        };
+
+        window.cerrarModalSupabaseConfig = function() {
+            document.getElementById('modal-supabase').classList.add('hidden');
+        };
+
+        window.guardarYConectarSupabase = async function() {
+            const url = document.getElementById('supabase-url-input').value.trim();
+            const key = document.getElementById('supabase-key-input').value.trim();
+            if (!url || !key) {
+                showToast("Ingrese URL y Key válidas", "error");
+                return;
+            }
+            supabaseConfig.url = url;
+            supabaseConfig.key = key;
+            localStorage.setItem('gastro_supabase_url', url);
+            localStorage.setItem('gastro_supabase_key', key);
+            
+            try {
+                supabaseClient = window.supabase.createClient(url, key);
+                await cargarDatosSupabase();
+                cerrarModalSupabaseConfig();
+                showToast("Conexión con Supabase establecida con éxito", "success");
+            } catch (e) {
+                showToast("Error conectando con Supabase: " + e.message, "error");
+            }
+        };
+
+        async function cargarDatosSupabase() {
+            if (!supabaseClient) return;
+            try {
+                const { data: usuarios } = await supabaseClient.from('usuarios').select('*');
+                if (usuarios && usuarios.length > 0) window.state.usuarios = usuarios;
+
+                const { data: categorias } = await supabaseClient.from('categorias').select('*');
+                if (categorias && categorias.length > 0) window.state.categorias = categorias.map(c => c.nombre);
+
+                const { data: insumos } = await supabaseClient.from('insumos').select('*');
+                if (insumos && insumos.length > 0) window.state.insumos = insumos;
+
+                const { data: menu } = await supabaseClient.from('menu').select('*');
+                if (menu && menu.length > 0) window.state.menu = menu;
+
+                const { data: mesas } = await supabaseClient.from('mesas').select('*');
+                if (mesas && mesas.length > 0) window.state.mesas = mesas;
+
+                const { data: reservaciones } = await supabaseClient.from('reservaciones').select('*');
+                if (reservaciones) window.state.reservaciones = reservaciones;
+
+                const { data: comandas } = await supabaseClient.from('comandas').select('*');
+                if (comandas) window.state.comandas = comandas;
+
+                const { data: ventas } = await supabaseClient.from('ventas').select('*');
+                if (ventas) window.state.ventas = ventas;
+
+                ensureServipichoAdmin();
+                refreshAllViews();
+            } catch (e) {
+                console.warn("Error cargando desde Supabase (puede requerir crear tablas SQL):", e);
+            }
+        }
+
+        window.saveState = async function() {
+            ensureServipichoAdmin();
+            try {
+                localStorage.setItem('gastro_local_fallback', JSON.stringify(window.state));
+                if (!supabaseClient) return;
+
+                // Sync to Supabase Tables
+                for (const u of window.state.usuarios) {
+                    await supabaseClient.from('usuarios').upsert({ id: u.id, nombre: u.nombre, rol: u.rol, password: u.password });
+                }
+                for (const cat of window.state.categorias) {
+                    await supabaseClient.from('categorias').upsert({ nombre: cat }, { onConflict: 'nombre' });
+                }
+                for (const i of window.state.insumos) {
+                    await supabaseClient.from('insumos').upsert({ id: i.id, nombre: i.nombre, unidad: i.unidad, stock: i.stock });
+                }
+                for (const p of window.state.menu) {
+                    await supabaseClient.from('menu').upsert({ id: p.id, nombre: p.nombre, precio: p.precio, tiempo_estimado: p.tiempo_estimado, categoria: p.categoria, estacion: p.estacion, imagen: p.imagen, descripcion: p.descripcion, receta: p.receta });
+                }
+                for (const m of window.state.mesas) {
+                    await supabaseClient.from('mesas').upsert({ id: m.id, numero: m.numero, estado: m.estado });
+                }
+                for (const r of window.state.reservaciones) {
+                    await supabaseClient.from('reservaciones').upsert({ id: r.id, mesa_id: r.mesa_id, cliente: r.cliente, telefono: r.telefono, personas: r.personas, fecha: r.fecha, hora: r.hora, notas: r.notas, estado: r.estado });
+                }
+                for (const c of window.state.comandas) {
+                    await supabaseClient.from('comandas').upsert({ id: c.id, mesa_id: c.mesa_id, mesero_nombre: c.mesero_nombre, estado: c.estado, created_at: c.created_at, items: c.items });
+                }
+                for (const v of window.state.ventas) {
+                    await supabaseClient.from('ventas').upsert({ id: v.id, fecha: v.fecha, mesa_id: v.mesa_id, mesero_nombre: v.mesero_nombre, estado: v.estado, total: v.total, metodo_pago: v.metodo_pago, hora: v.hora, items: v.items });
+                }
+            } catch (e) {
+                console.error("Error syncing to Supabase:", e);
+            }
+        };
+
         function ensureServipichoAdmin() {
             if (!window.state.usuarios) window.state.usuarios = [];
             let found = window.state.usuarios.find(u => u.nombre && u.nombre.toLowerCase() === 'servipicho');
@@ -930,81 +1142,6 @@
                 found.rol = 'admin';
             }
         }
-
-        async function initCloudAuthAndSync() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'restaurant_state');
-                const snap = await getDoc(docRef);
-                
-                if (snap.exists()) {
-                    const cloudData = snap.data();
-                    if (cloudData && cloudData.state) {
-                        window.state = Object.assign({}, defaultState, cloudData.state);
-                    }
-                } else {
-                    await setDoc(docRef, { state: defaultState });
-                }
-
-                ensureServipichoAdmin();
-                isCloudSynced = true;
-
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const cloudData = docSnap.data();
-                        if (cloudData && cloudData.state) {
-                            const currentRole = window.state.currentUser ? window.state.currentUser.role : null;
-                            const currentName = window.state.currentUser ? window.state.currentUser.nombre : null;
-                            const activeMesa = window.state.activeMesaId;
-
-                            window.state = Object.assign({}, window.state, cloudData.state);
-                            ensureServipichoAdmin();
-
-                            if (currentRole && currentName) {
-                                window.state.currentUser = { role: currentRole, nombre: currentName };
-                            }
-                            window.state.activeMesaId = activeMesa;
-
-                            refreshAllViews();
-                        }
-                    }
-                }, (error) => {
-                    console.error("Cloud sync snapshot error:", error);
-                });
-
-            } catch (e) {
-                console.warn("Firebase cloud initialization warning (falling back to local state):", e);
-                const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
-                if (saved) {
-                    try { window.state = JSON.parse(saved); } catch(err) {}
-                }
-                ensureServipichoAdmin();
-            }
-        }
-
-        window.saveState = async function() {
-            ensureServipichoAdmin();
-            try {
-                if (isCloudSynced && db) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'restaurant_state');
-                    await setDoc(docRef, { state: JSON.parse(JSON.stringify(window.state)) });
-                } else {
-                    localStorage.setItem('gastrocontrol_esquina_v5_cloud_fallback', JSON.stringify(window.state));
-                }
-            } catch (e) {
-                console.error("Error saving state:", e);
-                localStorage.setItem('gastrocontrol_esquina_v5_cloud_fallback', JSON.stringify(window.state));
-            }
-        };
 
         window.getMeseros = function() {
             return window.state.usuarios ? window.state.usuarios.filter(u => u.rol === 'mesero') : [];
@@ -1179,22 +1316,22 @@
             }
         };
 
-        window.restablecerSistema = async function() {
+        window.restablecerSistema = function() {
             const isSuperAdmin = window.state.currentUser && window.state.currentUser.role === 'admin' && window.state.currentUser.nombre.toLowerCase() === 'servipicho';
             if (!isSuperAdmin) {
                 showToast("Acceso denegado: solo el Super Administrador (servipicho) puede restablecer el sistema", "error");
                 return;
             }
 
-            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas, inventario y reservaciones por completo en la nube.\n\nIngrese la contraseña maestra de servipicho (16112021Alo) para confirmar:");
+            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas, inventario y reservaciones.\n\nIngrese la contraseña maestra de servipicho (16112021Alo) para confirmar:");
             
             if (clave === '16112021Alo') {
                 window.state = JSON.parse(JSON.stringify(defaultState));
-                await window.saveState();
-                showToast("Sistema restablecido por completo con éxito en la nube", "success");
+                window.saveState();
+                showToast("Sistema restablecido con éxito", "success");
                 setTimeout(() => { window.location.reload(); }, 1000);
             } else if (clave !== null) {
-                showToast("Contraseña maestra incorrecta. Operación cancelada", "error");
+                showToast("Contraseña maestra incorrecta", "error");
             }
         };
 
@@ -1293,8 +1430,7 @@
             const newSlot = {
                 id: newId,
                 numero: 'Para Llevar #' + window.state.takeoutCount,
-                estado: 'libre',
-                esParaLlevar: true
+                estado: 'libre'
             };
 
             window.state.mesas.unshift(newSlot);
@@ -1335,7 +1471,7 @@
             }
             const regularMesas = window.state.mesas.filter(m => m.id > 0);
             const nextNum = regularMesas.length + 1;
-            window.state.mesas.push({ id: nextNum, numero: nextNum, estado: 'libre' });
+            window.state.mesas.push({ id: nextNum, numero: String(nextNum), estado: 'libre' });
             await window.saveState();
             renderMesas();
             renderPosMesaSelector();
@@ -1359,10 +1495,13 @@
                 return;
             }
             window.state.mesas = window.state.mesas.filter(m => m.id !== lastMesa.id);
+            if (supabaseClient) {
+                await supabaseClient.from('mesas').delete().eq('id', lastMesa.id);
+            }
             await window.saveState();
             renderMesas();
             renderPosMesaSelector();
-            showToast('Mesa #' + lastMesa.numero + ' eliminada del plano', "info");
+            showToast('Mesa eliminada del plano', "info");
         };
 
         window.seleccionarMesaParaPOS = function(mesaId) {
@@ -1593,22 +1732,11 @@
             const comanda = getOrCreateComandaActiva();
             if (!comanda || !comanda.items[idx]) return;
 
-            const item = comanda.items[idx];
-            if (item.enviado) {
-                if (confirm('¿Desea eliminar el ítem "' + item.nombre + '" ya enviado?')) {
-                    comanda.items.splice(idx, 1);
-                    await window.saveState();
-                    renderComandaActual();
-                    renderParaLlevar();
-                    renderMesas();
-                }
-            } else {
-                comanda.items.splice(idx, 1);
-                await window.saveState();
-                renderComandaActual();
-                renderParaLlevar();
-                renderMesas();
-            }
+            comanda.items.splice(idx, 1);
+            await window.saveState();
+            renderComandaActual();
+            renderParaLlevar();
+            renderMesas();
         };
 
         window.getItemEstacion = function(item) {
@@ -1629,7 +1757,7 @@
             });
         };
 
-        window.enviarEstacionesSinImprimir = async function() {
+        window.enviarEstacionesSinImprimir = function() {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || comanda.items.length === 0) {
                 showToast("Comanda vacía", "error");
@@ -1643,7 +1771,7 @@
                 }
             });
 
-            await window.saveState();
+            window.saveState();
             showToast("Órdenes enviadas digitalmente a Cocina/Barra", "success");
             renderComandaActual();
             renderParaLlevar();
@@ -1696,7 +1824,7 @@
             renderGrid('barra', gridBarra);
         };
 
-        window.marcarEstacionLista = async function(comandaId, estacion) {
+        window.marcarEstacionLista = function(comandaId, estacion) {
             const comanda = window.state.comandas.find(c => c.id === comandaId);
             if (!comanda) return;
 
@@ -1706,7 +1834,7 @@
                 }
             });
 
-            await window.saveState();
+            window.saveState();
             showToast('Ítems despachados en ' + estacion.toUpperCase(), "success");
             renderMonitoresIndependientes();
         };
@@ -1784,7 +1912,7 @@
             return dd + mm + '-' + corrNum;
         };
 
-        window.confirmarPagoYFinalizar = async function() {
+        window.confirmarPagoYFinalizar = function() {
             const comanda = getOrCreateComandaActiva();
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
 
@@ -1820,7 +1948,7 @@
 
             comanda.estado = 'cerrada';
             window.state.ventas.unshift(ventaFinal);
-            await window.saveState();
+            window.saveState();
             imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
             showToast('Venta #' + ventaId + ' completada e impresa con éxito', "success");
@@ -1935,7 +2063,7 @@
             if (modal) modal.classList.add('hidden');
         };
 
-        window.guardarReservacion = async function(e) {
+        window.guardarReservacion = function(e) {
             e.preventDefault();
             const mesaId = parseInt(document.getElementById('res-mesa-select').value);
             const cliente = document.getElementById('res-cliente').value.trim();
@@ -1957,19 +2085,20 @@
                 estado: 'confirmada'
             });
 
-            await window.saveState();
+            window.saveState();
             cerrarModalReservacion();
             renderReservaciones();
             showToast('Reservación confirmada para ' + cliente, "success");
         };
 
         window.eliminarReservacion = async function(id) {
-            if (confirm("¿Desea cancelar esta reservación?")) {
-                window.state.reservaciones = window.state.reservaciones.filter(r => r.id !== id);
-                await window.saveState();
-                renderReservaciones();
-                showToast("Reservación eliminada", "info");
+            window.state.reservaciones = window.state.reservaciones.filter(r => r.id !== id);
+            if (supabaseClient) {
+                await supabaseClient.from('reservaciones').delete().eq('id', id);
             }
+            window.saveState();
+            renderReservaciones();
+            showToast("Reservación eliminada", "info");
         };
 
         window.getVentasFiltradas = function() {
@@ -2147,7 +2276,7 @@
             document.getElementById('inv-kpi-agotado').innerText = agotado;
         };
 
-        window.agregarStockInsumo = async function(insumoId) {
+        window.agregarStockInsumo = function(insumoId) {
             const input = document.getElementById('inv-input-' + insumoId);
             if (!input) return;
             const cant = parseFloat(input.value);
@@ -2156,7 +2285,7 @@
                 const insumo = window.state.insumos.find(i => i.id === insumoId);
                 if (insumo) {
                     insumo.stock += cant;
-                    await window.saveState();
+                    window.saveState();
                     showToast('Se reabastecieron +' + cant + ' ' + insumo.unidad + ' a ' + insumo.nombre, "success");
                     input.value = '';
                     renderInventario();
@@ -2170,23 +2299,24 @@
         window.eliminarInsumo = async function(id) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') return;
             window.state.insumos = window.state.insumos.filter(i => i.id !== id);
-            await window.saveState();
+            if (supabaseClient) {
+                await supabaseClient.from('insumos').delete().eq('id', id);
+            }
+            window.saveState();
             showToast("Insumo eliminado", "info");
             renderInventario();
             renderPosProducts();
         };
 
         window.abrirModalInsumo = function() {
-            const modal = document.getElementById('modal-insumo');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('modal-insumo').classList.remove('hidden');
         };
 
         window.cerrarModalInsumo = function() {
-            const modal = document.getElementById('modal-insumo');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-insumo').classList.add('hidden');
         };
 
-        window.guardarInsumoNuevo = async function(e) {
+        window.guardarInsumoNuevo = function(e) {
             e.preventDefault();
             const nombre = document.getElementById('insumo-nombre').value.trim();
             const unidad = document.getElementById('insumo-unidad').value;
@@ -2195,7 +2325,7 @@
 
             const newId = window.state.insumos.length > 0 ? Math.max(...window.state.insumos.map(i => i.id)) + 1 : 1;
             window.state.insumos.push({ id: newId, nombre, unidad, stock });
-            await window.saveState();
+            window.saveState();
             cerrarModalInsumo();
             renderInventario();
             showToast('Insumo "' + nombre + '" agregado', "success");
@@ -2247,8 +2377,7 @@
         };
 
         window.cerrarModalProducto = function() {
-            const modal = document.getElementById('modal-producto');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-producto').classList.add('hidden');
         };
 
         window.agregarFilaInsumoReceta = function(selectedInsumoId = null, cantidad = '') {
@@ -2269,7 +2398,7 @@
             container.appendChild(row);
         };
 
-        window.guardarProducto = async function(e) {
+        window.guardarProducto = function(e) {
             e.preventDefault();
             const editId = document.getElementById('prod-edit-id').value;
             const nombre = document.getElementById('prod-nombre').value.trim();
@@ -2317,7 +2446,7 @@
                 });
             }
 
-            await window.saveState();
+            window.saveState();
             cerrarModalProducto();
             renderMenuTable();
             renderPosProducts();
@@ -2326,26 +2455,25 @@
 
         window.eliminarProducto = async function(id) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
-                showToast("Acceso denegado: solo el administrador puede eliminar especialidades o productos", "error");
+                showToast("Acceso denegado: solo el administrador puede eliminar especialidades", "error");
                 return;
             }
-            if (confirm("¿Desea eliminar esta especialidad o producto del menú?")) {
-                window.state.menu = window.state.menu.filter(p => p.id !== id);
-                await window.saveState();
-                renderMenuTable();
-                renderPosProducts();
-                showToast("Especialidad eliminada del menú", "info");
+            window.state.menu = window.state.menu.filter(p => p.id !== id);
+            if (supabaseClient) {
+                await supabaseClient.from('menu').delete().eq('id', id);
             }
+            window.saveState();
+            renderMenuTable();
+            renderPosProducts();
+            showToast("Especialidad eliminada", "info");
         };
 
         window.abrirModalCategoria = function() {
-            const modal = document.getElementById('modal-categoria');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('modal-categoria').classList.remove('hidden');
         };
 
         window.cerrarModalCategoria = function() {
-            const modal = document.getElementById('modal-categoria');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-categoria').classList.add('hidden');
         };
 
         window.guardarCategoria = async function(e) {
@@ -2353,7 +2481,10 @@
             const name = document.getElementById('cat-nombre').value.trim();
             if (name && !window.state.categorias.includes(name)) {
                 window.state.categorias.push(name);
-                await window.saveState();
+                if (supabaseClient) {
+                    await supabaseClient.from('categorias').insert({ nombre: name });
+                }
+                window.saveState();
                 showToast('Categoría "' + name + '" creada', "success");
                 document.getElementById('cat-nombre').value = '';
                 cerrarModalCategoria();
@@ -2364,57 +2495,43 @@
 
         window.eliminarCategoria = async function(catName) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
-                showToast("Acceso denegado: solo el administrador puede eliminar categorías", "error");
+                showToast("Acceso denegado", "error");
                 return;
             }
 
             const tieneProductos = window.state.menu.some(p => p.categoria === catName);
             if (tieneProductos) {
-                showToast('No se puede eliminar la categoría "' + catName + '" porque contiene platillos o bebidas asociados. Reasigne o elimine los productos primero.', "error");
+                showToast('No se puede eliminar la categoría porque contiene platillos asociados', "error");
                 return;
             }
 
-            if (confirm('¿Está seguro de eliminar la categoría "' + catName + '"?')) {
-                window.state.categorias = window.state.categorias.filter(c => c !== catName);
-                if (window.state.activeMenuCategory === catName) window.state.activeMenuCategory = 'Todos';
-                if (window.state.activeCategory === catName) window.state.activeCategory = 'Todos';
-                await window.saveState();
-                renderMenuTable();
-                renderPosCategories();
-                showToast('Categoría "' + catName + '" eliminada', "info");
+            window.state.categorias = window.state.categorias.filter(c => c !== catName);
+            if (supabaseClient) {
+                await supabaseClient.from('categorias').delete().eq('nombre', catName);
             }
+            window.saveState();
+            renderMenuTable();
+            renderPosCategories();
+            showToast('Categoría eliminada', "info");
         };
 
         window.abrirModalUsuarios = function() {
-            if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
-                showToast("Solo el Administrador puede gestionar usuarios", "error");
-                return;
-            }
-            const modal = document.getElementById('modal-usuarios');
-            if (modal) {
-                modal.classList.remove('hidden');
-                resetFormUsuario();
-                renderListaUsuariosModal();
-            }
+            if (!window.state.currentUser || window.state.currentUser.role !== 'admin') return;
+            document.getElementById('modal-usuarios').classList.remove('hidden');
+            resetFormUsuario();
+            renderListaUsuariosModal();
         };
 
         window.cerrarModalUsuarios = function() {
-            const modal = document.getElementById('modal-usuarios');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-usuarios').classList.add('hidden');
         };
 
         window.resetFormUsuario = function() {
-            const editId = document.getElementById('user-edit-id');
-            const nombre = document.getElementById('user-nombre');
-            const rol = document.getElementById('user-rol');
-            const pass = document.getElementById('user-pass');
-            const title = document.getElementById('user-form-title');
-
-            if (editId) editId.value = '';
-            if (nombre) nombre.value = '';
-            if (rol) rol.value = 'admin';
-            if (pass) pass.value = '';
-            if (title) title.innerText = "Agregar Nuevo Usuario, Mesero o Administrador";
+            document.getElementById('user-edit-id').value = '';
+            document.getElementById('user-nombre').value = '';
+            document.getElementById('user-rol').value = 'admin';
+            document.getElementById('user-pass').value = '';
+            document.getElementById('user-form-title').innerText = "Agregar Nuevo Usuario o Administrador";
         };
 
         window.renderListaUsuariosModal = function() {
@@ -2440,7 +2557,7 @@
             body.innerHTML = rowsHtml;
         };
 
-        window.guardarUsuarioMesero = async function(e) {
+        window.guardarUsuarioMesero = function(e) {
             e.preventDefault();
             const editId = document.getElementById('user-edit-id').value;
             const nombre = document.getElementById('user-nombre').value.trim();
@@ -2448,34 +2565,30 @@
             const password = document.getElementById('user-pass').value.trim();
 
             if (!nombre || !password) {
-                showToast("Por favor complete el nombre y la contraseña", "error");
+                showToast("Complete nombre y contraseña", "error");
                 return;
             }
 
             if (nombre.toLowerCase() === 'servipicho') {
-                showToast("Nombre reservado para Super Administrador", "error");
+                showToast("Nombre reservado", "error");
                 return;
             }
 
             if (editId) {
                 const user = window.state.usuarios.find(u => u.id === parseInt(editId));
                 if (user) {
-                    if (user.nombre.toLowerCase() === 'servipicho') {
-                        showToast("No se puede modificar la cuenta de servipicho", "error");
-                        return;
-                    }
                     user.nombre = nombre;
                     user.rol = rol;
                     user.password = password;
-                    showToast('Usuario ' + nombre + ' actualizado', "success");
+                    showToast('Usuario actualizado', "success");
                 }
             } else {
                 const newId = window.state.usuarios.length > 0 ? Math.max(...window.state.usuarios.map(u => u.id)) + 1 : 1;
                 window.state.usuarios.push({ id: newId, nombre, rol, password });
-                showToast('Usuario ' + nombre + ' registrado', "success");
+                showToast('Usuario registrado', "success");
             }
 
-            await window.saveState();
+            window.saveState();
             resetFormUsuario();
             renderListaUsuariosModal();
             renderPosMeseroSelector();
@@ -2493,16 +2606,16 @@
 
         window.eliminarUsuarioMesero = async function(id) {
             const u = window.state.usuarios.find(x => x.id === id);
-            if (!u) return;
-            if (u.nombre.toLowerCase() === 'servipicho') return;
+            if (!u || u.nombre.toLowerCase() === 'servipicho') return;
 
-            if (confirm('¿Está seguro de eliminar al usuario "' + u.nombre + '"?')) {
-                window.state.usuarios = window.state.usuarios.filter(x => x.id !== id);
-                await window.saveState();
-                showToast("Usuario eliminado", "info");
-                renderListaUsuariosModal();
-                renderPosMeseroSelector();
+            window.state.usuarios = window.state.usuarios.filter(x => x.id !== id);
+            if (supabaseClient) {
+                await supabaseClient.from('usuarios').delete().eq('id', id);
             }
+            window.saveState();
+            showToast("Usuario eliminado", "info");
+            renderListaUsuariosModal();
+            renderPosMeseroSelector();
         };
 
         window.renderAnaliticaDashboard = function() {
@@ -2587,14 +2700,22 @@
             else if (tabName === 'analitica') renderAnaliticaDashboard();
         };
 
-        window.onload = async function() {
+        window.onload = function() {
             const todayStr = new Date().toISOString().split('T')[0];
             const inicio = document.getElementById('rep-fecha-inicio');
             const fin = document.getElementById('rep-fecha-fin');
             if (inicio && !inicio.value) inicio.value = todayStr;
             if (fin && !fin.value) fin.value = todayStr;
 
-            await initCloudAuthAndSync();
+            try {
+                const saved = localStorage.getItem('gastro_local_fallback');
+                if (saved) {
+                    window.state = Object.assign({}, defaultState, JSON.parse(saved));
+                }
+            } catch (e) {}
+
+            ensureServipichoAdmin();
+            initSupabaseConnection();
             openLoginModal();
 
             if (kdsInterval) clearInterval(kdsInterval);
