@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GastroControl POS - LA ESQUINA (Supabase)</title>
+    <title>GastroControl POS - LA ESQUINA (Auto-Sync Supabase)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -85,7 +85,7 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS (Supabase)</h1>
+                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS (Auto-Sync)</h1>
                 <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más ...</p>
             </div>
         </div>
@@ -124,9 +124,9 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button onclick="cargarDatosSupabaseManual()" class="bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 shadow-sm" title="Sincronizar datos con Supabase">
-                <i class="fa-solid fa-rotate animate-spin-slow"></i> <span class="hidden xl:inline">Sync Nuve</span>
-            </button>
+            <div id="sync-status-indicator" class="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-[10px] font-bold px-2 py-1.5 rounded-xl" title="Sincronización automática activa cada segundo">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Sync
+            </div>
             <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
             </button>
@@ -903,6 +903,7 @@
 
         window.state = JSON.parse(JSON.stringify(defaultState));
         let kdsInterval = null;
+        let syncInterval = null;
         let chartInstance = null;
 
         function initSupabaseConnection() {
@@ -952,16 +953,9 @@
             }
         }
 
-        window.cargarDatosSupabaseManual = async function() {
-            await cargarDatosSupabase();
-            showToast("Datos sincronizados con Supabase correctamente", "success");
-            renderListaUsuariosModal();
-        };
-
         window.saveState = async function() {
             ensureServipichoAdmin();
             try {
-                localStorage.setItem('gastro_local_fallback', JSON.stringify(window.state));
                 if (!supabaseClient) return;
 
                 for (const u of window.state.usuarios) {
@@ -1140,7 +1134,7 @@
 
         window.autenticarUsuario = async function(e) {
             e.preventDefault();
-            await cargarDatosSupabase(); // Refrescar usuarios antes de validar PIN/Contraseña
+            await cargarDatosSupabase();
 
             const usernameInput = (document.getElementById('login-username')?.value || '').trim();
             const passVal = (document.getElementById('login-pass')?.value || '').trim();
@@ -2602,6 +2596,12 @@
             kdsInterval = setInterval(() => {
                 renderMonitoresIndependientes();
             }, 10000);
+
+            // Auto-Sync cada 1 segundo con Supabase sin molestar al usuario
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                cargarDatosSupabase();
+            }, 1000);
         };
     </script>
 </body>
