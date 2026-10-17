@@ -124,8 +124,8 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="supabase-config-btn" onclick="abrirModalSupabaseConfig()" class="bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5" title="Configurar Conexión Supabase">
-                <i class="fa-solid fa-database"></i> <span class="hidden xl:inline">Conexión Supabase</span>
+            <button id="supabase-config-btn" onclick="abrirModalSupabaseConfig()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black px-3.5 py-2 rounded-xl transition flex items-center gap-2 shadow-lg shadow-cyan-600/30 animate-pulse" title="Configurar Conexión Supabase">
+                <i class="fa-solid fa-database"></i> <span>Configurar Supabase</span>
             </button>
             <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
@@ -506,7 +506,7 @@
 
     <!-- MODAL SUPABASE CONFIG -->
     <div id="modal-supabase" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                 <h3 class="font-black text-white text-base flex items-center gap-2">
                     <i class="fa-solid fa-database text-cyan-400"></i> Configuración Supabase
@@ -686,6 +686,13 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             </div>
 
             <form onsubmit="autenticarUsuario(event)" class="space-y-3">
+                <div class="bg-cyan-950/40 border border-cyan-800/60 p-2.5 rounded-2xl flex items-center justify-between">
+                    <span class="text-[10px] text-cyan-300 font-bold">¿Primera vez con Supabase?</span>
+                    <button type="button" onclick="cerrarLoginYAbrirSupabase()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-xl transition shadow">
+                        Configurar aquí
+                    </button>
+                </div>
+
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
                     <input id="login-username" type="text" required placeholder="Nombre de usuario" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -1092,7 +1099,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 ensureServipichoAdmin();
                 refreshAllViews();
             } catch (e) {
-                console.warn("Error cargando desde Supabase (puede requerir crear tablas SQL):", e);
+                console.warn("Error cargando desde Supabase:", e);
             }
         }
 
@@ -1102,7 +1109,6 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 localStorage.setItem('gastro_local_fallback', JSON.stringify(window.state));
                 if (!supabaseClient) return;
 
-                // Sync to Supabase Tables
                 for (const u of window.state.usuarios) {
                     await supabaseClient.from('usuarios').upsert({ id: u.id, nombre: u.nombre, rol: u.rol, password: u.password });
                 }
@@ -1271,6 +1277,11 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             }
         };
 
+        window.cerrarLoginYAbrirSupabase = function() {
+            closeLoginModal();
+            abrirModalSupabaseConfig();
+        };
+
         window.closeLoginModal = function() {
             const modal = document.getElementById('modal-login');
             if (modal) modal.classList.add('hidden');
@@ -1316,22 +1327,22 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             }
         };
 
-        window.restablecerSistema = function() {
+        window.restablecerSistema = async function() {
             const isSuperAdmin = window.state.currentUser && window.state.currentUser.role === 'admin' && window.state.currentUser.nombre.toLowerCase() === 'servipicho';
             if (!isSuperAdmin) {
                 showToast("Acceso denegado: solo el Super Administrador (servipicho) puede restablecer el sistema", "error");
                 return;
             }
 
-            const clave = prompt("⚠️ ATENCIÓN: Esta acción borrará todas las comandas, historial de ventas, inventario y reservaciones.\n\nIngrese la contraseña maestra de servipicho (16112021Alo) para confirmar:");
+            const clave = prompt("⚠️ ATENCIÓN: Esta acción restablecerá los datos por defecto.\n\nIngrese la contraseña maestra de servipicho (16112021Alo) para confirmar:");
             
             if (clave === '16112021Alo') {
                 window.state = JSON.parse(JSON.stringify(defaultState));
-                window.saveState();
+                await window.saveState();
                 showToast("Sistema restablecido con éxito", "success");
                 setTimeout(() => { window.location.reload(); }, 1000);
             } else if (clave !== null) {
-                showToast("Contraseña maestra incorrecta", "error");
+                showToast("Contraseña maestra incorrecta. Operación cancelada", "error");
             }
         };
 
@@ -1430,7 +1441,8 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             const newSlot = {
                 id: newId,
                 numero: 'Para Llevar #' + window.state.takeoutCount,
-                estado: 'libre'
+                estado: 'libre',
+                esParaLlevar: true
             };
 
             window.state.mesas.unshift(newSlot);
@@ -1495,13 +1507,10 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 return;
             }
             window.state.mesas = window.state.mesas.filter(m => m.id !== lastMesa.id);
-            if (supabaseClient) {
-                await supabaseClient.from('mesas').delete().eq('id', lastMesa.id);
-            }
             await window.saveState();
             renderMesas();
             renderPosMesaSelector();
-            showToast('Mesa eliminada del plano', "info");
+            showToast('Mesa #' + lastMesa.numero + ' eliminada del plano', "info");
         };
 
         window.seleccionarMesaParaPOS = function(mesaId) {
@@ -1732,11 +1741,22 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             const comanda = getOrCreateComandaActiva();
             if (!comanda || !comanda.items[idx]) return;
 
-            comanda.items.splice(idx, 1);
-            await window.saveState();
-            renderComandaActual();
-            renderParaLlevar();
-            renderMesas();
+            const item = comanda.items[idx];
+            if (item.enviado) {
+                if (confirm('¿Desea eliminar el ítem "' + item.nombre + '" ya enviado?')) {
+                    comanda.items.splice(idx, 1);
+                    await window.saveState();
+                    renderComandaActual();
+                    renderParaLlevar();
+                    renderMesas();
+                }
+            } else {
+                comanda.items.splice(idx, 1);
+                await window.saveState();
+                renderComandaActual();
+                renderParaLlevar();
+                renderMesas();
+            }
         };
 
         window.getItemEstacion = function(item) {
@@ -1757,7 +1777,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             });
         };
 
-        window.enviarEstacionesSinImprimir = function() {
+        window.enviarEstacionesSinImprimir = async function() {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || comanda.items.length === 0) {
                 showToast("Comanda vacía", "error");
@@ -1771,7 +1791,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 }
             });
 
-            window.saveState();
+            await window.saveState();
             showToast("Órdenes enviadas digitalmente a Cocina/Barra", "success");
             renderComandaActual();
             renderParaLlevar();
@@ -1824,7 +1844,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             renderGrid('barra', gridBarra);
         };
 
-        window.marcarEstacionLista = function(comandaId, estacion) {
+        window.marcarEstacionLista = async function(comandaId, estacion) {
             const comanda = window.state.comandas.find(c => c.id === comandaId);
             if (!comanda) return;
 
@@ -1834,7 +1854,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 }
             });
 
-            window.saveState();
+            await window.saveState();
             showToast('Ítems despachados en ' + estacion.toUpperCase(), "success");
             renderMonitoresIndependientes();
         };
@@ -1912,7 +1932,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             return dd + mm + '-' + corrNum;
         };
 
-        window.confirmarPagoYFinalizar = function() {
+        window.confirmarPagoYFinalizar = async function() {
             const comanda = getOrCreateComandaActiva();
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
 
@@ -1948,7 +1968,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
 
             comanda.estado = 'cerrada';
             window.state.ventas.unshift(ventaFinal);
-            window.saveState();
+            await window.saveState();
             imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
             showToast('Venta #' + ventaId + ' completada e impresa con éxito', "success");
@@ -2063,7 +2083,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             if (modal) modal.classList.add('hidden');
         };
 
-        window.guardarReservacion = function(e) {
+        window.guardarReservacion = async function(e) {
             e.preventDefault();
             const mesaId = parseInt(document.getElementById('res-mesa-select').value);
             const cliente = document.getElementById('res-cliente').value.trim();
@@ -2085,20 +2105,19 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 estado: 'confirmada'
             });
 
-            window.saveState();
+            await window.saveState();
             cerrarModalReservacion();
             renderReservaciones();
             showToast('Reservación confirmada para ' + cliente, "success");
         };
 
         window.eliminarReservacion = async function(id) {
-            window.state.reservaciones = window.state.reservaciones.filter(r => r.id !== id);
-            if (supabaseClient) {
-                await supabaseClient.from('reservaciones').delete().eq('id', id);
+            if (confirm("¿Desea cancelar esta reservación?")) {
+                window.state.reservaciones = window.state.reservaciones.filter(r => r.id !== id);
+                await window.saveState();
+                renderReservaciones();
+                showToast("Reservación eliminada", "info");
             }
-            window.saveState();
-            renderReservaciones();
-            showToast("Reservación eliminada", "info");
         };
 
         window.getVentasFiltradas = function() {
@@ -2276,7 +2295,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             document.getElementById('inv-kpi-agotado').innerText = agotado;
         };
 
-        window.agregarStockInsumo = function(insumoId) {
+        window.agregarStockInsumo = async function(insumoId) {
             const input = document.getElementById('inv-input-' + insumoId);
             if (!input) return;
             const cant = parseFloat(input.value);
@@ -2285,7 +2304,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 const insumo = window.state.insumos.find(i => i.id === insumoId);
                 if (insumo) {
                     insumo.stock += cant;
-                    window.saveState();
+                    await window.saveState();
                     showToast('Se reabastecieron +' + cant + ' ' + insumo.unidad + ' a ' + insumo.nombre, "success");
                     input.value = '';
                     renderInventario();
@@ -2299,24 +2318,23 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
         window.eliminarInsumo = async function(id) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') return;
             window.state.insumos = window.state.insumos.filter(i => i.id !== id);
-            if (supabaseClient) {
-                await supabaseClient.from('insumos').delete().eq('id', id);
-            }
-            window.saveState();
+            await window.saveState();
             showToast("Insumo eliminado", "info");
             renderInventario();
             renderPosProducts();
         };
 
         window.abrirModalInsumo = function() {
-            document.getElementById('modal-insumo').classList.remove('hidden');
+            const modal = document.getElementById('modal-insumo');
+            if (modal) modal.classList.remove('hidden');
         };
 
         window.cerrarModalInsumo = function() {
-            document.getElementById('modal-insumo').classList.add('hidden');
+            const modal = document.getElementById('modal-insumo');
+            if (modal) modal.classList.add('hidden');
         };
 
-        window.guardarInsumoNuevo = function(e) {
+        window.guardarInsumoNuevo = async function(e) {
             e.preventDefault();
             const nombre = document.getElementById('insumo-nombre').value.trim();
             const unidad = document.getElementById('insumo-unidad').value;
@@ -2325,7 +2343,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
 
             const newId = window.state.insumos.length > 0 ? Math.max(...window.state.insumos.map(i => i.id)) + 1 : 1;
             window.state.insumos.push({ id: newId, nombre, unidad, stock });
-            window.saveState();
+            await window.saveState();
             cerrarModalInsumo();
             renderInventario();
             showToast('Insumo "' + nombre + '" agregado', "success");
@@ -2377,7 +2395,8 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
         };
 
         window.cerrarModalProducto = function() {
-            document.getElementById('modal-producto').classList.add('hidden');
+            const modal = document.getElementById('modal-producto');
+            if (modal) modal.classList.add('hidden');
         };
 
         window.agregarFilaInsumoReceta = function(selectedInsumoId = null, cantidad = '') {
@@ -2398,7 +2417,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             container.appendChild(row);
         };
 
-        window.guardarProducto = function(e) {
+        window.guardarProducto = async function(e) {
             e.preventDefault();
             const editId = document.getElementById('prod-edit-id').value;
             const nombre = document.getElementById('prod-nombre').value.trim();
@@ -2446,7 +2465,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 });
             }
 
-            window.saveState();
+            await window.saveState();
             cerrarModalProducto();
             renderMenuTable();
             renderPosProducts();
@@ -2455,25 +2474,26 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
 
         window.eliminarProducto = async function(id) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
-                showToast("Acceso denegado: solo el administrador puede eliminar especialidades", "error");
+                showToast("Acceso denegado: solo el administrador puede eliminar especialidades o productos", "error");
                 return;
             }
-            window.state.menu = window.state.menu.filter(p => p.id !== id);
-            if (supabaseClient) {
-                await supabaseClient.from('menu').delete().eq('id', id);
+            if (confirm("¿Desea eliminar esta especialidad o producto del menú?")) {
+                window.state.menu = window.state.menu.filter(p => p.id !== id);
+                await window.saveState();
+                renderMenuTable();
+                renderPosProducts();
+                showToast("Especialidad eliminada del menú", "info");
             }
-            window.saveState();
-            renderMenuTable();
-            renderPosProducts();
-            showToast("Especialidad eliminada", "info");
         };
 
         window.abrirModalCategoria = function() {
-            document.getElementById('modal-categoria').classList.remove('hidden');
+            const modal = document.getElementById('modal-categoria');
+            if (modal) modal.classList.remove('hidden');
         };
 
         window.cerrarModalCategoria = function() {
-            document.getElementById('modal-categoria').classList.add('hidden');
+            const modal = document.getElementById('modal-categoria');
+            if (modal) modal.classList.add('hidden');
         };
 
         window.guardarCategoria = async function(e) {
@@ -2481,10 +2501,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             const name = document.getElementById('cat-nombre').value.trim();
             if (name && !window.state.categorias.includes(name)) {
                 window.state.categorias.push(name);
-                if (supabaseClient) {
-                    await supabaseClient.from('categorias').insert({ nombre: name });
-                }
-                window.saveState();
+                await window.saveState();
                 showToast('Categoría "' + name + '" creada', "success");
                 document.getElementById('cat-nombre').value = '';
                 cerrarModalCategoria();
@@ -2495,43 +2512,57 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
 
         window.eliminarCategoria = async function(catName) {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
-                showToast("Acceso denegado", "error");
+                showToast("Acceso denegado: solo el administrador puede eliminar categorías", "error");
                 return;
             }
 
             const tieneProductos = window.state.menu.some(p => p.categoria === catName);
             if (tieneProductos) {
-                showToast('No se puede eliminar la categoría porque contiene platillos asociados', "error");
+                showToast('No se puede eliminar la categoría "' + catName + '" porque contiene platillos o bebidas asociados.', "error");
                 return;
             }
 
-            window.state.categorias = window.state.categorias.filter(c => c !== catName);
-            if (supabaseClient) {
-                await supabaseClient.from('categorias').delete().eq('nombre', catName);
+            if (confirm('¿Está seguro de eliminar la categoría "' + catName + '"?')) {
+                window.state.categorias = window.state.categorias.filter(c => c !== catName);
+                if (window.state.activeMenuCategory === catName) window.state.activeMenuCategory = 'Todos';
+                if (window.state.activeCategory === catName) window.state.activeCategory = 'Todos';
+                await window.saveState();
+                renderMenuTable();
+                renderPosCategories();
+                showToast('Categoría "' + catName + '" eliminada', "info");
             }
-            window.saveState();
-            renderMenuTable();
-            renderPosCategories();
-            showToast('Categoría eliminada', "info");
         };
 
         window.abrirModalUsuarios = function() {
-            if (!window.state.currentUser || window.state.currentUser.role !== 'admin') return;
-            document.getElementById('modal-usuarios').classList.remove('hidden');
-            resetFormUsuario();
-            renderListaUsuariosModal();
+            if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
+                showToast("Solo el Administrador puede gestionar usuarios", "error");
+                return;
+            }
+            const modal = document.getElementById('modal-usuarios');
+            if (modal) {
+                modal.classList.remove('hidden');
+                resetFormUsuario();
+                renderListaUsuariosModal();
+            }
         };
 
         window.cerrarModalUsuarios = function() {
-            document.getElementById('modal-usuarios').classList.add('hidden');
+            const modal = document.getElementById('modal-usuarios');
+            if (modal) modal.classList.add('hidden');
         };
 
         window.resetFormUsuario = function() {
-            document.getElementById('user-edit-id').value = '';
-            document.getElementById('user-nombre').value = '';
-            document.getElementById('user-rol').value = 'admin';
-            document.getElementById('user-pass').value = '';
-            document.getElementById('user-form-title').innerText = "Agregar Nuevo Usuario o Administrador";
+            const editId = document.getElementById('user-edit-id');
+            const nombre = document.getElementById('user-nombre');
+            const rol = document.getElementById('user-rol');
+            const pass = document.getElementById('user-pass');
+            const title = document.getElementById('user-form-title');
+
+            if (editId) editId.value = '';
+            if (nombre) nombre.value = '';
+            if (rol) rol.value = 'admin';
+            if (pass) pass.value = '';
+            if (title) title.innerText = "Agregar Nuevo Usuario, Mesero o Administrador";
         };
 
         window.renderListaUsuariosModal = function() {
@@ -2557,7 +2588,7 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             body.innerHTML = rowsHtml;
         };
 
-        window.guardarUsuarioMesero = function(e) {
+        window.guardarUsuarioMesero = async function(e) {
             e.preventDefault();
             const editId = document.getElementById('user-edit-id').value;
             const nombre = document.getElementById('user-nombre').value.trim();
@@ -2565,30 +2596,34 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             const password = document.getElementById('user-pass').value.trim();
 
             if (!nombre || !password) {
-                showToast("Complete nombre y contraseña", "error");
+                showToast("Por favor complete el nombre y la contraseña", "error");
                 return;
             }
 
             if (nombre.toLowerCase() === 'servipicho') {
-                showToast("Nombre reservado", "error");
+                showToast("Nombre reservado para Super Administrador", "error");
                 return;
             }
 
             if (editId) {
                 const user = window.state.usuarios.find(u => u.id === parseInt(editId));
                 if (user) {
+                    if (user.nombre.toLowerCase() === 'servipicho') {
+                        showToast("No se puede modificar la cuenta de servipicho", "error");
+                        return;
+                    }
                     user.nombre = nombre;
                     user.rol = rol;
                     user.password = password;
-                    showToast('Usuario actualizado', "success");
+                    showToast('Usuario ' + nombre + ' actualizado', "success");
                 }
             } else {
                 const newId = window.state.usuarios.length > 0 ? Math.max(...window.state.usuarios.map(u => u.id)) + 1 : 1;
                 window.state.usuarios.push({ id: newId, nombre, rol, password });
-                showToast('Usuario registrado', "success");
+                showToast('Usuario ' + nombre + ' registrado', "success");
             }
 
-            window.saveState();
+            await window.saveState();
             resetFormUsuario();
             renderListaUsuariosModal();
             renderPosMeseroSelector();
@@ -2608,14 +2643,13 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             const u = window.state.usuarios.find(x => x.id === id);
             if (!u || u.nombre.toLowerCase() === 'servipicho') return;
 
-            window.state.usuarios = window.state.usuarios.filter(x => x.id !== id);
-            if (supabaseClient) {
-                await supabaseClient.from('usuarios').delete().eq('id', id);
+            if (confirm('¿Está seguro de eliminar al usuario "' + u.nombre + '"?')) {
+                window.state.usuarios = window.state.usuarios.filter(x => x.id !== id);
+                await window.saveState();
+                showToast("Usuario eliminado", "info");
+                renderListaUsuariosModal();
+                renderPosMeseroSelector();
             }
-            window.saveState();
-            showToast("Usuario eliminado", "info");
-            renderListaUsuariosModal();
-            renderPosMeseroSelector();
         };
 
         window.renderAnaliticaDashboard = function() {
@@ -2700,21 +2734,13 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             else if (tabName === 'analitica') renderAnaliticaDashboard();
         };
 
-        window.onload = function() {
+        window.onload = async function() {
             const todayStr = new Date().toISOString().split('T')[0];
             const inicio = document.getElementById('rep-fecha-inicio');
             const fin = document.getElementById('rep-fecha-fin');
             if (inicio && !inicio.value) inicio.value = todayStr;
             if (fin && !fin.value) fin.value = todayStr;
 
-            try {
-                const saved = localStorage.getItem('gastro_local_fallback');
-                if (saved) {
-                    window.state = Object.assign({}, defaultState, JSON.parse(saved));
-                }
-            } catch (e) {}
-
-            ensureServipichoAdmin();
             initSupabaseConnection();
             openLoginModal();
 
