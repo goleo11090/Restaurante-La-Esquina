@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GastroControl POS - LA ESQUINA (Auto-Sync Supabase)</title>
+    <title>GastroControl POS - LA ESQUINA (Optimized Auto-Sync)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -85,7 +85,7 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS (Auto-Sync)</h1>
+                <h1 class="font-black text-xs tracking-wider text-amber-400 uppercase">GastroControl POS</h1>
                 <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Mariscos, asados y mucho más ...</p>
             </div>
         </div>
@@ -124,7 +124,7 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <div id="sync-status-indicator" class="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-[10px] font-bold px-2 py-1.5 rounded-xl" title="Sincronización automática activa cada segundo">
+            <div id="sync-status-indicator" class="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-[10px] font-bold px-2.5 py-1.5 rounded-xl" title="Sincronización automática optimizada cada 10 segundos">
                 <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Sync
             </div>
             <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
@@ -905,11 +905,14 @@
         let kdsInterval = null;
         let syncInterval = null;
         let chartInstance = null;
+        let isSyncing = false;
 
         function initSupabaseConnection() {
             if (window.supabase) {
                 try {
-                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                        auth: { persistSession: false, autoRefreshToken: false }
+                    });
                     cargarDatosSupabase();
                 } catch (e) {
                     console.warn("Supabase initialization error:", e);
@@ -918,7 +921,8 @@
         }
 
         async function cargarDatosSupabase() {
-            if (!supabaseClient) return;
+            if (!supabaseClient || isSyncing) return;
+            isSyncing = true;
             try {
                 const { data: usuarios, error: errU } = await supabaseClient.from('usuarios').select('*');
                 if (!errU && usuarios && usuarios.length > 0) {
@@ -950,6 +954,8 @@
                 refreshAllViews();
             } catch (e) {
                 console.warn("Error cargando desde Supabase:", e);
+            } finally {
+                isSyncing = false;
             }
         }
 
@@ -958,30 +964,37 @@
             try {
                 if (!supabaseClient) return;
 
-                for (const u of window.state.usuarios) {
-                    await supabaseClient.from('usuarios').upsert({ id: u.id, nombre: u.nombre, rol: u.rol, password: u.password });
-                }
-                for (const cat of window.state.categorias) {
-                    await supabaseClient.from('categorias').upsert({ nombre: cat }, { onConflict: 'nombre' });
-                }
-                for (const i of window.state.insumos) {
-                    await supabaseClient.from('insumos').upsert({ id: i.id, nombre: i.nombre, unidad: i.unidad, stock: i.stock });
-                }
-                for (const p of window.state.menu) {
-                    await supabaseClient.from('menu').upsert({ id: p.id, nombre: p.nombre, precio: p.precio, tiempo_estimado: p.tiempo_estimado, categoria: p.categoria, estacion: p.estacion, imagen: p.imagen, descripcion: p.descripcion, receta: p.receta });
-                }
-                for (const m of window.state.mesas) {
-                    await supabaseClient.from('mesas').upsert({ id: m.id, numero: m.numero, estado: m.estado });
-                }
-                for (const r of window.state.reservaciones) {
-                    await supabaseClient.from('reservaciones').upsert({ id: r.id, mesa_id: r.mesa_id, cliente: r.cliente, telefono: r.telefono, personas: r.personas, fecha: r.fecha, hora: r.hora, notas: r.notas, estado: r.estado });
-                }
-                for (const c of window.state.comandas) {
-                    await supabaseClient.from('comandas').upsert({ id: c.id, mesa_id: c.mesa_id, mesero_nombre: c.mesero_nombre, estado: c.estado, created_at: c.created_at, items: c.items });
-                }
-                for (const v of window.state.ventas) {
-                    await supabaseClient.from('ventas').upsert({ id: v.id, fecha: v.fecha, mesa_id: v.mesa_id, mesero_nombre: v.mesero_nombre, estado: v.estado, total: v.total, metodo_pago: v.metodo_pago, hora: v.hora, items: v.items });
-                }
+                // Guardar de forma asíncrona sin bloquear la interfaz
+                setTimeout(async () => {
+                    try {
+                        for (const u of window.state.usuarios) {
+                            await supabaseClient.from('usuarios').upsert({ id: u.id, nombre: u.nombre, rol: u.rol, password: u.password });
+                        }
+                        for (const cat of window.state.categorias) {
+                            await supabaseClient.from('categorias').upsert({ nombre: cat }, { onConflict: 'nombre' });
+                        }
+                        for (const i of window.state.insumos) {
+                            await supabaseClient.from('insumos').upsert({ id: i.id, nombre: i.nombre, unidad: i.unidad, stock: i.stock });
+                        }
+                        for (const p of window.state.menu) {
+                            await supabaseClient.from('menu').upsert({ id: p.id, nombre: p.nombre, precio: p.precio, tiempo_estimado: p.tiempo_estimado, categoria: p.categoria, estacion: p.estacion, imagen: p.imagen, descripcion: p.descripcion, receta: p.receta });
+                        }
+                        for (const m of window.state.mesas) {
+                            await supabaseClient.from('mesas').upsert({ id: m.id, numero: m.numero, estado: m.estado });
+                        }
+                        for (const r of window.state.reservaciones) {
+                            await supabaseClient.from('reservaciones').upsert({ id: r.id, mesa_id: r.mesa_id, cliente: r.cliente, telefono: r.telefono, personas: r.personas, fecha: r.fecha, hora: r.hora, notas: r.notas, estado: r.estado });
+                        }
+                        for (const c of window.state.comandas) {
+                            await supabaseClient.from('comandas').upsert({ id: c.id, mesa_id: c.mesa_id, mesero_nombre: c.mesero_nombre, estado: c.estado, created_at: c.created_at, items: c.items });
+                        }
+                        for (const v of window.state.ventas) {
+                            await supabaseClient.from('ventas').upsert({ id: v.id, fecha: v.fecha, mesa_id: v.mesa_id, mesero_nombre: v.mesero_nombre, estado: v.estado, total: v.total, metodo_pago: v.metodo_pago, hora: v.hora, items: v.items });
+                        }
+                    } catch (err) {
+                        console.warn("Background sync error:", err);
+                    }
+                }, 10);
             } catch (e) {
                 console.error("Error syncing to Supabase:", e);
             }
@@ -2597,11 +2610,11 @@
                 renderMonitoresIndependientes();
             }, 10000);
 
-            // Auto-Sync cada 1 segundo con Supabase sin molestar al usuario
+            // Sincronización automática optimizada cada 10 segundos para máxima velocidad
             if (syncInterval) clearInterval(syncInterval);
             syncInterval = setInterval(() => {
                 cargarDatosSupabase();
-            }, 1000);
+            }, 10000);
         };
     </script>
 </body>
