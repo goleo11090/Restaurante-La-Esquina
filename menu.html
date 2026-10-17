@@ -12,6 +12,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         tailwind.config = {
@@ -28,6 +30,14 @@
                 }
             }
         };
+
+        // Credenciales de Supabase integradas
+        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co/rest/v1/';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
+
+        // Inicializar cliente de Supabase
+        const supabaseUrlClean = 'https://esrgrhfshzzvzriyynan.supabase.co';
+        const supabase = window.supabase.createClient(supabaseUrlClean, SUPABASE_ANON_KEY);
     </script>
 
     <style>
@@ -75,14 +85,10 @@
         import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'la-esquina-pos-v5';
-        const firebaseConfig = {
-            apiKey: "AIzaSyADgzSxR1VM587RiNrgC4ylfR5-yiovFok",
-            authDomain: "laesquinapos-69a89.firebaseapp.com",
-            projectId: "laesquinapos-69a89",
-            storageBucket: "laesquinapos-69a89.firebasestorage.app",
-            messagingSenderId: "184903943379",
-            appId: "1:184903943379:web:b206ba6a8610ba3ffa4026",
-            measurementId: "G-MCMSCPX465"
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForStaticHosting",
+            authDomain: "la-esquina.firebaseapp.com",
+            projectId: "la-esquina"
         };
 
         let clientState = {
@@ -105,21 +111,6 @@
                 }
 
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'restaurant_state');
-                
-                // Real-time listener for cloud changes across all devices
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        if (data && data.state) {
-                            clientState = Object.assign(clientState, data.state);
-                            renderClientMenu();
-                        }
-                    }
-                }, (error) => {
-                    console.error("Cloud snapshot error:", error);
-                });
-
-                // Initial fetch
                 const snap = await getDoc(docRef);
                 if (snap.exists()) {
                     const data = snap.data();
@@ -129,6 +120,15 @@
                 }
                 renderClientMenu();
 
+                onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data && data.state) {
+                            clientState = Object.assign(clientState, data.state);
+                            renderClientMenu();
+                        }
+                    }
+                });
             } catch (e) {
                 console.warn("Cloud sync client fallback warning:", e);
                 const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
