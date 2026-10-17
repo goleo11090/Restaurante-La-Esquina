@@ -973,7 +973,6 @@
 
             } catch (e) {
                 console.warn("Firebase cloud initialization warning (falling back to local state):", e);
-                // Fallback to local storage if firebase fails or is unconfigured
                 const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
                 if (saved) {
                     try { window.state = JSON.parse(saved); } catch(err) {}
