@@ -71,7 +71,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'la-esquina-pos-v5';
@@ -93,7 +93,12 @@
                 const app = initializeApp(firebaseConfig);
                 const db = getFirestore(app);
                 const auth = getAuth(app);
-                await signInAnonymously(auth);
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
 
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'restaurant_state');
                 const snap = await getDoc(docRef);
@@ -116,7 +121,6 @@
                 });
             } catch (e) {
                 console.warn("Cloud sync client fallback warning:", e);
-                // Fallback to local storage
                 const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
                 if (saved) {
                     try {
@@ -208,18 +212,6 @@
 
         window.onload = function() {
             initClientCloudSync();
-            setInterval(() => {
-                const saved = localStorage.getItem('gastrocontrol_esquina_v5_cloud_fallback');
-                if (saved) {
-                    try {
-                        const parsed = JSON.parse(saved);
-                        if (parsed.menu) clientState.menu = parsed.menu;
-                        if (parsed.categorias) clientState.categorias = parsed.categorias;
-                        if (parsed.insumos) clientState.insumos = parsed.insumos;
-                        renderClientMenu();
-                    } catch(err) {}
-                }
-            }, 1500);
         };
     </script>
 </body>
