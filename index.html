@@ -1110,7 +1110,9 @@
             });
         };
 
-        window.openLoginModal = function() {
+        window.openLoginModal = async function() {
+            // Recargar datos desde Supabase al abrir el modal para ver usuarios creados en otro equipo
+            await cargarDatosSupabase();
             const modal = document.getElementById('modal-login');
             if (modal) {
                 modal.classList.remove('hidden');
@@ -2372,11 +2374,13 @@
             }
         };
 
-        window.abrirModalUsuarios = function() {
+        window.abrirModalUsuarios = async function() {
             if (!window.state.currentUser || window.state.currentUser.role !== 'admin') {
                 showToast("Solo el Administrador puede gestionar usuarios", "error");
                 return;
             }
+            // Sincronizar usuarios desde Supabase antes de abrir la lista
+            await cargarDatosSupabase();
             const modal = document.getElementById('modal-usuarios');
             if (modal) {
                 modal.classList.remove('hidden');
