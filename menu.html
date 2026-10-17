@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menú Digital - LA ESQUINA</title>
+    <title>Menú Digital - Restaurante La Esquina</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -38,15 +38,17 @@
 </head>
 <body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 antialiased select-none">
 
-    <!-- Client Header with Large Restaurant Logo -->
-    <header class="bg-slate-900 border-b border-slate-800 py-8 px-4 text-center sticky top-0 z-30 shadow-md">
-        <div class="max-w-md mx-auto flex flex-col items-center justify-center space-y-3">
-            <svg viewBox="0 0 1000 320" width="280" height="auto" class="mx-auto text-white fill-current">
-                <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="square" />
-                <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
-                <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
-            </svg>
-            <p class="text-xs font-bold text-slate-400 tracking-widest uppercase">Mariscos, Asados y Mas</p>
+    <!-- Client Header with Large Restaurant Logo LA ESQUINA -->
+    <header class="bg-slate-900 border-b border-slate-800 py-6 px-4 text-center sticky top-0 z-30 shadow-md">
+        <div class="max-w-md mx-auto flex flex-col items-center justify-center space-y-2">
+            <div class="bg-amber-500/10 p-3 rounded-2xl border border-amber-500/30 shadow-lg flex items-center justify-center">
+                <svg viewBox="0 0 1000 320" width="240" height="auto" class="text-amber-400 fill-current">
+                    <path d="M 80 50 L 80 270 L 320 270" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="square" />
+                    <text x="350" y="115" font-family="serif" font-size="80" font-style="italic" font-weight="normal" fill="currentColor">Restaurante</text>
+                    <text x="80" y="235" font-family="serif" font-size="160" font-weight="bold" fill="currentColor">La esquina</text>
+                </svg>
+            </div>
+            <p class="text-xs font-bold text-amber-400/90 tracking-widest uppercase">Mariscos, asados y mucho más ...</p>
         </div>
     </header>
 
@@ -54,7 +56,7 @@
         <!-- Search & Categories Bar -->
         <div class="space-y-4 max-w-2xl mx-auto">
             <div class="relative">
-                <input id="client-search-input" type="text" oninput="renderClientMenu()" placeholder="🔍 Buscar platillo, bebida o ingrediente..." class="w-full bg-slate-900 border border-slate-800 text-white font-bold text-sm rounded-2xl py-3 px-4 pl-11 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-lg">
+                <input id="client-search-input" type="text" oninput="renderClientMenu()" placeholder="Buscar platillo, bebida o ingrediente..." class="w-full bg-slate-900 border border-slate-800 text-white font-bold text-sm rounded-2xl py-3 px-4 pl-11 focus:outline-none focus:ring-2 focus:ring-brand-500 shadow-lg">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-500"></i>
             </div>
             <div id="client-categories-pills" class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar justify-center">
@@ -90,32 +92,9 @@
                     categoria: 'Platillos', 
                     imagen: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80', 
                     descripcion: 'Torta de carne premium, queso cheddar, tocino y aderezo especial'
-                },
-                { 
-                    id: 3, 
-                    nombre: 'Cerveza Gallo 350ml', 
-                    precio: 20.00, 
-                    categoria: 'Bebidas', 
-                    imagen: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=400&q=80', 
-                    descripcion: 'Cerveza nacional fría de frasco de vidrio'
-                },
-                { 
-                    id: 4, 
-                    nombre: 'Limonada Natural', 
-                    precio: 15.00, 
-                    categoria: 'Bebidas', 
-                    imagen: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80', 
-                    descripcion: 'Jugo de limón recién exprimido con jarabe de la casa'
-                },
-                { 
-                    id: 5, 
-                    nombre: 'Flan de la Casa', 
-                    precio: 25.00, 
-                    categoria: 'Postres', 
-                    imagen: 'https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?auto=format&fit=crop&w=400&q=80', 
-                    descripcion: 'Flan artesanal de leche condensada con caramelo líquido'
                 }
-            ]
+            ],
+            insumos: []
         };
 
         let state = JSON.parse(JSON.stringify(defaultState));
@@ -127,10 +106,26 @@
                     const parsed = JSON.parse(saved);
                     if (parsed.menu) state.menu = parsed.menu;
                     if (parsed.categorias) state.categorias = parsed.categorias;
+                    if (parsed.insumos) state.insumos = parsed.insumos;
                 }
             } catch (e) {
                 console.error("Error cargando estado:", e);
             }
+        }
+
+        function calcularStockDisponibleProducto(prod) {
+            if (!state.insumos || state.insumos.length === 0 || !prod.receta || prod.receta.length === 0) return 999;
+            let maxPortions = Infinity;
+            prod.receta.forEach(r => {
+                const insumo = state.insumos.find(i => i.id === r.insumo_id);
+                if (insumo) {
+                    const possible = Math.floor(insumo.stock / r.cantidad);
+                    if (possible < maxPortions) maxPortions = possible;
+                } else {
+                    maxPortions = 0;
+                }
+            });
+            return maxPortions === Infinity ? 0 : maxPortions;
         }
 
         function setClientCategory(cat) {
@@ -168,34 +163,48 @@
                 return;
             }
 
-            grid.innerHTML = filtered.map(p => `
-                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-slate-700">
-                    <div class="relative">
-                        <img src="${p.imagen || 'https://placehold.co/400x250/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-full h-48 object-cover">
-                        <span class="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-brand-400 border border-brand-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
-                            ${p.categoria}
-                        </span>
-                    </div>
-                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-                        <div>
-                            <h3 class="font-black text-white text-base leading-snug">${p.nombre}</h3>
-                            <p class="text-xs text-slate-400 mt-1 leading-relaxed">${p.descripcion || 'Sin descripción detallada'}</p>
+            grid.innerHTML = filtered.map(p => {
+                const stock = calcularStockDisponibleProducto(p);
+                const isAgotado = stock <= 0;
+                const badge = isAgotado ? '<span class="absolute top-3 left-3 bg-rose-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase">Agotado</span>' : '';
+
+                return `
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-slate-700 ${isAgotado ? 'opacity-60' : ''}">
+                        <div class="relative">
+                            <img src="${p.imagen || 'https://placehold.co/400x250/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-full h-48 object-cover">
+                            <span class="absolute top-3 right-3 bg-slate-950/80 backdrop-blur-md text-brand-400 border border-brand-500/30 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                                ${p.categoria}
+                            </span>
+                            ${badge}
                         </div>
-                        <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
-                            <span class="text-lg font-black text-emerald-400">Q${p.precio.toFixed(2)}</span>
+                        <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                            <div>
+                                <h3 class="font-black text-white text-base leading-snug">${p.nombre}</h3>
+                                <p class="text-xs text-slate-400 mt-1 leading-relaxed">${p.descripcion || 'Sin descripción detallada'}</p>
+                            </div>
+                            <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
+                                <span class="text-lg font-black text-emerald-400">Q${p.precio.toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         window.onload = function() {
             renderClientMenu();
-            // Auto-refresh every 2 seconds to instantly catch any menu updates made by the admin in index.html
+
+            // Sincronización en tiempo real vía localStorage storage events y intervalo
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'gastrocontrol_esquina_v5_state') {
+                    renderClientMenu();
+                }
+            });
+
             setInterval(() => {
                 loadStateFromStorage();
                 renderClientMenu();
-            }, 2000);
+            }, 1500);
         };
     </script>
 </body>
