@@ -15,6 +15,8 @@
     <!-- html2pdf & Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         tailwind.config = {
@@ -35,6 +37,14 @@
                 }
             }
         };
+
+        // Credenciales de Supabase integradas
+        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co/rest/v1/';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
+
+        // Inicializar cliente de Supabase (nota: la URL base para createClient no debe incluir '/rest/v1/')
+        const supabaseUrlClean = 'https://esrgrhfshzzvzriyynan.supabase.co';
+        const supabase = window.supabase.createClient(supabaseUrlClean, SUPABASE_ANON_KEY);
     </script>
 
     <style>
@@ -833,21 +843,16 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- FIREBASE AND APP SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'la-esquina-pos-v5';
-        const firebaseConfig = {
-            apiKey: "AIzaSyADgzSxR1VM587RiNrgC4ylfR5-yiovFok",
-            authDomain: "laesquinapos-69a89.firebaseapp.com",
-            projectId: "laesquinapos-69a89",
-            storageBucket: "laesquinapos-69a89.firebasestorage.app",
-            messagingSenderId: "184903943379",
-            appId: "1:184903943379:web:b206ba6a8610ba3ffa4026",
-            measurementId: "G-MCMSCPX465"
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDummyKeyForStaticHosting",
+            authDomain: "la-esquina.firebaseapp.com",
+            projectId: "la-esquina"
         };
 
         let db = null;
