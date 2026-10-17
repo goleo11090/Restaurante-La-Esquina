@@ -194,7 +194,7 @@
         window.onload = function() {
             renderClientMenu();
 
-            // Sincronización en tiempo real vía localStorage storage events y intervalo
+            // Real-time synchronization across browser tabs and storage updates
             window.addEventListener('storage', (e) => {
                 if (e.key === 'gastrocontrol_esquina_v5_state') {
                     renderClientMenu();
