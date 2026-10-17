@@ -124,9 +124,6 @@
         </nav>
 
         <div class="flex items-center gap-2 sm:gap-3">
-            <button id="supabase-config-btn" onclick="abrirModalSupabaseConfig()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-black px-3.5 py-2 rounded-xl transition flex items-center gap-2 shadow-lg shadow-cyan-600/30 animate-pulse" title="Configurar Conexión Supabase">
-                <i class="fa-solid fa-database"></i> <span>Configurar Supabase</span>
-            </button>
             <button id="admin-reset-btn" onclick="restablecerSistema()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-bold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 hidden" title="Restablecer Sistema">
                 <i class="fa-solid fa-rotate-left"></i> <span class="hidden xl:inline">Restablecer</span>
             </button>
@@ -504,119 +501,6 @@
         </section>
     </main>
 
-    <!-- MODAL SUPABASE CONFIG -->
-    <div id="modal-supabase" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-lg shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-                <h3 class="font-black text-white text-base flex items-center gap-2">
-                    <i class="fa-solid fa-database text-cyan-400"></i> Configuración Supabase
-                </h3>
-                <button onclick="cerrarModalSupabaseConfig()" class="text-slate-400 hover:text-white text-lg">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <p class="text-xs text-slate-300">Conecte su base de datos Supabase ingresando la URL del proyecto y su clave ANON/Public.</p>
-            <div class="space-y-3 text-xs">
-                <div>
-                    <label class="block font-bold text-slate-400 uppercase mb-1">Supabase Project URL</label>
-                    <input id="supabase-url-input" type="text" placeholder="https://xyzproject.supabase.co" class="w-full bg-slate-800 border border-slate-700 text-white font-mono rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                </div>
-                <div>
-                    <label class="block font-bold text-slate-400 uppercase mb-1">Supabase Anon Key</label>
-                    <input id="supabase-key-input" type="password" placeholder="eyJhbGciOiJIUzI1Ni..." class="w-full bg-slate-800 border border-slate-700 text-white font-mono rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                </div>
-                <button onclick="guardarYConectarSupabase()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded-xl transition shadow-lg shadow-cyan-600/20">
-                    Conectar y Sincronizar Base de Datos
-                </button>
-            </div>
-            <div class="border-t border-slate-800 pt-3">
-                <h4 class="font-black text-[11px] text-amber-400 uppercase mb-2">📋 Script SQL para Supabase (Ejecutar en Supabase SQL Editor):</h4>
-                <textarea readonly rows="8" class="w-full bg-slate-950 text-slate-300 font-mono text-[10px] p-2 rounded-xl border border-slate-800 custom-scrollbar">
--- Tabla de Usuarios y Personal
-create table if not exists usuarios (
-    id serial primary key,
-    nombre text not null,
-    rol text not null,
-    password text not null
-);
-
--- Tabla de Categorías de Menú
-create table if not exists categorias (
-    id serial primary key,
-    nombre text unique not null
-);
-
--- Tabla de Materia Prima / Insumos
-create table if not exists insumos (
-    id serial primary key,
-    nombre text not null,
-    unidad text not null,
-    stock numeric default 0
-);
-
--- Tabla de Platillos y Bebidas (Menú)
-create table if not exists menu (
-    id serial primary key,
-    nombre text not null,
-    precio numeric not null,
-    tiempo_estimado int default 10,
-    categoria text not null,
-    estacion text not null,
-    imagen text,
-    descripcion text,
-    receta jsonb default '[]'::jsonb
-);
-
--- Tabla de Mesas y Para Llevar
-create table if not exists mesas (
-    id int primary key,
-    numero text not null,
-    estado text default 'libre'
-);
-
--- Tabla de Reservaciones
-create table if not exists reservaciones (
-    id bigint primary key,
-    mesa_id int,
-    cliente text,
-    telefono text,
-    personas int,
-    fecha text,
-    hora text,
-    notas text,
-    estado text default 'confirmada'
-);
-
--- Tabla de Comandas Activas
-create table if not exists comandas (
-    id bigint primary key,
-    mesa_id int,
-    mesero_nombre text,
-    estado text default 'abierta',
-    created_at bigint,
-    items jsonb default '[]'::jsonb
-);
-
--- Tabla Historial de Ventas / Cobros
-create table if not exists ventas (
-    id text primary key,
-    fecha text,
-    mesa_id int,
-    mesero_nombre text,
-    estado text default 'cerrada',
-    total numeric,
-    metodo_pago text,
-    hora text,
-    items jsonb default '[]'::jsonb
-);
-
--- Insertar Super Admin por defecto
-insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin', '16112021Alo') on conflict (id) do nothing;
-                </textarea>
-            </div>
-        </div>
-    </div>
-
     <!-- MODAL RESERVACION -->
     <div id="modal-reservacion" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4">
@@ -686,13 +570,6 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
             </div>
 
             <form onsubmit="autenticarUsuario(event)" class="space-y-3">
-                <div class="bg-cyan-950/40 border border-cyan-800/60 p-2.5 rounded-2xl flex items-center justify-between">
-                    <span class="text-[10px] text-cyan-300 font-bold">¿Primera vez con Supabase?</span>
-                    <button type="button" onclick="cerrarLoginYAbrirSupabase()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-xl transition shadow">
-                        Configurar aquí
-                    </button>
-                </div>
-
                 <div>
                     <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
                     <input id="login-username" type="text" required placeholder="Nombre de usuario" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -959,11 +836,10 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
+        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
+        
         let supabaseClient = null;
-        let supabaseConfig = {
-            url: localStorage.getItem('gastro_supabase_url') || '',
-            key: localStorage.getItem('gastro_supabase_key') || ''
-        };
 
         const defaultState = {
             currentUser: null,
@@ -1027,47 +903,15 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
         let chartInstance = null;
 
         function initSupabaseConnection() {
-            if (supabaseConfig.url && supabaseConfig.key && window.supabase) {
+            if (window.supabase) {
                 try {
-                    supabaseClient = window.supabase.createClient(supabaseConfig.url, supabaseConfig.key);
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
                     cargarDatosSupabase();
                 } catch (e) {
                     console.warn("Supabase initialization error:", e);
                 }
             }
         }
-
-        window.abrirModalSupabaseConfig = function() {
-            document.getElementById('supabase-url-input').value = supabaseConfig.url;
-            document.getElementById('supabase-key-input').value = supabaseConfig.key;
-            document.getElementById('modal-supabase').classList.remove('hidden');
-        };
-
-        window.cerrarModalSupabaseConfig = function() {
-            document.getElementById('modal-supabase').classList.add('hidden');
-        };
-
-        window.guardarYConectarSupabase = async function() {
-            const url = document.getElementById('supabase-url-input').value.trim();
-            const key = document.getElementById('supabase-key-input').value.trim();
-            if (!url || !key) {
-                showToast("Ingrese URL y Key válidas", "error");
-                return;
-            }
-            supabaseConfig.url = url;
-            supabaseConfig.key = key;
-            localStorage.setItem('gastro_supabase_url', url);
-            localStorage.setItem('gastro_supabase_key', key);
-            
-            try {
-                supabaseClient = window.supabase.createClient(url, key);
-                await cargarDatosSupabase();
-                cerrarModalSupabaseConfig();
-                showToast("Conexión con Supabase establecida con éxito", "success");
-            } catch (e) {
-                showToast("Error conectando con Supabase: " + e.message, "error");
-            }
-        };
 
         async function cargarDatosSupabase() {
             if (!supabaseClient) return;
@@ -1275,11 +1119,6 @@ insert into usuarios (id, nombre, rol, password) values (1, 'servipicho', 'admin
                 if (userInp) userInp.value = '';
                 if (passInp) passInp.value = '';
             }
-        };
-
-        window.cerrarLoginYAbrirSupabase = function() {
-            closeLoginModal();
-            abrirModalSupabaseConfig();
         };
 
         window.closeLoginModal = function() {
