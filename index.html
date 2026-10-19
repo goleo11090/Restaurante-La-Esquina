@@ -69,8 +69,8 @@
     <!-- Header Navigation -->
     <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md" id="header-root">
         <div class="flex items-center gap-3">
-            <div id="header-logo-container" class="h-10 max-w-[180px] rounded-xl overflow-hidden flex items-center justify-center bg-slate-800 shadow-lg shadow-brand-500/20 px-2">
-                <div class="w-full h-full bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-xl">E</div>
+            <div id="header-logo-container" class="h-10 max-w-[180px] rounded-xl overflow-hidden flex items-center justify-center bg-slate-800 shadow-lg shadow-brand-500/25 px-2">
+                <span class="text-white font-black text-sm tracking-wider">LA ESQUINA</span>
             </div>
         </div>
 
@@ -563,6 +563,7 @@
                     <div>
                         <label class="block font-bold text-slate-300 uppercase mb-1">URL de la Imagen de Pantalla de Login y Encabezado</label>
                         <input id="cfg-login-logo" type="url" placeholder="https://ejemplo.com/login-logo.png" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <p class="text-[10px] text-slate-400 mt-1">💡 Sincronizado en la nube: Cualquier dispositivo de la red local leerá esta URL guardada automáticamente en Supabase.</p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -651,9 +652,7 @@
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div class="text-center space-y-1">
                 <div id="login-logo-container" class="mb-3">
-                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 mx-auto flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30">
-                        E
-                    </div>
+                    <span class="text-white font-black text-xl tracking-wider">LA ESQUINA</span>
                 </div>
                 <h3 class="text-lg font-black text-white">LA ESQUINA</h3>
                 <p class="text-xs text-slate-400">Ingrese sus credenciales de acceso</p>
@@ -919,8 +918,6 @@
             realtime: { enabled: false }
         });
 
-        const DEFAULT_LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAABkCAYAAAC0zN7HAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek53Y3VjNVFlIj4gPHg6e21wOm1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wbnM6eD0iYWRvYmU6bnM6bWV0YS8iPjxyZGY6UkRGIHxmlnsDpzaW1wbGU9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zaW1wbGUvIiB4bWxuczpzdFJlZj0iaHR0cHM6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVFJlc291cmNlIj48cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIiB4bXA6Q3JlYXRvclRvb2xBaW5wZXRpZXMiIHhtcDpDcmVhdGVEYXRlPSIyMDI2LTEwLTE4VDIyOjQ0OjAwKzAwOjAwIiB4bXA6TW9kaWZ5RGF0ZT0iMjAyNi0xMC0xOFQyMjowNDA5KzAwOjAwIi8+PC9yZGY6UkRjPjwvcmRmOlJERj48L3g6eG1wbWV0YT48P3hwYWNrZXQgZW5kPSJyIj8+iSgV3AAAAAFiS0dEAIgFHUgAAABKSURBVHja7MExAQAAAMKg9U9tDB8gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4FwABbAAB72688gAAAABJRU5ErkJggg==";
-
         const state = {
             currentUser: { role: 'admin', nombre: 'alphatech' },
             activeMesaId: 1,
@@ -959,7 +956,7 @@
         };
 
         window.onload = async function() {
-            aplicarConfiguracionVisual();
+            await aplicarConfiguracionVisual();
             renderUserSession();
             renderMesas();
             renderGridLlevar();
@@ -975,7 +972,7 @@
             iniciarRealtimeSupabase();
         };
 
-        function aplicarConfiguracionVisual() {
+        async function aplicarConfiguracionVisual() {
             const theme = localStorage.getItem('pos_theme_mode') || 'dark';
             const htmlRoot = document.getElementById('html-root');
             const bodyRoot = document.getElementById('body-root');
@@ -995,16 +992,34 @@
                 if (headerRoot) headerRoot.className = "bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md";
             }
 
-            const loginLogoUrl = localStorage.getItem('pos_login_logo');
+            // CARGAR LOGO DESDE SUPABASE (Para que se vea en cualquier equipo de la red local)
+            let loginLogoUrl = localStorage.getItem('pos_login_logo');
+            try {
+                const { data, error } = await supabaseClient.from('configuracion').select('*').eq('clave', 'logo_url').single();
+                if (!error && data && data.valor) {
+                    loginLogoUrl = data.valor;
+                    localStorage.setItem('pos_login_logo', loginLogoUrl);
+                }
+            } catch (e) {
+                console.warn("Usando logo respaldado localmente", e);
+            }
+
             const headerLogoContainer = document.getElementById('header-logo-container');
-            const logoSrc = loginLogoUrl ? loginLogoUrl : DEFAULT_LOGO_BASE64;
             if (headerLogoContainer) {
-                headerLogoContainer.innerHTML = `<img src="${logoSrc}" class="w-full h-full object-contain">`;
+                if (loginLogoUrl && loginLogoUrl.trim() !== '') {
+                    headerLogoContainer.innerHTML = `<img src="${loginLogoUrl}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-sm tracking-wider\'>LA ESQUINA</span>';">`;
+                } else {
+                    headerLogoContainer.innerHTML = `<span class="text-white font-black text-sm tracking-wider">LA ESQUINA</span>`;
+                }
             }
 
             const loginContainer = document.getElementById('login-logo-container');
             if (loginContainer) {
-                loginContainer.innerHTML = `<img src="${logoSrc}" class="max-h-16 mx-auto object-contain rounded-xl shadow-md">`;
+                if (loginLogoUrl && loginLogoUrl.trim() !== '') {
+                    loginContainer.innerHTML = `<img src="${loginLogoUrl}" class="max-h-16 mx-auto object-contain rounded-xl shadow-md" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-xl tracking-wider\'>LA ESQUINA</span>';">`;
+                } else {
+                    loginContainer.innerHTML = `<span class="text-white font-black text-xl tracking-wider">LA ESQUINA</span>`;
+                }
             }
         }
 
@@ -1018,7 +1033,7 @@
         }
 
         async function cargarInventarioDesdeSupabase() {
-            const { data, error } = await supabaseClient.from('inventario').select('*');
+            const { data, error }  = await supabaseClient.from('inventario').select('*');
             if (!error && data) {
                 state.inventario = data;
                 renderInventario();
@@ -1115,13 +1130,11 @@
         function switchTab(tabName) {
             const role = state.currentUser.role;
 
-            // Restricción estricta para Cocina y Barra
             if ((role === 'cocinero' || role === 'barista') && tabName !== 'cocina' && tabName !== 'barra') {
                 showToast("Acceso no autorizado para su rol", "error");
                 return;
             }
 
-            // Restricción de Historial Admin y Config
             if (tabName === 'admin-historial' && role !== 'admin' && role !== 'cajero') {
                 showToast("Acceso reservado para Administradores", "error");
                 return;
@@ -1197,7 +1210,6 @@
             const role = state.currentUser.role;
             const nombreUsuario = state.currentUser.nombre.toLowerCase();
 
-            // Ocultar pestañas no permitidas para Cocina y Barra
             if (role === 'cocinero' || role === 'barista') {
                 if (navContainer) {
                     navContainer.querySelectorAll('button').forEach(btn => {
@@ -1306,16 +1318,12 @@
             if (montoCajaChica === null) return;
 
             const fondoNum = parseFloat(montoCajaChica) || 0;
-            
-            // Limpieza y reinicio de caja y ventas para el nuevo día (respaldado en Historial Admin)
             state.fondoCajaInicial = fondoNum;
             localStorage.setItem('pos_fondo_caja', fondoNum);
 
             state.turnoActivoFecha = new Date().toISOString().split('T')[0];
             localStorage.setItem('pos_turno_activo_fecha', state.turnoActivoFecha);
 
-            // Marcar las ventas anteriores como ya cerradas/limpias de la vista de caja diaria (manteniéndose en Historial Admin)
-            // Se actualiza el turno activo para que solo muestre las comandas desde este instante en adelante
             const nowIso = new Date().toISOString();
             localStorage.setItem('pos_ultimo_inicio_dia', nowIso);
 
@@ -1346,17 +1354,13 @@
             const efectivoTotalCaja = totalEfectivo + (state.fondoCajaInicial || 0);
             const fechaMostrar = new Date().toLocaleDateString();
             const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const customTicketLogo = localStorage.getItem('pos_ticket_logo');
-            const logoSrc = customTicketLogo ? customTicketLogo : DEFAULT_LOGO_BASE64;
+            const logoSrc = localStorage.getItem('pos_login_logo') || '';
 
             const ticket = document.getElementById('printable-ticket');
             if (!ticket) return;
 
             ticket.innerHTML = `
-                <div style="text-align: center; margin-bottom: 6px;">
-                    <img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto; filter: contrast(150%);" crossorigin="anonymous">
-                    <div style="font-size: 11px; font-weight: bold; margin-top: 4px; text-transform: uppercase;">Mariscos, Asados y Mas</div>
-                </div>
+                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
                 <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">CIERRE DE DÍA</div>
                 <div style="text-align: center;">Fecha: ${fechaMostrar}</div>
                 <div style="text-align: center; font-size: 10px;">Impreso a las: ${horaImpresion}</div>
@@ -1385,19 +1389,34 @@
             document.getElementById('cfg-theme-mode').value = localStorage.getItem('pos_theme_mode') || 'dark';
         }
 
-        function guardarConfiguracionAdmin(e) {
+        async function guardarConfiguracionAdmin(e) {
             e.preventDefault();
             if (state.currentUser.nombre.toLowerCase() !== 'alphatech') {
-                showToast("Acceso exclusivo para el usuario alphatech", "error");
+                showToast("Acceso exclusivo para alphatech", "error");
                 return;
             }
 
-            localStorage.setItem('pos_ticket_logo', document.getElementById('cfg-ticket-logo').value.trim());
-            localStorage.setItem('pos_login_logo', document.getElementById('cfg-login-logo').value.trim());
-            localStorage.setItem('pos_brand_color', document.getElementById('cfg-brand-color').value);
-            localStorage.setItem('pos_theme_mode', document.getElementById('cfg-theme-mode').value);
+            const logoUrl = document.getElementById('cfg-login-logo').value.trim();
+            const ticketLogo = document.getElementById('cfg-ticket-logo').value.trim();
+            const brandColor = document.getElementById('cfg-brand-color').value;
+            const themeMode = document.getElementById('cfg-theme-mode').value;
 
-            showToast("Configuración guardada. Recargando...", "success");
+            localStorage.setItem('pos_ticket_logo', ticketLogo);
+            localStorage.setItem('pos_login_logo', logoUrl);
+            localStorage.setItem('pos_brand_color', brandColor);
+            localStorage.setItem('pos_theme_mode', themeMode);
+
+            // Guardar en Supabase para sincronizar con toda la red local
+            try {
+                await supabaseClient.from('configuracion').upsert([
+                    { clave: 'logo_url', valor: logoUrl },
+                    { clave: 'ticket_logo', valor: ticketLogo }
+                ], { onConflict: 'clave' });
+            } catch (err) {
+                console.warn("Asegúrate de tener creada la tabla 'configuracion' en Supabase con columnas 'clave' (text, PK) y 'valor' (text)", err);
+            }
+
+            showToast("Configuración guardada y sincronizada. Recargando...", "success");
             setTimeout(() => location.reload(), 1000);
         }
 
@@ -1686,6 +1705,10 @@
             switchTab('pos');
         }
 
+        function seleccionarMesaForPOS(mesaId) {
+            state.activeMesaId = mesaId;
+            switchTab('pos');
+        }
         function seleccionarMesaParaPOS(mesaId) {
             state.activeMesaId = mesaId;
             switchTab('pos');
@@ -2084,17 +2107,13 @@
                 etiquetaMesa = m ? m.nombre : `Mesa #${comanda.mesa_id}`;
             }
 
-            const customTicketLogo = localStorage.getItem('pos_ticket_logo');
-            const logoSrc = customTicketLogo ? customTicketLogo : DEFAULT_LOGO_BASE64;
+            const logoSrc = localStorage.getItem('pos_login_logo') || '';
             const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
             const fechaImpresion = comanda.fecha || new Date().toLocaleDateString();
             const horaImpresion = comanda.hora || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
             ticket.innerHTML = `
-                <div style="text-align: center; margin-bottom: 6px;">
-                    <img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto; filter: contrast(150%);" crossorigin="anonymous">
-                    <div style="font-size: 11px; font-weight: bold; margin-top: 4px; text-transform: uppercase;">Mariscos, Asados y Mas</div>
-                </div>
+                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
                 <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
                 <div>--------------------------------</div>
                 <div>Origen: ${etiquetaMesa}</div>
@@ -2131,14 +2150,12 @@
 
             let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
             const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_LOGO_BASE64;
+            const logoSrc = localStorage.getItem('pos_login_logo') || '';
             const fechaImpresion = new Date().toLocaleDateString();
             const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
             ticket.innerHTML = `
-                <div style="text-align: center; margin-bottom: 6px;">
-                    <img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;">
-                </div>
+                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
                 <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">PRE-CUENTA</div>
                 <div>--------------------------------</div>
                 <div>Origen: ${etiquetaMesa}</div>
@@ -2417,7 +2434,6 @@
             const body = document.getElementById('ventas-table-body');
             if (!body) return;
 
-            // Ventas estrictamente del turno activo actual (desde el último "Iniciar Día")
             const ultimoInicio = localStorage.getItem('pos_ultimo_inicio_dia');
             const dataset = state.ventas.filter(v => {
                 if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
