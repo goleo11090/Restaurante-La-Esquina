@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú Digital - LA ESQUINA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 select-none">
+
+    <!-- Header / Branding -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-30 shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-brand-500/30">
+                E
+            </div>
+            <div>
+                <h1 class="font-black text-lg text-white tracking-wide">LA ESQUINA</h1>
+                <p class="text-xs text-slate-400">Menú Digital Interactivo</p>
+            </div>
+        </div>
+        <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3.5 py-1.5 rounded-xl flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En Línea
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto space-y-6 overflow-y-auto custom-scrollbar">
+        
+        <!-- Categorías Pills -->
+        <div id="categorias-container" class="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
+            <button onclick="filtrarCategoriaCliente('Todos')" id="cat-pill-Todos" class="cat-pill px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap bg-brand-500 text-white shadow-md">
+                Todos los Platillos
+            </button>
+        </div>
+
+        <!-- Grid de Productos -->
+        <div id="menu-digital-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        © 2026 La Esquina • Mariscos, Asados y Más. ¡Buen provecho!
+    </footer>
+
+    <script>
+        // CONFIGURACIÓN DE SUPABASE (La misma de tu sistema POS)
+        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let menuData = [];
+        let categoriaSeleccionada = 'Todos';
+        let categoriasList = ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'];
+
+        window.onload = async function() {
+            await cargarMenuDigital();
+            iniciarRealtimeCliente();
+        };
+
+        async function cargarMenuDigital() {
+            const { data, error } = await supabaseClient.from('menu').select('*');
+            if (!error && data) {
+                menuData = data;
+                
+                // Extraer categorías únicas si existen nuevas
+                data.forEach(p => {
+                    if (p.categoria && !categoriasList.includes(p.categoria)) {
+                        categoriasList.push(p.categoria);
+                    }
+                });
+
+                renderCategoriasPills();
+                renderMenuDigitalGrid();
+            }
+        }
+
+        function iniciarRealtimeCliente() {
+            try {
+                supabaseClient
+                    .channel('realtime-menu-cliente')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'menu' }, payload => {
+                        cargarMenuDigital();
+                    })
+                    .subscribe();
+            } catch (err) {
+                console.warn("Realtime no disponible en este entorno", err);
+            }
+        }
+
+        function renderCategoriasPills() {
+            const container = document.getElementById('categorias-container');
+            if (!container) return;
+
+            const allCats = ['Todos', ...categoriasList];
+            container.innerHTML = allCats.map(cat => `
+                <button onclick="filtrarCategoriaCliente('${cat}')" id="cat-pill-${cat}" class="cat-pill px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap ${categoriaSeleccionada === cat ? 'bg-brand-500 text-white shadow-md' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'}">
+                    ${cat}
+                </button>
+            `).join('');
+        }
+
+        function filtrarCategoriaCliente(cat) {
+            categoriaSeleccionada = cat;
+            renderCategoriasPills();
+            renderMenuDigitalGrid();
+        }
+
+        function renderMenuDigitalGrid() {
+            const grid = document.getElementById('menu-digital-grid');
+            if (!grid) return;
+
+            const filtrados = categoriaSeleccionada === 'Todos' ? menuData : menuData.filter(p => p.categoria === categoriaSeleccionada);
+
+            if (filtrados.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-2">
+                        <i class="fa-solid fa-utensils text-4xl text-slate-700"></i>
+                        <p class="text-slate-400 font-bold text-xs">No hay platillos disponibles en esta categoría</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtrados.map(p => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col justify-between transition hover:border-brand-500/50">
+                    <img src="${p.imagen || 'https://placehold.co/400x300/1e293b/white?text=La+Esquina'}" alt="${p.nombre}" class="w-full h-44 object-cover">
+                    <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+                        <div>
+                            <div class="flex items-center justify-between gap-2">
+                                <h3 class="font-black text-sm text-white">${p.nombre}</h3>
+                                <span class="bg-brand-500/20 text-brand-400 font-bold text-[9px] px-2 py-0.5 rounded uppercase">${p.categoria || 'Especialidad'}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1 line-clamp-2">${p.descripcion || 'Delicioso platillo preparado al momento con los mejores ingredientes.'}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-800/80">
+                            <span class="text-[10px] font-bold text-slate-500 uppercase">Precio</span>
+                            <span class="text-lg font-black text-brand-400">Q${p.precio.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
