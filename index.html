@@ -14,6 +14,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- html2pdf.js for PDF Reports -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
         tailwind.config = {
@@ -126,43 +128,28 @@
                     <p class="text-xs text-slate-400">Seleccione una mesa para abrir o atender una comanda</p>
                 </div>
             </div>
-            <div id="mesas-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                <!-- Dynamically populated tables -->
-            </div>
+            <div id="mesas-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4"></div>
         </section>
 
         <!-- 2. POS ORDER VIEW -->
         <section id="view-pos" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <!-- Left: Catalog & Products -->
             <div class="lg:col-span-7 xl:col-span-8 space-y-4">
-                <!-- Mesa & Mesero Selectors -->
                 <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex flex-wrap items-center justify-between gap-3">
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-bold text-slate-400">Mesa:</span>
-                        <select id="pos-mesa-select" onchange="changePosActiveTable(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            <!-- Options populated via JS -->
-                        </select>
+                        <select id="pos-mesa-select" onchange="changePosActiveTable(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-bold text-slate-400">Atiende:</span>
-                        <select id="pos-mesero-select" onchange="changeComandaMesero(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60">
-                            <!-- Options populated via JS -->
-                        </select>
+                        <select id="pos-mesero-select" onchange="changeComandaMesero(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:opacity-60"></select>
                     </div>
                 </div>
 
-                <!-- Categories Pills -->
-                <div id="pos-categories-pills" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-                    <!-- Populated via JS -->
-                </div>
-
-                <!-- Products Grid -->
-                <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    <!-- Populated via JS -->
-                </div>
+                <div id="pos-categories-pills" class="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar"></div>
+                <div id="pos-products-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"></div>
             </div>
 
-            <!-- Right: Order Ticket Cart -->
+            <!-- Cart Ticket -->
             <div class="lg:col-span-5 xl:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-[calc(100vh-140px)] sticky top-20 shadow-xl">
                 <div class="flex items-center justify-between pb-3 border-b border-slate-800">
                     <div>
@@ -172,12 +159,8 @@
                     <span id="comanda-status-badge" class="bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-500/20">Abierta</span>
                 </div>
 
-                <!-- Cart Items List -->
-                <div id="comanda-items-list" class="flex-1 overflow-y-auto py-3 space-y-2.5 custom-scrollbar">
-                    <!-- Items populated via JS -->
-                </div>
+                <div id="comanda-items-list" class="flex-1 overflow-y-auto py-3 space-y-2.5 custom-scrollbar"></div>
 
-                <!-- Cart Totals & Actions -->
                 <div class="pt-3 border-t border-slate-800 space-y-3">
                     <div class="flex items-center justify-between font-black text-lg text-white">
                         <span>TOTAL:</span>
@@ -210,9 +193,7 @@
                     <p class="text-xs text-slate-400">Órdenes de platillos y entradas pendientes</p>
                 </div>
             </div>
-            <div id="kds-cocina-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- KDS cards populated via JS -->
-            </div>
+            <div id="kds-cocina-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
         <!-- 4. BARRA VIEW -->
@@ -225,9 +206,7 @@
                     <p class="text-xs text-slate-400">Órdenes de bebidas y cocteles pendientes</p>
                 </div>
             </div>
-            <div id="kds-barra-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- KDS cards populated via JS -->
-            </div>
+            <div id="kds-barra-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </section>
 
         <!-- 5. MENU MANAGEMENT VIEW -->
@@ -249,7 +228,6 @@
                 </div>
             </div>
 
-            <!-- Menu Table -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-left text-xs">
@@ -263,9 +241,7 @@
                                 <th class="p-3 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="menu-table-body" class="divide-y divide-slate-800 text-slate-300">
-                            <!-- Populated via JS -->
-                        </tbody>
+                        <tbody id="menu-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
                     </table>
                 </div>
             </div>
@@ -290,7 +266,6 @@
                 </div>
             </div>
 
-            <!-- Summary KPI Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md">
                     <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ventas Totales</span>
@@ -310,7 +285,6 @@
                 </div>
             </div>
 
-            <!-- Historical Sales Table -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                 <div class="p-3.5 border-b border-slate-800 flex items-center justify-between">
                     <h3 class="text-xs font-black text-white uppercase tracking-wider">Historial de Comandas Cobradas</h3>
@@ -328,9 +302,7 @@
                                 <th class="p-3 text-right">Re-imprimir</th>
                             </tr>
                         </thead>
-                        <tbody id="ventas-table-body" class="divide-y divide-slate-800 text-slate-300">
-                            <!-- Populated via JS -->
-                        </tbody>
+                        <tbody id="ventas-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
                     </table>
                 </div>
             </div>
@@ -347,7 +319,6 @@
                 </div>
             </div>
 
-            <!-- Inventory KPIs -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
                     <span class="text-[10px] font-bold text-slate-400 uppercase">Total Productos</span>
@@ -358,7 +329,7 @@
                     <h3 id="inv-kpi-saludable" class="text-xl font-black text-emerald-400 mt-1">0</h3>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
-                    <span class="text-[10px] font-bold text-slate-400 uppercase">Alertas (<= 10)</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Alertas (&lt;= 10)</span>
                     <h3 id="inv-kpi-alerta" class="text-xl font-black text-amber-400 mt-1">0</h3>
                 </div>
                 <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
@@ -367,7 +338,6 @@
                 </div>
             </div>
 
-            <!-- Inventory Stock Table -->
             <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="w-full text-left text-xs">
@@ -380,9 +350,7 @@
                                 <th class="p-3 text-right">Reabastecer (+ Cantidad)</th>
                             </tr>
                         </thead>
-                        <tbody id="inventario-table-body" class="divide-y divide-slate-800 text-slate-300">
-                            <!-- Populated via JS -->
-                        </tbody>
+                        <tbody id="inventario-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
                     </table>
                 </div>
             </div>
@@ -410,7 +378,6 @@
                     </select>
                 </div>
 
-                <!-- Admin & Cajero Group -->
                 <div id="login-pass-group" class="space-y-2">
                     <div id="login-user-container">
                         <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Usuario</label>
@@ -422,13 +389,10 @@
                     </div>
                 </div>
 
-                <!-- Personal Select Group -->
                 <div id="login-mesero-group" class="space-y-2 hidden">
                     <div>
                         <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Seleccionar Usuario</label>
-                        <select id="login-mesero-select" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            <!-- Populated via JS -->
-                        </select>
+                        <select id="login-mesero-select" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
                     </div>
                     <div>
                         <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Contraseña / PIN</label>
@@ -472,7 +436,6 @@
                     </button>
                 </div>
 
-                <!-- Cash Quick Denominations -->
                 <div id="cobro-efectivo-group" class="space-y-2">
                     <label class="block text-[11px] font-bold text-slate-400">Paga con (Quetzales):</label>
                     <input id="cobro-monto-recibido" type="number" step="0.01" oninput="calcularCambioCobro()" placeholder="Monto recibido" class="w-full bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
@@ -526,9 +489,7 @@
                 </div>
                 <div>
                     <label class="block font-bold text-slate-400 uppercase mb-1">Categoría</label>
-                    <select id="prod-categoria" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        <!-- Populated via JS -->
-                    </select>
+                    <select id="prod-categoria" class="w-full bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-brand-500"></select>
                 </div>
                 <div>
                     <label class="block font-bold text-slate-400 uppercase mb-1">URL de Fotografía</label>
@@ -580,7 +541,6 @@
                 </button>
             </div>
 
-            <!-- Form to add/edit User -->
             <form onsubmit="guardarUsuarioMesero(event)" class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs">
                 <input id="user-edit-id" type="hidden" value="">
                 <h4 id="user-form-title" class="font-bold text-slate-300 uppercase tracking-wider text-[11px]">Agregar Nuevo Usuario</h4>
@@ -613,7 +573,6 @@
                 </div>
             </form>
 
-            <!-- Staff List Table -->
             <div class="space-y-2">
                 <h4 class="font-bold text-slate-400 text-xs uppercase tracking-wider">Personal Registrado</h4>
                 <div class="max-h-48 overflow-y-auto custom-scrollbar border border-slate-800 rounded-2xl bg-slate-950">
@@ -627,22 +586,22 @@
                                 <th class="p-2.5 text-right">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="usuarios-table-body" class="divide-y divide-slate-800 text-slate-300">
-                            <!-- Populated via JS -->
-                        </tbody>
+                        <tbody id="usuarios-table-body" class="divide-y divide-slate-800 text-slate-300"></tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Hidden 58mm Thermal Printable Ticket Container -->
     <div id="printable-ticket" class="hidden"></div>
-
-    <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
+        // CONFIGURACIÓN DE SUPABASE
+        const SUPABASE_URL = 'https://esrgrhfshzzvzriyynar.supabase.co'; // Extraído del proyecto
+        const SUPABASE_KEY = 'AQUÍ_TU_ANON_PUBLIC_KEY'; // Reemplazar por tu clave anon de Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
         const state = {
             currentUser: { role: 'admin', nombre: 'LA ESQUINA' },
             activeMesaId: 1,
@@ -661,26 +620,71 @@
             mesas: Array.from({ length: 12 }, (_, i) => ({ id: i + 1, numero: i + 1, estado: 'libre' })),
             comandas: [],
             ventas: [],
-            menu: [
-                { id: 1, nombre: 'Puyaso Importado 10oz', precio: 95.00, categoria: 'Carnes', estacion: 'cocina', stock: 25, imagen: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', descripcion: 'Corte magro a la parrilla con papas fritas y guacamol' },
-                { id: 2, nombre: 'Hamburguesa La Esquina', precio: 55.00, categoria: 'Platillos', estacion: 'cocina', stock: 30, imagen: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80', descripcion: 'Torta de carne premium, queso cheddar, tocino y aderezo especial' },
-                { id: 3, nombre: 'Cerveza Gallo 350ml', precio: 20.00, categoria: 'Bebidas', estacion: 'barra', stock: 48, imagen: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?auto=format&fit=crop&w=400&q=80', descripcion: 'Cerveza nacional fría de frasco de vidrio' },
-                { id: 4, nombre: 'Limonada Natural', precio: 15.00, categoria: 'Bebidas', estacion: 'barra', stock: 50, imagen: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=400&q=80', descripcion: 'Jugo de limón recién exprimido con jarabe de la casa' },
-                { id: 5, nombre: 'Flan de la Casa', precio: 25.00, categoria: 'Postres', estacion: 'cocina', stock: 15, imagen: 'https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?auto=format&fit=crop&w=400&q=80', descripcion: 'Flan artesanal de leche de condensada con caramelo líquido' }
-            ]
+            menu: []
         };
 
-        window.onload = function() {
+        window.onload = async function() {
             renderUserSession();
             renderMesas();
             renderPosMesaSelector();
             renderPosMeseroSelector();
             renderPosCategories();
-            renderPosProducts();
-            renderComandaActual();
             renderListaMeserosLoginSelect();
             openLoginModal();
+
+            await cargarMenuDesdeSupabase();
+            await cargarComandasDesdeSupabase();
+            iniciarRealtimeSupabase();
         };
+
+        // --- CONEXIÓN BASE DE DATOS SUPABASE ---
+
+        async function cargarMenuDesdeSupabase() {
+            const { data, error } = await supabase.from('menu').select('*');
+            if (error) {
+                console.error("Error al cargar menú:", error.message);
+            } else if (data && data.length > 0) {
+                state.menu = data;
+            } else {
+                state.menu = [
+                    { id: 1, nombre: 'Puyaso Importado 10oz', precio: 95.00, categoria: 'Carnes', estacion: 'cocina', stock: 25, imagen: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=400&q=80', descripcion: 'Corte magro a la parrilla con papas fritas y guacamol' },
+                    { id: 2, nombre: 'Hamburguesa La Esquina', precio: 55.00, categoria: 'Platillos', estacion: 'cocina', stock: 30, imagen: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=80', descripcion: 'Torta de carne premium, queso cheddar, tocino y aderezo especial' }
+                ];
+            }
+            renderPosProducts();
+        }
+
+        async function cargarComandasDesdeSupabase() {
+            const { data, error } = await supabase.from('ordenes').select('*');
+            if (error) {
+                console.error("Error al cargar órdenes:", error.message);
+            } else if (data) {
+                state.comandas = data.map(ord => ({
+                    id: ord.id,
+                    mesa_id: parseInt(ord.mesa.replace('Mesa #', '').replace('Mesa ', '')) || 1,
+                    mesero_nombre: 'Atendiendo',
+                    estado: ord.estado === 'pendiente' ? 'abierta' : 'cerrada',
+                    items: ord.detalle || [],
+                    total: ord.total
+                }));
+
+                state.ventas = state.comandas.filter(c => c.estado === 'cerrada');
+                renderMesas();
+                renderComandaActual();
+                renderMonitoresIndependientes();
+            }
+        }
+
+        function iniciarRealtimeSupabase() {
+            supabase
+                .channel('realtime-pos')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'ordenes' }, payload => {
+                    cargarComandasDesdeSupabase();
+                })
+                .subscribe();
+        }
+
+        // --- MANEJO DE VISTAS Y NAVEGACIÓN ---
 
         function openLoginModal() {
             const modal = document.getElementById('modal-login');
@@ -802,19 +806,6 @@
                 if (repTab) repTab.classList.add('hidden');
                 if (adminUsersBtn) adminUsersBtn.classList.add('hidden');
             }
-
-            if (role !== 'admin' && role !== 'cajero') {
-                const activeRep = document.getElementById('view-reportes');
-                if (activeRep && !activeRep.classList.contains('hidden')) {
-                    switchTab(role === 'barista' ? 'barra' : role === 'cocinero' ? 'cocina' : 'mesas');
-                }
-            }
-            if (role !== 'admin') {
-                const activeInv = document.getElementById('view-inventario');
-                if (activeInv && !activeInv.classList.contains('hidden')) {
-                    switchTab(role === 'barista' ? 'barra' : role === 'cocinero' ? 'cocina' : 'mesas');
-                }
-            }
         }
 
         function renderListaMeserosLoginSelect() {
@@ -894,15 +885,10 @@
                     renderPosMeseroSelector();
                     renderMenuTable();
 
-                    if (user.rol === 'cocinero') {
-                        switchTab('cocina');
-                    } else if (user.rol === 'barista') {
-                        switchTab('barra');
-                    } else if (user.rol === 'cajero') {
-                        switchTab('reportes');
-                    } else {
-                        switchTab('mesas');
-                    }
+                    if (user.rol === 'cocinero') switchTab('cocina');
+                    else if (user.rol === 'barista') switchTab('barra');
+                    else if (user.rol === 'cajero') switchTab('reportes');
+                    else switchTab('mesas');
 
                     const comanda = getOrCreateComandaActiva();
                     if (comanda && user.rol === 'mesero') comanda.mesero_nombre = user.nombre;
@@ -912,29 +898,15 @@
             }
         }
 
-        function resetFormUsuario() {
-            const editId = document.getElementById('user-edit-id');
-            const nombre = document.getElementById('user-nombre');
-            const rol = document.getElementById('user-rol');
-            const pass = document.getElementById('user-pass');
-            const title = document.getElementById('user-form-title');
-
-            if (editId) editId.value = '';
-            if (nombre) nombre.value = '';
-            if (rol) rol.value = 'mesero';
-            if (pass) pass.value = '';
-            if (title) title.innerText = "Agregar Nuevo Usuario";
-        }
-
         function renderListaUsuariosModal() {
             const body = document.getElementById('usuarios-table-body');
             if (!body) return;
 
             body.innerHTML = state.usuarios.map(u => {
                 const badgeClass = u.rol === 'cajero' ? 'bg-sky-500/20 text-sky-400' :
-                                 u.rol === 'barista' ? 'bg-cyan-500/20 text-cyan-400' :
-                                 u.rol === 'cocinero' ? 'bg-amber-500/20 text-amber-400' :
-                                 'bg-emerald-500/20 text-emerald-400';
+                                   u.rol === 'barista' ? 'bg-cyan-500/20 text-cyan-400' :
+                                   u.rol === 'cocinero' ? 'bg-amber-500/20 text-amber-400' :
+                                   'bg-emerald-500/20 text-emerald-400';
 
                 return `
                     <tr>
@@ -943,16 +915,20 @@
                         <td class="p-2.5"><span class="${badgeClass} px-2 py-0.5 rounded font-black text-[9px] uppercase">${u.rol}</span></td>
                         <td class="p-2.5 font-mono text-slate-400">•••• (${u.password || '123'})</td>
                         <td class="p-2.5 text-right space-x-1">
-                            <button onclick="editarUsuarioMesero(${u.id})" class="text-brand-400 hover:text-brand-300 p-1 font-bold" title="Editar">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                            <button onclick="eliminarUsuarioMesero(${u.id})" class="text-rose-400 hover:text-rose-300 p-1 font-bold" title="Eliminar">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
+                            <button onclick="editarUsuarioMesero(${u.id})" class="text-brand-400 hover:text-brand-300 p-1 font-bold" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="eliminarUsuarioMesero(${u.id})" class="text-rose-400 hover:text-rose-300 p-1 font-bold" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        function resetFormUsuario() {
+            document.getElementById('user-edit-id').value = '';
+            document.getElementById('user-nombre').value = '';
+            document.getElementById('user-rol').value = 'mesero';
+            document.getElementById('user-pass').value = '';
+            document.getElementById('user-form-title').innerText = "Agregar Nuevo Usuario";
         }
 
         function guardarUsuarioMesero(e) {
@@ -962,28 +938,16 @@
             const rol = document.getElementById('user-rol').value;
             const password = document.getElementById('user-pass').value.trim();
 
-            if (!nombre || !password) {
-                showToast("Por favor complete el nombre y la contraseña", "error");
-                return;
-            }
-
             if (editId) {
                 const user = state.usuarios.find(u => u.id === parseInt(editId));
                 if (user) {
                     user.nombre = nombre;
                     user.rol = rol;
                     user.password = password;
-                    showToast(`Usuario ${nombre} (${rol.toUpperCase()}) actualizado`, "success");
                 }
             } else {
                 const newId = state.usuarios.length > 0 ? Math.max(...state.usuarios.map(u => u.id)) + 1 : 1;
-                state.usuarios.push({
-                    id: newId,
-                    nombre: nombre,
-                    rol: rol,
-                    password: password
-                });
-                showToast(`Usuario ${nombre} (${rol.toUpperCase()}) registrado con éxito`, "success");
+                state.usuarios.push({ id: newId, nombre, rol, password });
             }
 
             resetFormUsuario();
@@ -1003,20 +967,11 @@
         }
 
         function eliminarUsuarioMesero(id) {
-            if (state.usuarios.length <= 1) {
-                showToast("Debe existir al menos un usuario registrado", "error");
-                return;
-            }
-            const u = state.usuarios.find(x => x.id === id);
-            if (!u) return;
-
-            if (confirm(`¿Está seguro de eliminar al usuario "${u.nombre}" (${u.rol.toUpperCase()})?`)) {
-                state.usuarios = state.usuarios.filter(x => x.id !== id);
-                showToast(`Usuario ${u.nombre} eliminado`, "info");
-                renderListaUsuariosModal();
-                renderListaMeserosLoginSelect();
-                renderPosMeseroSelector();
-            }
+            if (state.usuarios.length <= 1) return;
+            state.usuarios = state.usuarios.filter(x => x.id !== id);
+            renderListaUsuariosModal();
+            renderListaMeserosLoginSelect();
+            renderPosMeseroSelector();
         }
 
         function renderMesas() {
@@ -1064,8 +1019,6 @@
                     items: []
                 };
                 state.comandas.push(comanda);
-            } else if (state.currentUser.role === 'mesero') {
-                comanda.mesero_nombre = state.currentUser.nombre;
             }
             return comanda;
         }
@@ -1080,13 +1033,7 @@
             const sel = document.getElementById('pos-mesero-select');
             if (!sel) return;
             sel.innerHTML = state.meseros.map(m => `<option value="${m.nombre}">${m.nombre}</option>`).join('');
-            
-            if (state.currentUser.role === 'mesero') {
-                sel.value = state.currentUser.nombre;
-                sel.disabled = true;
-            } else {
-                sel.disabled = false;
-            }
+            sel.disabled = state.currentUser.role === 'mesero';
         }
 
         function changePosActiveTable(mesaId) {
@@ -1144,26 +1091,19 @@
 
         function agregarProductoAComanda(prodId) {
             const prod = state.menu.find(p => p.id === prodId);
-            if (!prod || prod.stock <= 0) {
-                showToast("Producto agotado", "error");
-                return;
-            }
+            if (!prod || prod.stock <= 0) return;
 
             const comanda = getOrCreateComandaActiva();
             const item = comanda.items.find(i => i.producto_id === prodId && !i.enviado);
 
             if (item) {
-                if (item.cantidad + 1 > prod.stock) {
-                    showToast(`Solo quedan ${prod.stock} unidades en existencias`, "error");
-                    return;
-                }
                 item.cantidad++;
             } else {
                 comanda.items.push({
                     producto_id: prod.id,
                     nombre: prod.nombre,
                     precio: prod.precio,
-                    estacion: prod.estacion,
+                    estacion: prod.estacion || 'cocina',
                     cantidad: 1,
                     preparado: 0,
                     enviado: false
@@ -1195,7 +1135,7 @@
                             <div class="flex-1">
                                 <div class="flex items-center gap-1.5">
                                     <span class="font-bold text-xs text-white">${item.nombre}</span>
-                                    ${item.enviado ? '<i class="fa-solid fa-check-double text-amber-400 text-[10px]" title="Enviado a cocina/barra"></i>' : ''}
+                                    ${item.enviado ? '<i class="fa-solid fa-check-double text-amber-400 text-[10px]"></i>' : ''}
                                 </div>
                                 <span class="text-[10px] text-slate-400">Q${item.precio.toFixed(2)} c/u</span>
                             </div>
@@ -1237,32 +1177,35 @@
             return prod ? prod.estacion : 'cocina';
         }
 
-        function enviarEstacionesSinImprimir() {
+        // ENVIAR ORDEN A SUPABASE (SINCRONIZACIÓN EN TIEMPO REAL)
+        async function enviarEstacionesSinImprimir() {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || comanda.items.length === 0) {
                 showToast("Comanda vacía", "error");
                 return;
             }
 
-            let descontados = 0;
-            comanda.items.forEach(item => {
-                if (!item.enviado) {
-                    item.enviado = true;
-                    const prod = state.menu.find(p => p.id === item.producto_id);
-                    if (prod) {
-                        prod.stock = Math.max(0, prod.stock - item.cantidad);
-                        descontados++;
-                        if (prod.stock <= 10 && prod.stock > 0) {
-                            showToast(`⚠️ Alerta: Stock de ${prod.nombre} cayó a ${prod.stock} unidades`, "info");
-                        }
-                    }
-                }
-            });
+            comanda.items.forEach(item => item.enviado = true);
+            const totalMonto = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
 
-            showToast("Órdenes enviadas digitalmente a Cocina/Barra", "success");
-            renderComandaActual();
-            renderMesas();
-            renderPosProducts();
+            // Guardar en la tabla ordenes de Supabase
+            const { data, error } = await supabase
+                .from('ordenes')
+                .upsert([{
+                    id: comanda.id,
+                    mesa: `Mesa #${comanda.mesa_id}`,
+                    detalle: comanda.items,
+                    total: totalMonto,
+                    estado: 'pendiente'
+                }]);
+
+            if (error) {
+                showToast("Error al sincronizar con Supabase: " + error.message, "error");
+            } else {
+                showToast("Órden enviada en tiempo real a Cocina/Barra", "success");
+                renderComandaActual();
+                renderMesas();
+            }
         }
 
         function renderMonitoresIndependientes() {
@@ -1308,7 +1251,7 @@
             renderGrid('barra', gridBarra);
         }
 
-        function marcarEstacionLista(comandaId, estacion) {
+        async function marcarEstacionLista(comandaId, estacion) {
             const comanda = state.comandas.find(c => c.id === comandaId);
             if (!comanda) return;
 
@@ -1318,29 +1261,26 @@
                 }
             });
 
+            // Actualizar estado en Supabase
+            await supabase.from('ordenes').update({ detalle: comanda.items }).eq('id', comandaId);
+
             showToast(`Ítems despachados en ${estacion.toUpperCase()}`, "success");
             renderMonitoresIndependientes();
         }
 
         function abrirModalCobro() {
             const comanda = getOrCreateComandaActiva();
-            if (!comanda || comanda.items.length === 0) {
-                showToast("No hay consumo para cobrar", "error");
-                return;
-            }
+            if (!comanda || comanda.items.length === 0) return;
 
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            const display = document.getElementById('cobro-total-display');
-            if (display) display.innerText = `Q${total.toFixed(2)}`;
+            document.getElementById('cobro-total-display').innerText = `Q${total.toFixed(2)}`;
 
-            const modal = document.getElementById('modal-cobro');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('modal-cobro').classList.remove('hidden');
             setMetodoPago('efectivo');
         }
 
         function cerrarModalCobro() {
-            const modal = document.getElementById('modal-cobro');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-cobro').classList.add('hidden');
         }
 
         function setMetodoPago(metodo) {
@@ -1374,27 +1314,17 @@
             const comanda = getOrCreateComandaActiva();
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
             const recibido = parseFloat(document.getElementById('cobro-monto-recibido').value) || 0;
-            const cambioDisplay = document.getElementById('cobro-cambio-display');
-
             const cambio = Math.max(0, recibido - total);
-            if (cambioDisplay) cambioDisplay.innerText = `Q${cambio.toFixed(2)}`;
+            document.getElementById('cobro-cambio-display').innerText = `Q${cambio.toFixed(2)}`;
         }
 
-        function confirmarPagoYFinalizar() {
+        // CONFIRMAR PAGO Y ACTUALIZAR ESTADO A 'PAGADO' EN SUPABASE
+        async function confirmarPagoYFinalizar() {
             const comanda = getOrCreateComandaActiva();
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
 
-            if (state.metodoPagoSel === 'efectivo') {
-                const recibido = parseFloat(document.getElementById('cobro-monto-recibido').value) || 0;
-                if (recibido < total) {
-                    showToast("El monto recibido es menor al total", "error");
-                    return;
-                }
-            }
-
             const ventaFinal = {
                 ...comanda,
-                items: JSON.parse(JSON.stringify(comanda.items)),
                 estado: 'cerrada',
                 total: total,
                 metodo_pago: state.metodoPagoSel,
@@ -1402,15 +1332,14 @@
             };
 
             comanda.estado = 'cerrada';
-            comanda.total = total;
-            comanda.metodo_pago = state.metodoPagoSel;
-            comanda.hora = ventaFinal.hora;
-
             state.ventas.unshift(ventaFinal);
+
+            // Actualizar registro en Supabase a 'pagado'
+            await supabase.from('ordenes').update({ estado: 'pagado', total: total }).eq('id', comanda.id);
 
             imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
-            showToast("Venta completada e impresa con éxito", "success");
+            showToast("Venta registrada y cerrada en Supabase", "success");
 
             renderMesas();
             renderComandaActual();
@@ -1430,7 +1359,7 @@
                 <div>--------------------------------</div>
                 ${comanda.items.map(i => `
                     <div style="display: flex; justify-content: space-between;">
-                        <span>${i.cantidad}x ${i.nombre}</span>
+                        <span>${i.cantidad}x${i.nombre}</span>
                         <span>Q${(i.precio * i.cantidad).toFixed(2)}</span>
                     </div>
                 `).join('')}
@@ -1444,26 +1373,12 @@
                 <div style="text-align: center;">¡Gracias por su preferencia!</div>
             `;
 
-            setTimeout(() => {
-                window.print();
-            }, 100);
-        }
-
-        function reimprimirVenta(ventaId) {
-            const venta = state.ventas.find(v => v.id === ventaId);
-            if (!venta) {
-                showToast("Venta no encontrada", "error");
-                return;
-            }
-            imprimirTicketFinal58mm(venta);
+            setTimeout(() => { window.print(); }, 100);
         }
 
         function verPrecuentaTicket() {
             const comanda = getOrCreateComandaActiva();
-            if (!comanda || comanda.items.length === 0) {
-                showToast("Sin ítems en comanda", "error");
-                return;
-            }
+            if (!comanda || comanda.items.length === 0) return;
 
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
             const ticket = document.getElementById('printable-ticket');
@@ -1474,11 +1389,10 @@
                 <div style="text-align: center;">PRE-CUENTA</div>
                 <div>--------------------------------</div>
                 <div>Mesa: #${comanda.mesa_id}</div>
-                <div>Mesero: ${comanda.mesero_nombre || 'Mesero'}</div>
                 <div>--------------------------------</div>
                 ${comanda.items.map(i => `
                     <div style="display: flex; justify-content: space-between;">
-                        <span>${i.cantidad}x ${i.nombre}</span>
+                        <span>${i.cantidad}x${i.nombre}</span>
                         <span>Q${(i.precio * i.cantidad).toFixed(2)}</span>
                     </div>
                 `).join('')}
@@ -1489,20 +1403,12 @@
                 </div>
             `;
 
-            setTimeout(() => {
-                window.print();
-            }, 100);
+            setTimeout(() => { window.print(); }, 100);
         }
 
         function renderMenuTable() {
             const body = document.getElementById('menu-table-body');
-            const actions = document.getElementById('admin-menu-actions');
             if (!body) return;
-
-            if (actions) {
-                if (state.currentUser.role === 'admin') actions.classList.remove('hidden');
-                else actions.classList.add('hidden');
-            }
 
             body.innerHTML = state.menu.map(p => `
                 <tr>
@@ -1514,7 +1420,7 @@
                         <div class="text-[10px] text-slate-400 line-clamp-1">${p.descripcion || ''}</div>
                     </td>
                     <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">${p.categoria}</span></td>
-                    <td class="p-3 font-bold text-[10px] uppercase">${p.estacion}</td>
+                    <td class="p-3 font-bold text-[10px] uppercase">${p.estacion || 'cocina'}</td>
                     <td class="p-3 font-black text-brand-400">Q${p.precio.toFixed(2)}</td>
                     <td class="p-3 text-right">
                         ${state.currentUser.role === 'admin' ? `
@@ -1532,92 +1438,43 @@
             if (!modal || !catSel) return;
 
             catSel.innerHTML = state.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-
-            if (id) {
-                const p = state.menu.find(x => x.id === id);
-                if (p) {
-                    document.getElementById('modal-prod-title').innerText = "Editar Producto";
-                    document.getElementById('prod-edit-id').value = p.id;
-                    document.getElementById('prod-nombre').value = p.nombre;
-                    document.getElementById('prod-precio').value = p.precio;
-                    document.getElementById('prod-estacion').value = p.estacion;
-                    document.getElementById('prod-categoria').value = p.categoria;
-                    document.getElementById('prod-imagen').value = p.imagen || '';
-                    document.getElementById('prod-descripcion').value = p.descripcion || '';
-                }
-            } else {
-                document.getElementById('modal-prod-title').innerText = "Nuevo Producto";
-                document.getElementById('prod-edit-id').value = '';
-                document.getElementById('prod-nombre').value = '';
-                document.getElementById('prod-precio').value = '';
-                document.getElementById('prod-imagen').value = '';
-                document.getElementById('prod-descripcion').value = '';
-            }
-
             modal.classList.remove('hidden');
         }
 
         function cerrarModalProducto() {
-            const modal = document.getElementById('modal-producto');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-producto').classList.add('hidden');
         }
 
-        function guardarProducto(e) {
+        async function guardarProducto(e) {
             e.preventDefault();
-            const editId = document.getElementById('prod-edit-id').value;
             const nombre = document.getElementById('prod-nombre').value.trim();
             const precio = parseFloat(document.getElementById('prod-precio').value) || 0;
-            const estacion = document.getElementById('prod-estacion').value;
             const categoria = document.getElementById('prod-categoria').value;
-            const imagen = document.getElementById('prod-imagen').value.trim();
-            const descripcion = document.getElementById('prod-descripcion').value.trim();
 
-            if (editId) {
-                const p = state.menu.find(x => x.id === parseInt(editId));
-                if (p) {
-                    p.nombre = nombre;
-                    p.precio = precio;
-                    p.estacion = estacion;
-                    p.categoria = categoria;
-                    p.imagen = imagen;
-                    p.descripcion = descripcion;
-                }
+            const { data, error } = await supabase.from('menu').insert([{ nombre, precio, categoria }]);
+            if (error) {
+                showToast("Error al guardar en Supabase: " + error.message, "error");
             } else {
-                state.menu.push({
-                    id: Date.now(),
-                    nombre,
-                    precio,
-                    estacion,
-                    categoria,
-                    imagen,
-                    descripcion,
-                    stock: 50
-                });
+                showToast("Producto guardado correctamente", "success");
+                cerrarModalProducto();
+                await cargarMenuDesdeSupabase();
             }
-
-            cerrarModalProducto();
-            renderMenuTable();
-            renderPosProducts();
-            showToast("Producto guardado correctamente", "success");
         }
 
-        function eliminarProducto(id) {
+        async function eliminarProducto(id) {
             if (confirm("¿Desea eliminar este producto del menú?")) {
-                state.menu = state.menu.filter(p => p.id !== id);
-                renderMenuTable();
-                renderPosProducts();
+                await supabase.from('menu').delete().eq('id', id);
+                await cargarMenuDesdeSupabase();
                 showToast("Producto eliminado", "info");
             }
         }
 
         function abrirModalCategoria() {
-            const modal = document.getElementById('modal-categoria');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('modal-categoria').classList.remove('hidden');
         }
 
         function cerrarModalCategoria() {
-            const modal = document.getElementById('modal-categoria');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('modal-categoria').classList.add('hidden');
         }
 
         function guardarCategoria(e) {
@@ -1626,7 +1483,6 @@
             if (name && !state.categorias.includes(name)) {
                 state.categorias.push(name);
                 showToast(`Categoría "${name}" creada`, "success");
-                document.getElementById('cat-nombre').value = '';
                 cerrarModalCategoria();
                 renderPosCategories();
             }
@@ -1641,30 +1497,26 @@
             let saludable = 0, alerta = 0, agotado = 0;
 
             body.innerHTML = state.menu.map(p => {
-                const isAgotado = p.stock <= 0;
-                const isAlerta = p.stock > 0 && p.stock <= 10;
+                const stock = p.stock || 0;
+                const isAgotado = stock <= 0;
+                const isAlerta = stock > 0 && stock <= 10;
 
                 if (isAgotado) agotado++;
                 else if (isAlerta) alerta++;
                 else saludable++;
 
                 const statusBadge = isAgotado ? '<span class="bg-rose-500/20 text-rose-400 font-bold px-2 py-0.5 rounded text-[10px]">AGOTADO</span>' :
-                                   isAlerta ? '<span class="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px]">ALERTA (<=10)</span>' :
+                                   isAlerta ? '<span class="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px]">ALERTA</span>' :
                                    '<span class="bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px]">OK</span>';
 
                 return `
                     <tr>
                         <td class="p-3 font-bold text-white">${p.nombre}</td>
                         <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px]">${p.categoria}</span></td>
-                        <td class="p-3 font-black text-sm text-white">${p.stock}</td>
+                        <td class="p-3 font-black text-sm text-white">${stock}</td>
                         <td class="p-3">${statusBadge}</td>
                         <td class="p-3 text-right">
-                            <div class="flex items-center justify-end gap-1.5">
-                                <input id="inv-input-${p.id}" type="number" min="1" placeholder="Cant." class="w-16 bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-lg p-1.5 text-center focus:outline-none">
-                                <button onclick="agregarStockInput(${p.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">
-                                    + Agregar
-                                </button>
-                            </div>
+                            <button onclick="agregarStockInput(${p.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">+ Agregar</button>
                         </td>
                     </tr>
                 `;
@@ -1674,25 +1526,6 @@
             document.getElementById('inv-kpi-saludable').innerText = saludable;
             document.getElementById('inv-kpi-alerta').innerText = alerta;
             document.getElementById('inv-kpi-agotado').innerText = agotado;
-        }
-
-        function agregarStockInput(prodId) {
-            const input = document.getElementById(`inv-input-${prodId}`);
-            if (!input) return;
-            const cant = parseInt(input.value);
-
-            if (cant && cant > 0) {
-                const prod = state.menu.find(p => p.id === prodId);
-                if (prod) {
-                    prod.stock += cant;
-                    showToast(`Se agregaron +${cant} unidades a ${prod.nombre}`, "success");
-                    input.value = '';
-                    renderInventario();
-                    renderPosProducts();
-                }
-            } else {
-                showToast("Ingrese una cantidad válida mayor a 0", "error");
-            }
         }
 
         function renderReportes() {
@@ -1718,11 +1551,11 @@
                     <td class="p-3 font-bold text-slate-400">#${v.id}</td>
                     <td class="p-3 font-bold text-white">Mesa #${v.mesa_id}</td>
                     <td class="p-3">${v.mesero_nombre || 'Mesero'}</td>
-                    <td class="p-3">${v.hora}</td>
-                    <td class="p-3 uppercase font-bold text-[10px] text-brand-400">${v.metodo_pago}</td>
+                    <td class="p-3">${v.hora || '--:--'}</td>
+                    <td class="p-3 uppercase font-bold text-[10px] text-brand-400">${v.metodo_pago || 'efectivo'}</td>
                     <td class="p-3 font-black text-white">Q${v.total.toFixed(2)}</td>
                     <td class="p-3 text-right">
-                        <button onclick="reimprimirVenta(${v.id})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition" title="Reimprimir Ticket 58mm">
+                        <button onclick="imprimirTicketFinal58mm(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition">
                             <i class="fa-solid fa-print"></i> Reimprimir
                         </button>
                     </td>
@@ -1731,147 +1564,13 @@
         }
 
         function imprimirCorte58mm() {
-            const total = state.ventas.reduce((s, v) => s + v.total, 0);
-            const ticket = document.getElementById('printable-ticket');
-            if (!ticket) return;
-
-            ticket.innerHTML = `
-                <div style="text-align: center; font-weight: bold; font-size: 14px;">LA ESQUINA</div>
-                <div style="text-align: center;">CORTE DE CAJA (Z-REPORT)</div>
-                <div>--------------------------------</div>
-                <div>Fecha: ${new Date().toLocaleDateString()}</div>
-                <div>Generado por: ${state.currentUser.nombre}</div>
-                <div>--------------------------------</div>
-                <div>Transacciones: ${state.ventas.length}</div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-top: 4px;">
-                    <span>TOTAL GENERAL:</span>
-                    <span>Q${total.toFixed(2)}</span>
-                </div>
-                <div>--------------------------------</div>
-                <div style="text-align: center;">FIN DE REPORTE</div>
-            `;
-
             window.print();
         }
 
         function exportarCortePDF() {
-            let totalVentas = 0, efectivo = 0, tarjeta = 0, transferencia = 0;
-            state.ventas.forEach(v => {
-                totalVentas += v.total;
-                if (v.metodo_pago === 'efectivo') efectivo += v.total;
-                else if (v.metodo_pago === 'tarjeta') tarjeta += v.total;
-                else if (v.metodo_pago === 'transferencia') transferencia += v.total;
-            });
-
-            const container = document.createElement('div');
-            container.style.padding = "24px";
-            container.style.fontFamily = "Inter, Arial, sans-serif";
-            container.style.color = "#0f172a";
-
-            const rowsComandas = state.ventas.length === 0 ? `
-                <tr>
-                    <td colspan="5" style="padding: 12px; text-align: center; color: #64748b; font-style: italic;">No hay comandas registradas en este turno.</td>
-                </tr>
-            ` : state.ventas.map((v, index) => {
-                const itemsHtml = v.items && v.items.length > 0 ? v.items.map(i => `
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #475569; padding: 2px 0;">
-                        <span>• ${i.cantidad}x ${i.nombre} (Q${i.precio.toFixed(2)} c/u)</span>
-                        <span style="font-weight: 600;">Q${(i.precio * i.cantidad).toFixed(2)}</span>
-                    </div>
-                `).join('') : '<div style="font-size: 10px; color: #94a3b8;">Sin ítems</div>';
-
-                return `
-                    <tr style="border-bottom: 1px solid #e2e8f0; ${index % 2 === 0 ? 'background-color: #f8fafc;' : ''}">
-                        <td style="padding: 8px; font-size: 11px; font-weight: bold; vertical-align: top;">#${v.id}<br><span style="font-size: 9px; color: #64748b;">${v.hora}</span></td>
-                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
-                            <strong>Mesa #${v.mesa_id}</strong><br>
-                            <span style="font-size: 10px; color: #64748b;">Mesero: ${v.mesero_nombre || 'Mesero'}</span>
-                        </td>
-                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
-                            <span style="display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; ${
-                                v.metodo_pago === 'efectivo' ? 'background: #dcfce7; color: #15803d;' :
-                                v.metodo_pago === 'tarjeta' ? 'background: #e0f2fe; color: #0369a1;' :
-                                'background: #f3e8ff; color: #6b21a8;'
-                            }">${v.metodo_pago}</span>
-                        </td>
-                        <td style="padding: 8px; font-size: 11px; vertical-align: top;">
-                            ${itemsHtml}
-                        </td>
-                        <td style="padding: 8px; font-size: 12px; font-weight: 800; text-align: right; color: #0f172a; vertical-align: top;">
-                            Q${v.total.toFixed(2)}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            container.innerHTML = `
-                <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
-                    <h1 style="font-size: 22px; font-weight: 900; color: #0284c7; margin: 0;">RESTAURANTE LA ESQUINA</h1>
-                    <h3 style="font-size: 13px; color: #475569; margin: 4px 0 0 0; font-weight: 700; text-transform: uppercase;">REPORTE DETALLADO DE CORTE DE CAJA (Z)</h3>
-                </div>
-
-                <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 11px; background-color: #f1f5f9; padding: 12px; border-radius: 8px;">
-                    <div>
-                        <p style="margin: 0 0 4px 0;"><strong>Fecha y Hora de Emisión:</strong> ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
-                        <p style="margin: 0;"><strong>Generado por:</strong> ${state.currentUser.nombre}</p>
-                    </div>
-                    <div style="text-align: right;">
-                        <p style="margin: 0 0 4px 0;"><strong>Total Comandas Cerradas:</strong> ${state.ventas.length}</p>
-                        <p style="margin: 0; font-size: 14px; font-weight: 900; color: #15803d;">TOTAL GENERAL: Q${totalVentas.toFixed(2)}</p>
-                    </div>
-                </div>
-
-                <div style="margin-bottom: 20px;">
-                    <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #334155; margin: 0 0 8px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Resumen por Forma de Pago</h4>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead>
-                            <tr style="background-color: #e2e8f0; color: #334155; text-align: left; font-size: 10px; text-transform: uppercase;">
-                                <th style="padding: 6px 8px;">Efectivo</th>
-                                <th style="padding: 6px 8px;">Tarjeta Débito/Crédito</th>
-                                <th style="padding: 6px 8px;">QR / Transferencia</th>
-                                <th style="padding: 6px 8px; text-align: right;">Total Recaudado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style="font-weight: bold; font-size: 12px;">
-                                <td style="padding: 6px 8px; color: #16a34a;">Q${efectivo.toFixed(2)}</td>
-                                <td style="padding: 6px 8px; color: #0284c7;">Q${tarjeta.toFixed(2)}</td>
-                                <td style="padding: 6px 8px; color: #9333ea;">Q${transferencia.toFixed(2)}</td>
-                                <td style="padding: 6px 8px; text-align: right; color: #0f172a; font-size: 13px;">Q${totalVentas.toFixed(2)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <div>
-                    <h4 style="font-size: 12px; font-weight: 800; text-transform: uppercase; color: #334155; margin: 0 0 8px 0; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">Detalle de Comandas Atendidas</h4>
-                    <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                        <thead>
-                            <tr style="background-color: #0f172a; color: #ffffff; text-align: left; font-size: 10px; text-transform: uppercase;">
-                                <th style="padding: 8px; width: 12%;">ID / Hora</th>
-                                <th style="padding: 8px; width: 22%;">Mesa & Mesero</th>
-                                <th style="padding: 8px; width: 16%;">Pago</th>
-                                <th style="padding: 8px; width: 36%;">Productos & Cantidades</th>
-                                <th style="padding: 8px; width: 14%; text-align: right;">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${rowsComandas}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            const opt = {
-                margin: 0.4,
-                filename: `Corte_Detallado_LaEsquina_${new Date().toISOString().slice(0, 10)}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-
             if (window.html2pdf) {
-                window.html2pdf().set(opt).from(container).save().then(() => showToast("Reporte PDF detallado descargado con éxito", "success"));
+                const element = document.getElementById('view-reportes');
+                window.html2pdf().from(element).save('Corte_Caja_LaEsquina.pdf');
             } else {
                 window.print();
             }
