@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        const brandColor = localStorage.getItem('pos_brand_color') || '#0284c7';
+        const brandColor = '#0284c7';
         tailwind.config = {
             theme: {
                 extend: {
@@ -64,7 +64,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
-<body class="h-full flex flex-col font-sans antialiased select-none" id="body-root">
+<body class="h-full flex flex-col font-sans antialiased select-none bg-slate-950 text-slate-100" id="body-root">
 
     <!-- Header Navigation -->
     <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md" id="header-root">
@@ -926,8 +926,8 @@
             activeMesaId: 1,
             activeCategory: 'Todos',
             metodoPagoSel: 'efectivo',
-            fondoCajaInicial: parseFloat(localStorage.getItem('pos_fondo_caja')) || 0,
-            turnoActivoFecha: localStorage.getItem('pos_turno_activo_fecha') || new Date().toISOString().split('T')[0],
+            fondoCajaInicial: 0,
+            turnoActivoFecha: new Date().toISOString().split('T')[0],
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
             usuarios: [],
             get meseros() {
@@ -971,42 +971,33 @@
         };
 
         async function aplicarConfiguracionVisual() {
-            const theme = localStorage.getItem('pos_theme_mode') || 'dark';
             const htmlRoot = document.getElementById('html-root');
             const bodyRoot = document.getElementById('body-root');
             const headerRoot = document.getElementById('header-root');
 
-            if (theme === 'light') {
-                htmlRoot.className = 'h-full bg-slate-100 text-slate-900';
-                bodyRoot.className = 'h-full flex flex-col font-sans antialiased select-none bg-slate-100 text-slate-900';
-                if (headerRoot) headerRoot.className = "bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-sm";
-                document.querySelectorAll('.card-dynamic').forEach(el => {
-                    el.classList.remove('bg-slate-900', 'border-slate-800');
-                    el.classList.add('bg-white', 'border-slate-200', 'text-slate-900');
-                });
-            } else {
-                htmlRoot.className = 'h-full bg-slate-950 text-slate-100';
-                bodyRoot.className = 'h-full flex flex-col font-sans antialiased select-none bg-slate-950 text-slate-100';
-                if (headerRoot) headerRoot.className = "bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md";
-            }
+            htmlRoot.className = 'h-full bg-slate-950 text-slate-100';
+            bodyRoot.className = 'h-full flex flex-col font-sans antialiased select-none bg-slate-950 text-slate-100';
+            if (headerRoot) headerRoot.className = "bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md";
 
-            let loginLogoUrl = localStorage.getItem('pos_login_logo') || DEFAULT_LOGO_URL;
-            let ticketLogoUrl = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
+            let loginLogoUrl = DEFAULT_LOGO_URL;
+            let ticketLogoUrl = DEFAULT_TICKET_LOGO_URL;
 
             try {
                 const { data, error } = await supabaseClient.from('configuracion').select('*');
                 if (!error && data) {
                     const rowLogo = data.find(d => d.clave === 'logo_url');
                     const rowTicket = data.find(d => d.clave === 'ticket_logo');
+                    const rowFondo = data.find(d => d.clave === 'fondo_caja');
+                    const rowTurno = data.find(d => d.clave === 'turno_activo_fecha');
+                    
                     if (rowLogo && rowLogo.valor) loginLogoUrl = rowLogo.valor;
                     if (rowTicket && rowTicket.valor) ticketLogoUrl = rowTicket.valor;
+                    if (rowFondo && rowFondo.valor) state.fondoCajaInicial = parseFloat(rowFondo.valor) || 0;
+                    if (rowTurno && rowTurno.valor) state.turnoActivoFecha = rowTurno.valor;
                 }
             } catch (e) {
                 console.warn("Usando enlaces predeterminados", e);
             }
-
-            localStorage.setItem('pos_login_logo', loginLogoUrl);
-            localStorage.setItem('pos_ticket_logo', ticketLogoUrl);
 
             const headerLogoContainer = document.getElementById('header-logo-container');
             if (headerLogoContainer) {
@@ -1032,7 +1023,6 @@
             if (!error && data && data.length > 0) {
                 state.usuarios = data;
             } else {
-                // Usuarios predeterminados si la tabla está vacía
                 state.usuarios = [
                     { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
                     { id: 2, nombre: 'Ana Gómez', rol: 'cajero', password: '123' },
@@ -1040,7 +1030,6 @@
                     { id: 4, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' },
                     { id: 5, nombre: 'Admin General', rol: 'admin', password: '123' }
                 ];
-                // Intentar guardar en Supabase para futuras conexiones
                 for (const u of state.usuarios) {
                     await supabaseClient.from('usuarios').upsert([u], { onConflict: 'id' });
                 }
@@ -1057,7 +1046,7 @@
         }
 
         async function cargarInventarioDesdeSupabase() {
-            const { data, error }  = await supabaseClient.from('inventario').select('*');
+            const { data, error } = await supabaseClient.from('inventario').select('*');
             if (!error && data) {
                 state.inventario = data;
                 renderInventario();
@@ -1311,15 +1300,23 @@
             showToast("Usuario o contraseña incorrectos", "error");
         }
 
-        function guardarFondoCaja() {
+        async function guardarFondoCaja() {
             const val = parseFloat(document.getElementById('input-fondo-caja').value) || 0;
             state.fondoCajaInicial = val;
-            localStorage.setItem('pos_fondo_caja', val);
-            showToast(`Fondo de caja inicial guardado: Q${val.toFixed(2)}`, "success");
+            
+            try {
+                await supabaseClient.from('configuracion').upsert([
+                    { clave: 'fondo_caja', valor: val.toString() }
+                ], { onConflict: 'clave' });
+            } catch (err) {
+                console.warn("Error guardando fondo en Supabase", err);
+            }
+
+            showToast(`Fondo de caja inicial guardado en la nube: Q${val.toFixed(2)}`, "success");
             renderReportes();
         }
 
-        function iniciarDiaTurnoPrompt() {
+        async function iniciarDiaTurnoPrompt() {
             const passIngresada = prompt(`Ingrese la contraseña / PIN del usuario activo (${state.currentUser.nombre}):`);
             if (passIngresada === null) return;
 
@@ -1347,22 +1344,28 @@
 
             const fondoNum = parseFloat(montoCajaChica) || 0;
             state.fondoCajaInicial = fondoNum;
-            localStorage.setItem('pos_fondo_caja', fondoNum);
 
             state.turnoActivoFecha = new Date().toISOString().split('T')[0];
-            localStorage.setItem('pos_turno_activo_fecha', state.turnoActivoFecha);
-
             const nowIso = new Date().toISOString();
-            localStorage.setItem('pos_ultimo_inicio_dia', nowIso);
+
+            try {
+                await supabaseClient.from('configuracion').upsert([
+                    { clave: 'fondo_caja', valor: fondoNum.toString() },
+                    { clave: 'turno_activo_fecha', valor: state.turnoActivoFecha },
+                    { clave: 'ultimo_inicio_dia', valor: nowIso }
+                ], { onConflict: 'clave' });
+            } catch (err) {
+                console.warn("Error guardando turno en Supabase", err);
+            }
 
             const inputFondo = document.getElementById('input-fondo-caja');
             if (inputFondo) inputFondo.value = fondoNum > 0 ? fondoNum : '';
 
-            showToast(`¡Nuevo día iniciado! Caja chica y ventas limpiadas (respaldadas en Historial Admin).`, "success");
+            showToast(`¡Nuevo día iniciado en la nube! Caja chica y ventas actualizadas.`, "success");
             renderReportes();
         }
 
-        function generarCierreDeDia58mm() {
+        async function generarCierreDeDia58mm() {
             const fechaHoy = new Date().toISOString().split('T')[0];
             const esAdmin = (state.currentUser.role === 'admin');
             const turnoVentas = esAdmin ? state.ventas : state.ventas.filter(v => (v.fecha || '') >= state.turnoActivoFecha);
@@ -1382,7 +1385,12 @@
             const efectivoTotalCaja = totalEfectivo + (state.fondoCajaInicial || 0);
             const fechaMostrar = new Date().toLocaleDateString();
             const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
+            
+            let logoSrc = DEFAULT_TICKET_LOGO_URL;
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*').eq('clave', 'ticket_logo').single();
+                if (data && data.valor) logoSrc = data.valor;
+            } catch(e) {}
 
             const ticket = document.getElementById('printable-ticket');
             if (!ticket) return;
@@ -1411,10 +1419,24 @@
 
         async function cargarDatosConfiguracionAdmin() {
             if (state.currentUser.nombre.toLowerCase() !== 'alphatech') return;
-            document.getElementById('cfg-login-logo').value = localStorage.getItem('pos_login_logo') || DEFAULT_LOGO_URL;
-            document.getElementById('cfg-ticket-logo').value = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-            document.getElementById('cfg-brand-color').value = localStorage.getItem('pos_brand_color') || '#0284c7';
-            document.getElementById('cfg-theme-mode').value = localStorage.getItem('pos_theme_mode') || 'dark';
+            
+            let loginLogoUrl = DEFAULT_LOGO_URL;
+            let ticketLogoUrl = DEFAULT_TICKET_LOGO_URL;
+
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*');
+                if (data) {
+                    const rowLogo = data.find(d => d.clave === 'logo_url');
+                    const rowTicket = data.find(d => d.clave === 'ticket_logo');
+                    if (rowLogo && rowLogo.valor) loginLogoUrl = rowLogo.valor;
+                    if (rowTicket && rowTicket.valor) ticketLogoUrl = rowTicket.valor;
+                }
+            } catch(e) {}
+
+            document.getElementById('cfg-login-logo').value = loginLogoUrl;
+            document.getElementById('cfg-ticket-logo').value = ticketLogoUrl;
+            document.getElementById('cfg-brand-color').value = '#0284c7';
+            document.getElementById('cfg-theme-mode').value = 'dark';
         }
 
         async function guardarConfiguracionAdmin(e) {
@@ -1426,13 +1448,6 @@
 
             const logoUrl = document.getElementById('cfg-login-logo').value.trim();
             const ticketLogo = document.getElementById('cfg-ticket-logo').value.trim();
-            const brandColor = document.getElementById('cfg-brand-color').value;
-            const themeMode = document.getElementById('cfg-theme-mode').value;
-
-            localStorage.setItem('pos_ticket_logo', ticketLogo);
-            localStorage.setItem('pos_login_logo', logoUrl);
-            localStorage.setItem('pos_brand_color', brandColor);
-            localStorage.setItem('pos_theme_mode', themeMode);
 
             try {
                 await supabaseClient.from('configuracion').upsert([
@@ -1443,7 +1458,7 @@
                 console.warn("Error guardando en Supabase", err);
             }
 
-            showToast("Configuración guardada y sincronizada. Recargando...", "success");
+            showToast("Configuración guardada en la nube. Recargando...", "success");
             setTimeout(() => location.reload(), 1000);
         }
 
@@ -2138,7 +2153,7 @@
             renderAdminHistorial();
         }
 
-        function imprimirTicketFinal58mm(comanda) {
+        async function imprimirTicketFinal58mm(comanda) {
             const ticket = document.getElementById('printable-ticket');
             if (!ticket) return;
 
@@ -2148,7 +2163,12 @@
                 etiquetaMesa = m ? m.nombre : `Mesa #${comanda.mesa_id}`;
             }
 
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
+            let logoSrc = DEFAULT_TICKET_LOGO_URL;
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*').eq('clave', 'ticket_logo').single();
+                if (data && data.valor) logoSrc = data.valor;
+            } catch(e) {}
+
             const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
             const fechaImpresion = comanda.fecha || new Date().toLocaleDateString();
             const horaImpresion = comanda.hora || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2181,7 +2201,7 @@
             setTimeout(() => window.print(), 200);
         }
 
-        function verPrecuentaTicket() {
+        async function verPrecuentaTicket() {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || comanda.items.length === 0) return;
 
@@ -2191,7 +2211,13 @@
 
             let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
             const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
+            
+            let logoSrc = DEFAULT_TICKET_LOGO_URL;
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*').eq('clave', 'ticket_logo').single();
+                if (data && data.valor) logoSrc = data.valor;
+            } catch(e) {}
+
             const fechaImpresion = new Date().toLocaleDateString();
             const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -2471,11 +2497,16 @@
             }
         }
 
-        function renderReportes() {
+        async function renderReportes() {
             const body = document.getElementById('ventas-table-body');
             if (!body) return;
 
-            const ultimoInicio = localStorage.getItem('pos_ultimo_inicio_dia');
+            let ultimoInicio = null;
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*').eq('clave', 'ultimo_inicio_dia').single();
+                if (data && data.valor) ultimoInicio = data.valor;
+            } catch(e) {}
+
             const dataset = state.ventas.filter(v => {
                 if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
                 if (ultimoInicio) {
@@ -2529,7 +2560,7 @@
                         </td>
                     </tr>
                 `;
-            }).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-bold">No hay registros de ventas para este nuevo día</td></tr>`;
+            }).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-bold">No hay registros de ventas para este turno</td></tr>`;
         }
 
         let ventasFiltradasCache = [];
@@ -2712,14 +2743,19 @@
             });
         }
 
-        function exportarCortePDF() {
+        async function exportarCortePDF() {
             if (!window.html2pdf) {
                 showToast("Librería PDF no cargada", "error");
                 window.print();
                 return;
             }
 
-            const ultimoInicio = localStorage.getItem('pos_ultimo_inicio_dia');
+            let ultimoInicio = null;
+            try {
+                const { data } = await supabaseClient.from('configuracion').select('*').eq('clave', 'ultimo_inicio_dia').single();
+                if (data && data.valor) ultimoInicio = data.valor;
+            } catch(e) {}
+
             const turnoVentas = state.ventas.filter(v => {
                 if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
                 if (ultimoInicio) {
