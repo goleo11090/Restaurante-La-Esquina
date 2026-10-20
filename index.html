@@ -914,7 +914,7 @@
         const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            realtime: { enabled: false }
+            realtime: { enabled: true }
         });
 
         // ENLACES PÚBLICOS OFICIALES DE SUPABASE STORAGE
@@ -926,8 +926,9 @@
             activeMesaId: 1,
             activeCategory: 'Todos',
             metodoPagoSel: 'efectivo',
-            fondoCajaInicial: parseFloat(localStorage.getItem('pos_fondo_caja')) || 0,
-            turnoActivoFecha: localStorage.getItem('pos_turno_activo_fecha') || new Date().toISOString().split('T')[0],
+            fondoCajaInicial: 0,
+            turnoActivoFecha: new Date().toISOString().split('T')[0],
+            ultimoInicioDia: null,
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
             usuarios: [],
             get meseros() {
@@ -954,6 +955,7 @@
 
         window.onload = async function() {
             await aplicarConfiguracionVisual();
+            await cargarEstadoCajaDesdeSupabase();
             await cargarUsuariosDesdeSupabase();
             renderUserSession();
             renderMesas();
@@ -969,6 +971,36 @@
             await cargarComandasDesdeSupabase();
             iniciarRealtimeSupabase();
         };
+
+        async function cargarEstadoCajaDesdeSupabase() {
+            try {
+                const { data, error } = await supabaseClient.from('caja_estado').select('*').eq('id', 'principal').single();
+                if (!error && data) {
+                    state.fondoCajaInicial = parseFloat(data.fondo_inicial) || 0;
+                    state.turnoActivoFecha = data.turno_fecha || new Date().toISOString().split('T')[0];
+                    state.ultimoInicioDia = data.ultimo_inicio || null;
+                } else {
+                    await supabaseClient.from('caja_estado').upsert([{
+                        id: 'principal',
+                        fondo_inicial: 0,
+                        turno_fecha: new Date().toISOString().split('T')[0],
+                        ultimo_inicio: new Date().toISOString()
+                    }]);
+                }
+            } catch (e) {
+                console.warn("Error cargando estado de caja en red:", e);
+            }
+        }
+
+        async function guardarEstadoCajaEnSupabase() {
+            await supabaseClient.from('caja_estado').upsert([{
+                id: 'principal',
+                fondo_inicial: state.fondoCajaInicial,
+                turno_fecha: state.turnoActivoFecha,
+                ultimo_inicio: state.ultimoInicioDia,
+                actualizado_at: new Date().toISOString()
+            }]);
+        }
 
         async function aplicarConfiguracionVisual() {
             const theme = localStorage.getItem('pos_theme_mode') || 'dark';
@@ -1032,7 +1064,6 @@
             if (!error && data && data.length > 0) {
                 state.usuarios = data;
             } else {
-                // Usuarios predeterminados si la tabla está vacía
                 state.usuarios = [
                     { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
                     { id: 2, nombre: 'Ana Gómez', rol: 'cajero', password: '123' },
@@ -1040,7 +1071,6 @@
                     { id: 4, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' },
                     { id: 5, nombre: 'Admin General', rol: 'admin', password: '123' }
                 ];
-                // Intentar guardar en Supabase para futuras conexiones
                 for (const u of state.usuarios) {
                     await supabaseClient.from('usuarios').upsert([u], { onConflict: 'id' });
                 }
@@ -1057,7 +1087,7 @@
         }
 
         async function cargarInventarioDesdeSupabase() {
-            const { data, error }  = await supabaseClient.from('inventario').select('*');
+            const { data, error } = await supabaseClient.from('inventario').select('*');
             if (!error && data) {
                 state.inventario = data;
                 renderInventario();
@@ -1125,6 +1155,14 @@
                         })
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, payload => {
                             cargarUsuariosDesdeSupabase();
+                        })
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'caja_estado' }, payload => {
+                            if (payload.new) {
+                                state.fondoCajaInicial = parseFloat(payload.new.fondo_inicial) || 0;
+                                state.turnoActivoFecha = payload.new.turno_fecha || state.turnoActivoFecha;
+                                state.ultimoInicioDia = payload.new.ultimo_inicio || state.ultimoInicioDia;
+                                renderReportes();
+                            }
                         })
                         .subscribe();
                 }
@@ -1311,15 +1349,15 @@
             showToast("Usuario o contraseña incorrectos", "error");
         }
 
-        function guardarFondoCaja() {
+        async function guardarFondoCaja() {
             const val = parseFloat(document.getElementById('input-fondo-caja').value) || 0;
             state.fondoCajaInicial = val;
-            localStorage.setItem('pos_fondo_caja', val);
-            showToast(`Fondo de caja inicial guardado: Q${val.toFixed(2)}`, "success");
+            await guardarEstadoCajaEnSupabase();
+            showToast(`Fondo de caja inicial guardado en red: Q${val.toFixed(2)}`, "success");
             renderReportes();
         }
 
-        function iniciarDiaTurnoPrompt() {
+        async function iniciarDiaTurnoPrompt() {
             const passIngresada = prompt(`Ingrese la contraseña / PIN del usuario activo (${state.currentUser.nombre}):`);
             if (passIngresada === null) return;
 
@@ -1347,18 +1385,15 @@
 
             const fondoNum = parseFloat(montoCajaChica) || 0;
             state.fondoCajaInicial = fondoNum;
-            localStorage.setItem('pos_fondo_caja', fondoNum);
-
             state.turnoActivoFecha = new Date().toISOString().split('T')[0];
-            localStorage.setItem('pos_turno_activo_fecha', state.turnoActivoFecha);
+            state.ultimoInicioDia = new Date().toISOString();
 
-            const nowIso = new Date().toISOString();
-            localStorage.setItem('pos_ultimo_inicio_dia', nowIso);
+            await guardarEstadoCajaEnSupabase();
 
             const inputFondo = document.getElementById('input-fondo-caja');
             if (inputFondo) inputFondo.value = fondoNum > 0 ? fondoNum : '';
 
-            showToast(`¡Nuevo día iniciado! Caja chica y ventas limpiadas (respaldadas en Historial Admin).`, "success");
+            showToast(`¡Nuevo día iniciado en red para todos los dispositivos!`, "success");
             renderReportes();
         }
 
@@ -1746,10 +1781,6 @@
             switchTab('pos');
         }
 
-        function seleccionarMesaForPOS(mesaId) {
-            state.activeMesaId = mesaId;
-            switchTab('pos');
-        }
         function seleccionarMesaParaPOS(mesaId) {
             state.activeMesaId = mesaId;
             switchTab('pos');
@@ -2475,11 +2506,10 @@
             const body = document.getElementById('ventas-table-body');
             if (!body) return;
 
-            const ultimoInicio = localStorage.getItem('pos_ultimo_inicio_dia');
             const dataset = state.ventas.filter(v => {
                 if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
-                if (ultimoInicio) {
-                    return v.timestamp_cobro >= new Date(ultimoInicio).getTime();
+                if (state.ultimoInicioDia) {
+                    return v.timestamp_cobro >= new Date(state.ultimoInicioDia).getTime();
                 }
                 return (v.fecha || '') >= state.turnoActivoFecha;
             });
@@ -2719,11 +2749,10 @@
                 return;
             }
 
-            const ultimoInicio = localStorage.getItem('pos_ultimo_inicio_dia');
             const turnoVentas = state.ventas.filter(v => {
                 if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
-                if (ultimoInicio) {
-                    return v.timestamp_cobro >= new Date(ultimoInicio).getTime();
+                if (state.ultimoInicioDia) {
+                    return v.timestamp_cobro >= new Date(state.ultimoInicioDia).getTime();
                 }
                 return (v.fecha || '') >= state.turnoActivoFecha;
             });
