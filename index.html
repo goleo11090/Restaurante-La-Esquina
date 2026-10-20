@@ -914,7 +914,7 @@
         const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-            realtime: { enabled: false }
+            realtime: { enabled: true }
         });
 
         // ENLACES PÚBLICOS OFICIALES DE SUPABASE STORAGE
@@ -1083,7 +1083,7 @@
                         mesa_id: (ord.mesa.includes('Para Llevar') || ord.mesa.includes('Llevar')) ? ord.id : (parseInt(ord.mesa.replace('Mesa #', '').replace('Mesa ', '')) || ord.id),
                         tipo_orden: (ord.mesa.includes('Para Llevar') || ord.mesa.includes('Llevar')) ? 'llevar' : 'mesa',
                         mesero_nombre: meseroExtra,
-                        estado: ord.estado === 'pendiente' ? 'abierta' : 'cerrada',
+                        estado: (ord.estado === 'pendiente' || ord.estado === 'abierta') ? 'abierta' : 'cerrada',
                         items: ord.detalle || [],
                         total: ord.total,
                         timestamp_cobro: timestampExtra,
@@ -1966,12 +1966,13 @@
                     detalle: comanda.items,
                     total: totalMonto,
                     estado: 'pendiente'
-                }]);
+                }], { onConflict: 'id' });
 
             if (error) {
-                showToast("Error al sincronizar con Supabase: " + error.message, "error");
+                console.error("Error Supabase Comanda:", error);
+                showToast("Error al sincronizar comanda: " + (error.message || error.hint), "error");
             } else {
-                showToast("Órden enviada a Cocina/Barra", "success");
+                showToast("Órden enviada a Cocina/Barra en la nube", "success");
                 renderComandaActual();
                 renderMesas();
                 renderGridLlevar();
@@ -2032,7 +2033,13 @@
                 if (getItemEstacion(i) === estacion) i.preparado = i.cantidad;
             });
 
-            await supabaseClient.from('ordenes').update({ detalle: comanda.items }).eq('id', comandaId);
+            const { error } = await supabaseClient.from('ordenes').update({ detalle: comanda.items }).eq('id', comandaId);
+            if (error) {
+                console.error("Error actualizando estación:", error);
+                showToast("Error al actualizar estación en la nube", "error");
+                return;
+            }
+
             showToast(`Ítems despachados en ${estacion.toUpperCase()}`, "success");
             renderMonitoresIndependientes();
         }
@@ -2133,18 +2140,24 @@
             let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
             const textoMesaConMesero = `${etiquetaMesa} (Atiende: ${meseroActual})`;
 
-            await supabaseClient.from('ordenes').upsert([{
+            const { error } = await supabaseClient.from('ordenes').upsert([{
                 id: comanda.id,
                 mesa: textoMesaConMesero,
                 detalle: comanda.items,
                 total: total,
                 estado: 'pagado'
-            }]);
+            }], { onConflict: 'id' });
+
+            if (error) {
+                console.error("Error al guardar venta en Supabase:", error);
+                showToast("Error al registrar venta en la nube: " + error.message, "error");
+                return;
+            }
 
             await cargarInventarioDesdeSupabase();
             imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
-            showToast(`Venta cobrada por ${meseroActual}`, "success");
+            showToast(`Venta cobrada y guardada en Supabase por ${meseroActual}`, "success");
 
             renderMesas();
             renderGridLlevar();
