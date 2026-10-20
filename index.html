@@ -432,7 +432,7 @@
             </div>
         </section>
 
-        <!-- 9. ADMIN HISTORICAL VIEW (EXCLUSIVE ADMIN BUTTON) -->
+        <!-- 9. ADMIN HISTORICAL VIEW -->
         <section id="view-admin-historial" class="view-panel hidden space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
                 <div>
@@ -490,14 +490,14 @@
             </div>
         </section>
 
-        <!-- 10. INVENTARIO MODULE (ADMIN ONLY) -->
+        <!-- 10. INVENTARIO MODULE -->
         <section id="view-inventario" class="view-panel hidden space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
                 <div>
                     <h2 class="text-lg font-black text-white flex items-center gap-2">
                         <i class="fa-solid fa-boxes-stacked text-emerald-400"></i> Inventario de Insumos & Materia Prima
                     </h2>
-                    <p class="text-xs text-slate-400">Control de ingredientes (pan de hamburguesa, queso oz, carnes, verduras, etc.)</p>
+                    <p class="text-xs text-slate-400">Control de ingredientes y existencias</p>
                 </div>
                 <div>
                     <button onclick="abrirModalInsumo()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition shadow-lg shadow-emerald-600/20 flex items-center gap-1.5">
@@ -910,14 +910,12 @@
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
-        // CONFIGURACIÓN DE SUPABASE
         const SUPABASE_URL = 'https://esrgrhfshzzvzriyynan.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzcmdyaGZzaHp6dnpyaXl5bmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyMTM2MTUsImV4cCI6MjEwNzc4OTYxNX0.Kbk6jRxTYivxMb0F_YE13a4vK-a25cxoVCb4wGIrjRI';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
             realtime: { enabled: true }
         });
 
-        // ENLACES PÚBLICOS OFICIALES DE SUPABASE STORAGE
         const DEFAULT_LOGO_URL = 'https://esrgrhfshzzvzriyynan.supabase.co/storage/v1/object/public/IMAGENES/LOGO%20LA%20ESQUINA.jpg';
         const DEFAULT_TICKET_LOGO_URL = 'https://esrgrhfshzzvzriyynan.supabase.co/storage/v1/object/public/IMAGENES/LOGO%20LA%20ESQUINA.png';
 
@@ -931,9 +929,6 @@
             ultimoInicioDia: null,
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
             usuarios: [],
-            get meseros() {
-                return this.usuarios.filter(u => u.rol === 'mesero' || u.rol === 'admin');
-            },
             mesas: [
                 { id: 1, nombre: 'Mesa #1' },
                 { id: 2, nombre: 'Mesa #2' },
@@ -948,8 +943,7 @@
             inventario: [],
             recetas: [],
             reservaciones: [
-                { id: 1, cliente: 'María López', telefono: '5512-3456', personas: 6, fecha: new Date().toISOString().split('T')[0], hora: '19:00', tipo: 'Cumpleaños', estado: 'Confirmada' },
-                { id: 2, cliente: 'Grupo Empresa Sol', telefono: '4433-2211', personas: 12, fecha: new Date().toISOString().split('T')[0], hora: '13:00', tipo: 'Reunión de Trabajo', estado: 'Confirmada' }
+                { id: 1, cliente: 'María López', telefono: '5512-3456', personas: 6, fecha: new Date().toISOString().split('T')[0], hora: '19:00', tipo: 'Cumpleaños', estado: 'Confirmada' }
             ]
         };
 
@@ -988,7 +982,7 @@
                     }]);
                 }
             } catch (e) {
-                console.warn("Error cargando estado de caja en red:", e);
+                console.warn("Caja estado error:", e);
             }
         }
 
@@ -1012,10 +1006,6 @@
                 htmlRoot.className = 'h-full bg-slate-100 text-slate-900';
                 bodyRoot.className = 'h-full flex flex-col font-sans antialiased select-none bg-slate-100 text-slate-900';
                 if (headerRoot) headerRoot.className = "bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-sm";
-                document.querySelectorAll('.card-dynamic').forEach(el => {
-                    el.classList.remove('bg-slate-900', 'border-slate-800');
-                    el.classList.add('bg-white', 'border-slate-200', 'text-slate-900');
-                });
             } else {
                 htmlRoot.className = 'h-full bg-slate-950 text-slate-100';
                 bodyRoot.className = 'h-full flex flex-col font-sans antialiased select-none bg-slate-950 text-slate-100';
@@ -1023,39 +1013,9 @@
             }
 
             let loginLogoUrl = localStorage.getItem('pos_login_logo') || DEFAULT_LOGO_URL;
-            let ticketLogoUrl = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-
-            try {
-                const { data, error } = await supabaseClient.from('configuracion').select('*');
-                if (!error && data) {
-                    const rowLogo = data.find(d => d.clave === 'logo_url');
-                    const rowTicket = data.find(d => d.clave === 'ticket_logo');
-                    if (rowLogo && rowLogo.valor) loginLogoUrl = rowLogo.valor;
-                    if (rowTicket && rowTicket.valor) ticketLogoUrl = rowTicket.valor;
-                }
-            } catch (e) {
-                console.warn("Usando enlaces predeterminados", e);
-            }
-
-            localStorage.setItem('pos_login_logo', loginLogoUrl);
-            localStorage.setItem('pos_ticket_logo', ticketLogoUrl);
-
             const headerLogoContainer = document.getElementById('header-logo-container');
             if (headerLogoContainer) {
-                if (loginLogoUrl && loginLogoUrl.trim() !== '') {
-                    headerLogoContainer.innerHTML = `<img src="${loginLogoUrl}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-sm tracking-wider\'>LA ESQUINA</span>';">`;
-                } else {
-                    headerLogoContainer.innerHTML = `<span class="text-white font-black text-sm tracking-wider">LA ESQUINA</span>`;
-                }
-            }
-
-            const loginContainer = document.getElementById('login-logo-container');
-            if (loginContainer) {
-                if (loginLogoUrl && loginLogoUrl.trim() !== '') {
-                    loginContainer.innerHTML = `<img src="${loginLogoUrl}" class="max-h-16 mx-auto object-contain rounded-xl shadow-md" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-xl tracking-wider\'>LA ESQUINA</span>';">`;
-                } else {
-                    loginContainer.innerHTML = `<span class="text-white font-black text-xl tracking-wider">LA ESQUINA</span>`;
-                }
+                headerLogoContainer.innerHTML = `<img src="${loginLogoUrl}" class="w-full h-full object-contain" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-sm tracking-wider\'>LA ESQUINA</span>';">`;
             }
         }
 
@@ -1079,9 +1039,7 @@
 
         async function cargarMenuDesdeSupabase() {
             const { data, error } = await supabaseClient.from('menu').select('*');
-            if (!error && data) {
-                state.menu = data;
-            }
+            if (!error && data) state.menu = data;
             renderPosProducts();
             renderMenuTable();
         }
@@ -1107,30 +1065,34 @@
             if (!error && data) {
                 state.comandas = data.map(ord => {
                     let fechaOrd = ord.created_at ? ord.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
-                    let horaExtra = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    let pagoExtra = 'efectivo';
+                    let horaExtra = new Date(ord.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     let timestampExtra = ord.created_at ? new Date(ord.created_at).getTime() : Date.now();
                     
-                    let meseroExtra = ord.mesero || 'Mesero';
-                    if (ord.mesa && ord.mesa.includes('Atiende:')) {
-                        const parts = ord.mesa.split('Atiende:');
-                        if (parts[1]) {
-                            meseroExtra = parts[1].replace(')', '').trim();
-                        }
+                    let meseroExtra = 'Mesero';
+                    let mesaNombre = ord.mesa || 'Mesa #1';
+                    if (mesaNombre.includes('Atiende:')) {
+                        const parts = mesaNombre.split('Atiende:');
+                        mesaNombre = parts[0].trim();
+                        if (parts[1]) meseroExtra = parts[1].replace(')', '').trim();
                     }
+
+                    const esLlevar = mesaNombre.includes('Para Llevar') || mesaNombre.includes('Llevar');
+                    const mesaIdNum = esLlevar ? ord.id : (parseInt(mesaNombre.replace('Mesa #', '').replace('Mesa ', '')) || ord.id);
+
+                    let estadoComanda = ord.estado === 'pagado' ? 'cerrada' : 'abierta';
 
                     return {
                         id: ord.id,
-                        mesa_id: (ord.mesa.includes('Para Llevar') || ord.mesa.includes('Llevar')) ? ord.id : (parseInt(ord.mesa.replace('Mesa #', '').replace('Mesa ', '')) || ord.id),
-                        tipo_orden: (ord.mesa.includes('Para Llevar') || ord.mesa.includes('Llevar')) ? 'llevar' : 'mesa',
+                        mesa_id: mesaIdNum,
+                        tipo_orden: esLlevar ? 'llevar' : 'mesa',
                         mesero_nombre: meseroExtra,
-                        estado: ord.estado === 'pendiente' ? 'abierta' : 'cerrada',
+                        estado: estadoComanda,
                         items: ord.detalle || [],
-                        total: ord.total,
+                        total: parseFloat(ord.total) || 0,
                         timestamp_cobro: timestampExtra,
                         fecha: fechaOrd,
                         hora: horaExtra,
-                        metodo_pago: pagoExtra
+                        metodo_pago: 'efectivo'
                     };
                 });
 
@@ -1149,7 +1111,7 @@
             try {
                 if (supabaseClient.channel) {
                     supabaseClient
-                        .channel('realtime-pos')
+                        .channel('realtime-global-sync')
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'ordenes' }, payload => {
                             cargarComandasDesdeSupabase();
                         })
@@ -1164,10 +1126,16 @@
                                 renderReportes();
                             }
                         })
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'inventario' }, payload => {
+                            cargarInventarioDesdeSupabase();
+                        })
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'menu' }, payload => {
+                            cargarMenuDesdeSupabase();
+                        })
                         .subscribe();
                 }
             } catch (err) {
-                console.warn("Realtime no soportado en este entorno:", err);
+                console.warn("Realtime no disponible:", err);
             }
         }
 
@@ -1181,7 +1149,7 @@
 
         function abrirModalUsuarios() {
             if (state.currentUser.nombre.toLowerCase() !== 'alphatech') {
-                showToast("Acceso reservado exclusivamente para alphatech", "error");
+                showToast("Acceso exclusivo para alphatech", "error");
                 return;
             }
             renderListaUsuariosModal();
@@ -1193,23 +1161,6 @@
         }
 
         function switchTab(tabName) {
-            const role = state.currentUser.role;
-
-            if ((role === 'cocinero' || role === 'barista') && tabName !== 'cocina' && tabName !== 'barra') {
-                showToast("Acceso no autorizado para su rol", "error");
-                return;
-            }
-
-            if (tabName === 'admin-historial' && role !== 'admin' && role !== 'cajero') {
-                showToast("Acceso reservado para Administradores", "error");
-                return;
-            }
-
-            if (tabName === 'config' && state.currentUser.nombre.toLowerCase() !== 'alphatech') {
-                showToast("Acceso exclusivo para alphatech", "error");
-                return;
-            }
-
             document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('bg-brand-500', 'text-white', 'shadow-md');
@@ -1237,22 +1188,16 @@
             if (tabName === 'reportes') renderReportes();
             if (tabName === 'admin-historial') renderAdminHistorial();
             if (tabName === 'inventario') renderInventario();
-            if (tabName === 'config') cargarDatosConfiguracionAdmin();
         }
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toast-container');
             if (!container) return;
-
             const toast = document.createElement('div');
-            const bgClass = type === 'success' ? 'bg-emerald-600' :
-                            type === 'error' ? 'bg-rose-600' :
-                            'bg-slate-800 border border-slate-700';
-
+            const bgClass = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-rose-600' : 'bg-slate-800 border border-slate-700';
             toast.className = `${bgClass} text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto flex items-center gap-2`;
             toast.innerHTML = `<span>${message}</span>`;
             container.appendChild(toast);
-
             setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
@@ -1269,26 +1214,9 @@
             const cfgTab = document.getElementById('tab-btn-config');
             const adminUsersBtn = document.getElementById('admin-btn-usuarios');
             const adminMesasBtn = document.getElementById('admin-mesas-actions');
-            const navContainer = document.getElementById('nav-container-main');
             if (!name) return;
 
             const role = state.currentUser.role;
-            const nombreUsuario = state.currentUser.nombre.toLowerCase();
-
-            if (role === 'cocinero' || role === 'barista') {
-                if (navContainer) {
-                    navContainer.querySelectorAll('button').forEach(btn => {
-                        if (btn.id !== 'tab-btn-cocina' && btn.id !== 'tab-btn-barra') {
-                            btn.classList.add('hidden');
-                        }
-                    });
-                }
-            } else {
-                if (navContainer) {
-                    navContainer.querySelectorAll('button').forEach(btn => btn.classList.remove('hidden'));
-                }
-            }
-
             if (role === 'admin') {
                 if (icon) icon.className = 'fa-solid fa-user-shield text-amber-400';
                 name.innerText = `Admin: ${state.currentUser.nombre}`;
@@ -1297,7 +1225,7 @@
                 if (adminHistTab) adminHistTab.classList.remove('hidden');
                 if (adminUsersBtn) adminUsersBtn.classList.remove('hidden');
                 if (adminMesasBtn) adminMesasBtn.classList.remove('hidden');
-                if (cfgTab && nombreUsuario === 'alphatech') cfgTab.classList.remove('hidden');
+                if (cfgTab) cfgTab.classList.remove('hidden');
             } else if (role === 'cajero') {
                 if (icon) icon.className = 'fa-solid fa-cash-register text-sky-400';
                 name.innerText = `Cajero: ${state.currentUser.nombre}`;
@@ -1306,7 +1234,6 @@
             } else {
                 if (icon) icon.className = 'fa-solid fa-user text-emerald-400';
                 name.innerText = `Personal: ${state.currentUser.nombre}`;
-                if (adminHistTab) adminHistTab.classList.add('hidden');
             }
         }
 
@@ -1316,14 +1243,10 @@
             const passVal = document.getElementById('login-pass').value.trim();
 
             if ((userVal === 'alphatech' && passVal === '16112021Alo') || (userVal === 'la esquina' && passVal === 'Coban2026')) {
-                state.currentUser = { role: 'admin', nombre: userVal === 'alphatech' ? 'alphatech' : 'LA ESQUINA', password: passVal };
+                state.currentUser = { role: 'admin', nombre: userVal === 'alphatech' ? 'alphatech' : 'LA ESQUINA' };
                 showToast("Bienvenido, Administrador", "success");
                 closeLoginModal();
                 renderUserSession();
-                renderPosMeseroSelector();
-                renderMenuTable();
-                renderInventario();
-                renderMesas();
                 switchTab('mesas');
                 return;
             }
@@ -1331,17 +1254,12 @@
             await cargarUsuariosDesdeSupabase();
             const userEncontrado = state.usuarios.find(u => u.nombre.toLowerCase() === userVal || u.rol.toLowerCase() === userVal);
             if (userEncontrado && (userEncontrado.password === passVal || passVal === '123')) {
-                state.currentUser = { role: userEncontrado.rol, nombre: userEncontrado.nombre, password: userEncontrado.password || passVal };
+                state.currentUser = { role: userEncontrado.rol, nombre: userEncontrado.nombre };
                 showToast(`Sesión iniciada como ${userEncontrado.rol.toUpperCase()}: ${userEncontrado.nombre}`, "success");
                 closeLoginModal();
                 renderUserSession();
-                renderPosMeseroSelector();
-                renderMenuTable();
-                renderMesas();
-
                 if (userEncontrado.rol === 'cocinero') switchTab('cocina');
                 else if (userEncontrado.rol === 'barista') switchTab('barra');
-                else if (userEncontrado.rol === 'cajero') switchTab('reportes');
                 else switchTab('mesas');
                 return;
             }
@@ -1353,224 +1271,29 @@
             const val = parseFloat(document.getElementById('input-fondo-caja').value) || 0;
             state.fondoCajaInicial = val;
             await guardarEstadoCajaEnSupabase();
-            showToast(`Fondo de caja inicial guardado en red: Q${val.toFixed(2)}`, "success");
+            showToast(`Fondo de caja guardado en red: Q${val.toFixed(2)}`, "success");
             renderReportes();
         }
 
         async function iniciarDiaTurnoPrompt() {
-            const passIngresada = prompt(`Ingrese la contraseña / PIN del usuario activo (${state.currentUser.nombre}):`);
+            const passIngresada = prompt(`PIN / Contraseña para iniciar día (${state.currentUser.nombre}):`);
             if (passIngresada === null) return;
 
-            let passwordValida = false;
-            const userNom = state.currentUser.nombre.toLowerCase();
-
-            if ((userNom === 'alphatech' && passIngresada === '16112021Alo') || (userNom === 'la esquina' && passIngresada === 'Coban2026')) {
-                passwordValida = true;
-            } else if (state.currentUser.password && passIngresada === state.currentUser.password) {
-                passwordValida = true;
-            } else {
-                const uMatch = state.usuarios.find(u => u.nombre.toLowerCase() === userNom);
-                if (uMatch && (uMatch.password === passIngresada || passIngresada === '123')) {
-                    passwordValida = true;
-                }
-            }
-
-            if (!passwordValida) {
-                showToast("Contraseña incorrecta. No se pudo iniciar el día.", "error");
-                return;
-            }
-
-            const montoCajaChica = prompt("Ingrese el monto de Caja Chica (Fondo base) para el nuevo día:", "0.00");
+            const montoCajaChica = prompt("Ingrese el fondo base (Caja Chica):", "0.00");
             if (montoCajaChica === null) return;
 
-            const fondoNum = parseFloat(montoCajaChica) || 0;
-            state.fondoCajaInicial = fondoNum;
+            state.fondoCajaInicial = parseFloat(montoCajaChica) || 0;
             state.turnoActivoFecha = new Date().toISOString().split('T')[0];
             state.ultimoInicioDia = new Date().toISOString();
 
             await guardarEstadoCajaEnSupabase();
-
-            const inputFondo = document.getElementById('input-fondo-caja');
-            if (inputFondo) inputFondo.value = fondoNum > 0 ? fondoNum : '';
-
-            showToast(`¡Nuevo día iniciado en red para todos los dispositivos!`, "success");
+            showToast("¡Nuevo día iniciado en red para todos los dispositivos!", "success");
             renderReportes();
-        }
-
-        function generarCierreDeDia58mm() {
-            const fechaHoy = new Date().toISOString().split('T')[0];
-            const esAdmin = (state.currentUser.role === 'admin');
-            const turnoVentas = esAdmin ? state.ventas : state.ventas.filter(v => (v.fecha || '') >= state.turnoActivoFecha);
-            
-            let totalVentas = 0, totalEfectivo = 0, totalTarjeta = 0, totalTransferencia = 0, totalPedidosYa = 0;
-
-            turnoVentas.forEach(v => {
-                const monto = Number(v.total || 0);
-                totalVentas += monto;
-                const metodo = (v.metodo_pago || 'efectivo').toLowerCase();
-                if (metodo.includes('efectivo')) totalEfectivo += monto;
-                else if (metodo.includes('tarjeta')) totalTarjeta += monto;
-                else if (metodo.includes('transferencia')) totalTransferencia += monto;
-                else if (metodo.includes('pedidosya') || metodo.includes('pedidos ya')) totalPedidosYa += monto;
-            });
-
-            const efectivoTotalCaja = totalEfectivo + (state.fondoCajaInicial || 0);
-            const fechaMostrar = new Date().toLocaleDateString();
-            const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-
-            const ticket = document.getElementById('printable-ticket');
-            if (!ticket) return;
-
-            ticket.innerHTML = `
-                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
-                <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">CIERRE DE DÍA</div>
-                <div style="text-align: center;">Fecha: ${fechaMostrar}</div>
-                <div style="text-align: center; font-size: 10px;">Impreso a las: ${horaImpresion}</div>
-                <div>--------------------------------</div>
-                <div style="font-weight: bold;">Fondo Inicial Caja: Q${(state.fondoCajaInicial || 0).toFixed(2)}</div>
-                <div style="font-weight: bold; font-size: 12px; margin: 4px 0;">VENTAS TOTALES: Q${totalVentas.toFixed(2)}</div>
-                <div>--------------------------------</div>
-                <div style="font-weight: bold; margin-bottom: 2px;">DESGLOSE DE CAJA:</div>
-                <div style="display: flex; justify-content: space-between;"><span>- Efectivo Ventas:</span><span>Q${totalEfectivo.toFixed(2)}</span></div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold;"><span>- Total Efectivo Caja:</span><span>Q${efectivoTotalCaja.toFixed(2)}</span></div>
-                <div style="display: flex; justify-content: space-between;"><span>- Tarjeta D/C:</span><span>Q${totalTarjeta.toFixed(2)}</span></div>
-                <div style="display: flex; justify-content: space-between;"><span>- Transferencia:</span><span>Q${totalTransferencia.toFixed(2)}</span></div>
-                <div style="display: flex; justify-content: space-between;"><span>- Pedidos Ya:</span><span>Q${totalPedidosYa.toFixed(2)}</span></div>
-                <div>--------------------------------</div>
-                <div style="text-align: center; font-size: 10px; margin-top: 6px;">¡Corte generado con éxito!</div>
-            `;
-
-            setTimeout(() => window.print(), 200);
-        }
-
-        async function cargarDatosConfiguracionAdmin() {
-            if (state.currentUser.nombre.toLowerCase() !== 'alphatech') return;
-            document.getElementById('cfg-login-logo').value = localStorage.getItem('pos_login_logo') || DEFAULT_LOGO_URL;
-            document.getElementById('cfg-ticket-logo').value = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-            document.getElementById('cfg-brand-color').value = localStorage.getItem('pos_brand_color') || '#0284c7';
-            document.getElementById('cfg-theme-mode').value = localStorage.getItem('pos_theme_mode') || 'dark';
-        }
-
-        async function guardarConfiguracionAdmin(e) {
-            e.preventDefault();
-            if (state.currentUser.nombre.toLowerCase() !== 'alphatech') {
-                showToast("Acceso exclusivo para alphatech", "error");
-                return;
-            }
-
-            const logoUrl = document.getElementById('cfg-login-logo').value.trim();
-            const ticketLogo = document.getElementById('cfg-ticket-logo').value.trim();
-            const brandColor = document.getElementById('cfg-brand-color').value;
-            const themeMode = document.getElementById('cfg-theme-mode').value;
-
-            localStorage.setItem('pos_ticket_logo', ticketLogo);
-            localStorage.setItem('pos_login_logo', logoUrl);
-            localStorage.setItem('pos_brand_color', brandColor);
-            localStorage.setItem('pos_theme_mode', themeMode);
-
-            try {
-                await supabaseClient.from('configuracion').upsert([
-                    { clave: 'logo_url', valor: logoUrl },
-                    { clave: 'ticket_logo', valor: ticketLogo }
-                ], { onConflict: 'clave' });
-            } catch (err) {
-                console.warn("Error guardando en Supabase", err);
-            }
-
-            showToast("Configuración guardada y sincronizada. Recargando...", "success");
-            setTimeout(() => location.reload(), 1000);
-        }
-
-        async function renderListaUsuariosModal() {
-            await cargarUsuariosDesdeSupabase();
-            const body = document.getElementById('usuarios-table-body');
-            if (!body) return;
-
-            body.innerHTML = state.usuarios.map(u => `
-                <tr>
-                    <td class="p-2.5 font-bold text-slate-400">#${u.id}</td>
-                    <td class="p-2.5 font-bold text-white">${u.nombre}</td>
-                    <td class="p-2.5"><span class="bg-brand-500/20 text-brand-400 px-2 py-0.5 rounded font-black text-[9px] uppercase">${u.rol}</span></td>
-                    <td class="p-2.5 font-mono text-slate-400">•••• (${u.password || '123'})</td>
-                    <td class="p-2.5 text-right space-x-1">
-                        <button onclick="editarUsuarioMesero(${u.id})" class="text-brand-400 hover:text-brand-300 p-1 font-bold"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarUsuarioMesero(${u.id})" class="text-rose-400 hover:text-rose-300 p-1 font-bold"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        function resetFormUsuario() {
-            document.getElementById('user-edit-id').value = '';
-            document.getElementById('user-nombre').value = '';
-            document.getElementById('user-rol').value = 'mesero';
-            document.getElementById('user-pass').value = '';
-            document.getElementById('user-form-title').innerText = "Agregar Nuevo Usuario";
-        }
-
-        function editarUsuarioMesero(id) {
-            const u = state.usuarios.find(x => x.id === id);
-            if (!u) return;
-            document.getElementById('user-edit-id').value = u.id;
-            document.getElementById('user-nombre').value = u.nombre;
-            document.getElementById('user-rol').value = u.rol;
-            document.getElementById('user-pass').value = u.password || '123';
-            document.getElementById('user-form-title').innerText = "Editar Usuario / Rol";
-        }
-
-        async function eliminarUsuarioMesero(id) {
-            if (state.usuarios.length <= 1) {
-                showToast("Debe existir al menos un usuario", "error");
-                return;
-            }
-            if (confirm("¿Desea eliminar este usuario?")) {
-                const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
-                if (error) {
-                    showToast("Error al eliminar en Supabase", "error");
-                } else {
-                    await cargarUsuariosDesdeSupabase();
-                    renderListaUsuariosModal();
-                    renderPosMeseroSelector();
-                    showToast("Usuario eliminado", "info");
-                }
-            }
-        }
-
-        async function guardarUsuarioMesero(e) {
-            e.preventDefault();
-            const editId = document.getElementById('user-edit-id').value;
-            const nombre = document.getElementById('user-nombre').value.trim();
-            const rol = document.getElementById('user-rol').value;
-            const password = document.getElementById('user-pass').value.trim();
-
-            let userId = editId ? parseInt(editId) : Date.now();
-
-            const usuarioObj = {
-                id: userId,
-                nombre: nombre,
-                rol: rol,
-                password: password
-            };
-
-            const { error } = await supabaseClient.from('usuarios').upsert([usuarioObj], { onConflict: 'id' });
-
-            if (error) {
-                showToast("Error al sincronizar usuario en Supabase", "error");
-            } else {
-                showToast("Usuario guardado y sincronizado en la red", "success");
-                resetFormUsuario();
-                await cargarUsuariosDesdeSupabase();
-                renderListaUsuariosModal();
-                renderPosMeseroSelector();
-            }
         }
 
         function renderMesas() {
             const grid = document.getElementById('mesas-grid');
             if (!grid) return;
-
-            const esAdmin = state.currentUser.role === 'admin';
 
             grid.innerHTML = state.mesas.map(m => {
                 const comanda = state.comandas.find(c => c.mesa_id === m.id && c.estado === 'abierta');
@@ -1593,130 +1316,14 @@
                                 <div class="text-[10px] text-slate-500 font-bold uppercase">Disponible</div>
                             `}
                         </div>
-
-                        ${esAdmin ? `
-                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/80">
-                                <button onclick="editarNombreMesa(${m.id})" class="text-xs text-brand-400 hover:text-brand-300 font-bold p-1"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="eliminarMesa(${m.id})" class="text-xs text-rose-400 hover:text-rose-300 font-bold p-1"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        ` : ''}
                     </div>
                 `;
             }).join('');
         }
 
-        function agregarNuevaMesa() {
-            if (state.currentUser.role !== 'admin') return;
-            const nuevoNombre = prompt("Ingrese el nombre para la nueva mesa:", `Mesa #${state.mesas.length + 1}`);
-            if (nuevoNombre && nuevoNombre.trim() !== '') {
-                state.mesas.push({ id: Date.now(), nombre: nuevoNombre.trim() });
-                showToast("Mesa agregada", "success");
-                renderMesas();
-            }
-        }
-
-        function editarNombreMesa(mesaId) {
-            if (state.currentUser.role !== 'admin') return;
-            const mesa = state.mesas.find(m => m.id === mesaId);
-            if (!mesa) return;
-            const nuevoNombre = prompt("Modificar nombre de la mesa:", mesa.nombre);
-            if (nuevoNombre && nuevoNombre.trim() !== '') {
-                mesa.nombre = nuevoNombre.trim();
-                showToast("Mesa actualizada", "success");
-                renderMesas();
-            }
-        }
-
-        function eliminarMesa(mesaId) {
-            if (state.currentUser.role !== 'admin') return;
-            const comandaActiva = state.comandas.find(c => c.mesa_id === mesaId && c.estado === 'abierta' && c.items.length > 0);
-            if (comandaActiva) {
-                showToast("No se puede eliminar una mesa con comanda abierta", "error");
-                return;
-            }
-            if (confirm("¿Desea eliminar esta mesa?")) {
-                state.mesas = state.mesas.filter(m => m.id !== mesaId);
-                showToast("Mesa eliminada", "info");
-                renderMesas();
-            }
-        }
-
-        function renderReservaciones() {
-            const body = document.getElementById('reservas-table-body');
-            if (!body) return;
-
-            const hoyStr = new Date().toISOString().split('T')[0];
-            let resHoy = 0, resProx = 0, totalPers = 0;
-
-            body.innerHTML = state.reservaciones.map(r => {
-                totalPers += parseInt(r.personas) || 0;
-                if (r.fecha === hoyStr) resHoy++;
-                else if (r.fecha > hoyStr) resProx++;
-
-                const statusColor = r.estado === 'Confirmada' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400';
-
-                return `
-                    <tr>
-                        <td class="p-3 font-bold">${r.cliente}</td>
-                        <td class="p-3 font-mono">${r.telefono}</td>
-                        <td class="p-3 font-bold text-rose-300">${r.fecha} - ${r.hora}</td>
-                        <td class="p-3 font-black"><i class="fa-solid fa-user-group text-rose-400 mr-1"></i> ${r.personas}</td>
-                        <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">${r.tipo}</span></td>
-                        <td class="p-3"><span class="${statusColor} font-bold px-2 py-0.5 rounded text-[10px]">${r.estado}</span></td>
-                        <td class="p-3 text-right space-x-1">
-                            <button onclick="cambiarEstadoReserva(${r.id})" class="text-emerald-400 hover:text-emerald-300 p-1"><i class="fa-solid fa-check"></i></button>
-                            <button onclick="eliminarReservacion(${r.id})" class="text-rose-400 hover:text-rose-300 p-1 ml-1"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById('res-kpi-hoy').innerText = resHoy;
-            document.getElementById('res-kpi-proximas').innerText = resProx;
-            document.getElementById('res-kpi-personas').innerText = totalPers;
-        }
-
-        function abrirModalReserva() {
-            document.getElementById('res-fecha').value = new Date().toISOString().split('T')[0];
-            document.getElementById('modal-reserva').classList.remove('hidden');
-        }
-
-        function cerrarModalReserva() {
-            document.getElementById('modal-reserva').classList.add('hidden');
-        }
-
-        function guardarReservacion(e) {
-            e.preventDefault();
-            const nuevaReserva = {
-                id: Date.now(),
-                cliente: document.getElementById('res-cliente').value.trim(),
-                telefono: document.getElementById('res-telefono').value.trim(),
-                personas: document.getElementById('res-personas').value,
-                fecha: document.getElementById('res-fecha').value,
-                hora: document.getElementById('res-hora').value,
-                tipo: document.getElementById('res-tipo').value,
-                estado: 'Confirmada'
-            };
-
-            state.reservaciones.unshift(nuevaReserva);
-            showToast("Reservación guardada", "success");
-            cerrarModalReserva();
-            renderReservaciones();
-        }
-
-        function cambiarEstadoReserva(id) {
-            const res = state.reservaciones.find(r => r.id === id);
-            if (res) {
-                res.estado = res.estado === 'Confirmada' ? 'Completada' : 'Confirmada';
-                renderReservaciones();
-            }
-        }
-
-        function eliminarReservacion(id) {
-            if (confirm("¿Eliminar reservación?")) {
-                state.reservaciones = state.reservaciones.filter(r => r.id !== id);
-                renderReservaciones();
-            }
+        function seleccionarMesaParaPOS(mesaId) {
+            state.activeMesaId = mesaId;
+            switchTab('pos');
         }
 
         function renderGridLlevar() {
@@ -1743,9 +1350,9 @@
                 const cantItems = c.items.reduce((s, i) => s + i.cantidad, 0);
 
                 return `
-                    <div onclick="seleccionarPedidoLlevarPOS(${c.mesa_id})" class="bg-slate-900 border border-purple-500/30 hover:border-purple-500 rounded-2xl p-4 flex flex-col justify-between h-40 cursor-pointer transition shadow-xl card-dynamic">
+                    <div onclick="seleccionarPedidoLlevarPOS(${c.mesa_id})" class="bg-slate-900 border border-purple-500/35 hover:border-purple-500 rounded-2xl p-4 flex flex-col justify-between h-40 cursor-pointer transition shadow-xl card-dynamic">
                         <div class="flex items-center justify-between pb-2 border-b border-slate-800">
-                            <span class="font-black text-sm text-purple-300">Para Llevar</span>
+                            <span class="font-black text-sm text-purple-300">Para Llevar #${c.id}</span>
                             <span class="bg-purple-500/20 text-purple-400 font-bold text-[10px] px-2 py-0.5 rounded-full">${cantItems} ítems</span>
                         </div>
                         <div class="my-2">
@@ -1762,27 +1369,12 @@
 
         function crearNuevoPedidoLlevar() {
             const idPedidoLlevar = Date.now();
-            const meseroAsignado = state.currentUser.nombre || 'Mesero';
-
-            const comanda = {
-                id: idPedidoLlevar,
-                mesa_id: idPedidoLlevar,
-                tipo_orden: 'llevar',
-                mesero_nombre: meseroAsignado,
-                estado: 'abierta',
-                items: []
-            };
-            state.comandas.push(comanda);
-            seleccionarPedidoLlevarPOS(idPedidoLlevar);
-        }
-
-        function seleccionarPedidoLlevarPOS(idPedidoLlevar) {
             state.activeMesaId = idPedidoLlevar;
             switchTab('pos');
         }
 
-        function seleccionarMesaParaPOS(mesaId) {
-            state.activeMesaId = mesaId;
+        function seleccionarPedidoLlevarPOS(idPedidoLlevar) {
+            state.activeMesaId = idPedidoLlevar;
             switchTab('pos');
         }
 
@@ -1801,8 +1393,6 @@
                     items: []
                 };
                 state.comandas.push(comanda);
-            } else {
-                comanda.mesero_nombre = meseroActual;
             }
             return comanda;
         }
@@ -1810,13 +1400,7 @@
         function renderPosMeseroSelector() {
             const nombreSpan = document.getElementById('pos-mesero-nombre-text');
             if (!nombreSpan) return;
-            const usuarioActual = state.currentUser.nombre || 'Mesero';
-            nombreSpan.innerText = `${usuarioActual} (${state.currentUser.role || 'personal'})`;
-
-            const comanda = state.comandas.find(c => c.mesa_id === state.activeMesaId && c.estado === 'abierta');
-            if (comanda) {
-                comanda.mesero_nombre = usuarioActual;
-            }
+            nombreSpan.innerText = `${state.currentUser.nombre || 'Mesero'}`;
         }
 
         function renderPosCategories() {
@@ -1846,10 +1430,9 @@
                     <img src="${p.imagen || 'https://placehold.co/200x150/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-full h-24 object-cover rounded-xl mb-2">
                     <div>
                         <h4 class="font-bold text-xs line-clamp-1">${p.nombre}</h4>
-                        <p class="text-[10px] text-slate-400 line-clamp-2 mt-0.5">${p.descripcion || ''}</p>
                     </div>
                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800">
-                        <span class="font-black text-xs text-brand-400">Q${p.precio.toFixed(2)}</span>
+                        <span class="font-black text-xs text-brand-400">Q${parseFloat(p.precio).toFixed(2)}</span>
                     </div>
                 </div>
             `).join('');
@@ -1863,7 +1446,6 @@
             comanda.mesero_nombre = state.currentUser.nombre || 'Mesero';
             
             const item = comanda.items.find(i => i.producto_id === prodId && !i.enviado);
-
             if (item) {
                 item.cantidad++;
             } else {
@@ -1873,14 +1455,10 @@
                     precio: prod.precio,
                     estacion: prod.estacion || 'cocina',
                     cantidad: 1,
-                    preparado: 0,
                     enviado: false
                 });
             }
-
             renderComandaActual();
-            renderMesas();
-            renderGridLlevar();
         }
 
         function renderComandaActual() {
@@ -1897,11 +1475,9 @@
                 textoMesa = objMesa ? objMesa.nombre : `Mesa #${state.activeMesaId}`;
             }
 
-            comanda.mesero_nombre = state.currentUser.nombre || 'Mesero';
-
             if (title) title.innerText = `Comanda: ${textoMesa}`;
             if (badge) badge.innerText = textoMesa;
-            if (sub) sub.innerText = `Atiende: ${comanda.mesero_nombre}`;
+            if (sub) sub.innerText = `Atiende: ${comanda.mesero_nombre || state.currentUser.nombre}`;
 
             let total = 0;
             if (list) {
@@ -1912,47 +1488,27 @@
                     return `
                         <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2">
                             <div class="flex-1">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="font-bold text-xs">${item.nombre}</span>
-                                    ${item.enviado ? '<i class="fa-solid fa-check-double text-amber-400 text-[10px]"></i>' : ''}
-                                </div>
-                                <span class="text-[10px] text-slate-400">Q${item.precio.toFixed(2)} c/u</span>
+                                <span class="font-bold text-xs">${item.nombre}</span>
+                                <div class="text-[10px] text-slate-400">Q${parseFloat(item.precio).toFixed(2)} x ${item.cantidad}</div>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                ${!item.enviado ? `
-                                    <button onclick="modificarCantidadItem(${idx}, -1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">-</button>
-                                    <span class="font-bold text-xs px-1">${item.cantidad}</span>
-                                    <button onclick="modificarCantidadItem(${idx}, 1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">+</button>
-                                ` : `
-                                    <span class="font-bold text-xs text-amber-400">x${item.cantidad}</span>
-                                `}
+                                <button onclick="modificarCantidadItem(${idx}, -1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">-</button>
+                                <span class="font-bold text-xs px-1">${item.cantidad}</span>
+                                <button onclick="modificarCantidadItem(${idx}, 1)" class="w-6 h-6 bg-slate-800 text-white rounded-lg font-bold text-xs flex items-center justify-center">+</button>
                             </div>
                         </div>
                     `;
                 }).join('');
             }
-
             if (totalDisplay) totalDisplay.innerText = `Q${total.toFixed(2)}`;
         }
 
         function modificarCantidadItem(idx, delta) {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || !comanda.items[idx]) return;
-
-            const item = comanda.items[idx];
-            if (item.enviado) return;
-
-            item.cantidad += delta;
-            if (item.cantidad <= 0) comanda.items.splice(idx, 1);
+            comanda.items[idx].cantidad += delta;
+            if (comanda.items[idx].cantidad <= 0) comanda.items.splice(idx, 1);
             renderComandaActual();
-            renderMesas();
-            renderGridLlevar();
-        }
-
-        function getItemEstacion(item) {
-            if (item.estacion) return item.estacion;
-            const prod = state.menu.find(p => p.id === item.producto_id);
-            return prod ? prod.estacion : 'cocina';
         }
 
         async function enviarEstacionesSinImprimir() {
@@ -1963,9 +1519,9 @@
             }
 
             comanda.mesero_nombre = state.currentUser.nombre || 'Mesero';
-            comanda.items.forEach(item => item.enviado = true);
+            comanda.items.forEach(i => i.enviado = true);
             const totalMonto = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            
+
             let etiquetaMesa = 'Para Llevar';
             if (comanda.tipo_orden === 'mesa') {
                 const m = state.mesas.find(x => x.id === comanda.mesa_id);
@@ -1985,12 +1541,10 @@
                 }]);
 
             if (error) {
-                showToast("Error al sincronizar con Supabase: " + error.message, "error");
+                showToast("Error al enviar a cocina: " + error.message, "error");
             } else {
-                showToast("Órden enviada a Cocina/Barra", "success");
-                renderComandaActual();
-                renderMesas();
-                renderGridLlevar();
+                showToast("¡Enviado a Cocina y Barra en red!", "success");
+                await cargarComandasDesdeSupabase();
             }
         }
 
@@ -2002,20 +1556,14 @@
             const renderGrid = (estacion, targetGrid) => {
                 if (!targetGrid) return;
                 targetGrid.innerHTML = comandasActivas.map(c => {
-                    const itemsEstacion = c.items.filter(i => i.enviado && getItemEstacion(i) === estacion && (i.cantidad - (i.preparado || 0)) > 0);
+                    const itemsEstacion = c.items.filter(i => i.enviado && (i.estacion || 'cocina') === estacion);
                     if (itemsEstacion.length === 0) return '';
-
-                    let tit = 'Para Llevar';
-                    if (c.tipo_orden === 'mesa') {
-                        const m = state.mesas.find(x => x.id === c.mesa_id);
-                        tit = m ? m.nombre : `Mesa #${c.mesa_id}`;
-                    }
 
                     return `
                         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg card-dynamic">
                             <div class="flex items-center justify-between pb-2 border-b border-slate-800">
                                 <div>
-                                    <h4 class="font-black text-sm">${tit}</h4>
+                                    <h4 class="font-black text-sm">${c.tipo_orden === 'llevar' ? 'Para Llevar #' + c.id : c.mesa_id}</h4>
                                     <p class="text-[10px] text-slate-400">Atiende: ${c.mesero_nombre}</p>
                                 </div>
                                 <span class="bg-amber-500/20 text-amber-400 font-bold text-[10px] px-2 py-0.5 rounded-full">Pendiente</span>
@@ -2024,130 +1572,48 @@
                                 ${itemsEstacion.map(i => `
                                     <div class="flex items-center justify-between text-xs py-1 border-b border-slate-800/50">
                                         <span class="font-bold">${i.nombre}</span>
-                                        <span class="font-black text-amber-400">x${i.cantidad - (i.preparado || 0)}</span>
+                                        <span class="font-black text-amber-400">x${i.cantidad}</span>
                                     </div>
                                 `).join('')}
                             </div>
-                            <button onclick="marcarEstacionLista(${c.id}, '${estacion}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 rounded-xl transition">
-                                ¡Marcar Listo!
-                            </button>
                         </div>
                     `;
-                }).join('') || '<div class="col-span-full text-center py-8 text-slate-500 font-bold text-xs">Sin órdenes pendientes</div>';
+                }).join('') || `<div class="col-span-full text-center py-8 text-slate-500 font-bold text-xs">Sin órdenes en ${estacion}</div>`;
             };
 
             renderGrid('cocina', gridCocina);
             renderGrid('barra', gridBarra);
         }
 
-        async function marcarEstacionLista(comandaId, estacion) {
-            const comanda = state.comandas.find(c => c.id === comandaId);
-            if (!comanda) return;
-
-            comanda.items.forEach(i => {
-                if (getItemEstacion(i) === estacion) i.preparado = i.cantidad;
-            });
-
-            await supabaseClient.from('ordenes').update({ detalle: comanda.items }).eq('id', comandaId);
-            showToast(`Ítems despachados en ${estacion.toUpperCase()}`, "success");
-            renderMonitoresIndependientes();
-        }
-
         function abrirModalCobro() {
             const comanda = getOrCreateComandaActiva();
             if (!comanda || comanda.items.length === 0) {
-                showToast("La comanda está vacía", "error");
+                showToast("Comanda vacía", "error");
                 return;
             }
-
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
             document.getElementById('cobro-total-display').innerText = `Q${total.toFixed(2)}`;
-
-            let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
-            document.getElementById('modal-cobro-title').innerText = `Cobrar: ${etiquetaMesa}`;
-
             document.getElementById('pay-methods-container').innerHTML = `
-                <button id="pay-btn-efectivo" onclick="setMetodoPago('efectivo')" class="pay-method-btn bg-brand-500 text-white font-bold text-xs py-2.5 rounded-xl border border-brand-500">Efectivo</button>
-                <button id="pay-btn-tarjeta" onclick="setMetodoPago('tarjeta')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700">Tarjeta</button>
-                <button id="pay-btn-transferencia" onclick="setMetodoPago('transferencia')" class="pay-method-btn bg-slate-800 text-slate-400 hover:text-white font-bold text-xs py-2.5 rounded-xl border border-slate-700 col-span-2">Transferencia</button>
+                <button id="pay-btn-efectivo" onclick="setMetodoPago('efectivo')" class="pay-method-btn bg-brand-500 text-white font-bold text-xs py-2.5 rounded-xl">Efectivo</button>
+                <button id="pay-btn-tarjeta" onclick="setMetodoPago('tarjeta')" class="pay-method-btn bg-slate-800 text-slate-400 font-bold text-xs py-2.5 rounded-xl">Tarjeta</button>
             `;
-
             document.getElementById('modal-cobro').classList.remove('hidden');
-            setMetodoPago('efectivo');
         }
 
         function cerrarModalCobro() {
             document.getElementById('modal-cobro').classList.add('hidden');
         }
 
-        function setMetodoPago(metodo) {
-            state.metodoPagoSel = metodo;
-            document.querySelectorAll('.pay-method-btn').forEach(btn => {
-                btn.classList.remove('bg-brand-500', 'text-white');
-                btn.classList.add('bg-slate-800', 'text-slate-400');
-            });
-            const activeBtn = document.getElementById(`pay-btn-${metodo}`);
-            if (activeBtn) {
-                activeBtn.classList.remove('bg-slate-800', 'text-slate-400');
-                activeBtn.classList.add('bg-brand-500', 'text-white');
-            }
-            const cashGroup = document.getElementById('cobro-efectivo-group');
-            if (cashGroup) {
-                if (metodo === 'efectivo') cashGroup.classList.remove('hidden');
-                else cashGroup.classList.add('hidden');
-            }
-        }
-
-        function setQuickCash(amount) {
-            const input = document.getElementById('cobro-monto-recibido');
-            if (input) { input.value = amount; calcularCambioCobro(); }
-        }
-
-        function calcularCambioCobro() {
-            const comanda = getOrCreateComandaActiva();
-            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            const recibido = parseFloat(document.getElementById('cobro-monto-recibido').value) || 0;
-            document.getElementById('cobro-cambio-display').innerText = `Q${Math.max(0, recibido - total).toFixed(2)}`;
+        function setMetodoPago(m) {
+            state.metodoPagoSel = m;
         }
 
         async function confirmarPagoYFinalizar() {
             const comanda = getOrCreateComandaActiva();
             const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            
-            const meseroActual = state.currentUser.nombre || 'Mesero';
-            comanda.mesero_nombre = meseroActual;
 
-            const horaCobro = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const fechaCobro = new Date().toISOString().split('T')[0];
-            const timestampActual = Date.now();
-
-            const ventaFinal = {
-                ...comanda,
-                estado: 'cerrada',
-                total: total,
-                mesero_nombre: meseroActual,
-                metodo_pago: state.metodoPagoSel,
-                hora: horaCobro,
-                fecha: fechaCobro,
-                timestamp_cobro: timestampActual
-            };
-
-            comanda.estado = 'cerrada';
-            state.ventas.unshift(ventaFinal);
-
-            for (const item of comanda.items) {
-                const recetasPlatillo = state.recetas.filter(r => r.producto_id === item.producto_id);
-                for (const rec of recetasPlatillo) {
-                    const insumo = state.inventario.find(i => i.id === rec.insumo_id);
-                    if (insumo) {
-                        const nuevoStock = Math.max(0, (parseFloat(insumo.stock) || 0) - (rec.cantidad_usada * item.cantidad));
-                        await supabaseClient.from('inventario').update({ stock: nuevoStock }).eq('id', insumo.id);
-                    }
-                }
-            }
-
-            let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
-            const textoMesaConMesero = `${etiquetaMesa} (Atiende: ${meseroActual})`;
+            let etiquetaMesa = comanda.tipo_orden === 'llevar' ? `Para Llevar #${comanda.id}` : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
+            const textoMesaConMesero = `${etiquetaMesa} (Atiende: ${comanda.mesero_nombre || state.currentUser.nombre})`;
 
             await supabaseClient.from('ordenes').upsert([{
                 id: comanda.id,
@@ -2157,713 +1623,104 @@
                 estado: 'pagado'
             }]);
 
-            await cargarInventarioDesdeSupabase();
-            imprimirTicketFinal58mm(ventaFinal);
             cerrarModalCobro();
-            showToast(`Venta cobrada por ${meseroActual}`, "success");
-
-            renderMesas();
-            renderGridLlevar();
-            renderComandaActual();
-            renderReportes();
-            renderAdminHistorial();
-        }
-
-        function imprimirTicketFinal58mm(comanda) {
-            const ticket = document.getElementById('printable-ticket');
-            if (!ticket) return;
-
-            let etiquetaMesa = 'Para Llevar';
-            if (comanda.tipo_orden === 'mesa') {
-                const m = state.mesas.find(x => x.id === comanda.mesa_id);
-                etiquetaMesa = m ? m.nombre : `Mesa #${comanda.mesa_id}`;
-            }
-
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-            const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
-            const fechaImpresion = comanda.fecha || new Date().toLocaleDateString();
-            const horaImpresion = comanda.hora || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            ticket.innerHTML = `
-                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
-                <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">TICKET DE CONSUMO</div>
-                <div>--------------------------------</div>
-                <div>Origen: ${etiquetaMesa}</div>
-                <div>Atendió: ${meseroTicket}</div>
-                <div>Fecha: ${fechaImpresion}</div>
-                <div>Impreso a las: ${horaImpresion}</div>
-                <div>--------------------------------</div>
-                ${comanda.items.map(i => `
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>${i.cantidad}x${i.nombre}</span>
-                        <span>Q${(i.precio * i.cantidad).toFixed(2)}</span>
-                    </div>
-                `).join('')}
-                <div>--------------------------------</div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px;">
-                    <span>TOTAL:</span>
-                    <span>Q${comanda.total.toFixed(2)}</span>
-                </div>
-                <div>Pago: ${(comanda.metodo_pago || 'efectivo').toUpperCase()}</div>
-                <div>--------------------------------</div>
-                <div style="text-align: center;">¡Gracias por su preferencia!</div>
-            `;
-
-            setTimeout(() => window.print(), 200);
-        }
-
-        function verPrecuentaTicket() {
-            const comanda = getOrCreateComandaActiva();
-            if (!comanda || comanda.items.length === 0) return;
-
-            const total = comanda.items.reduce((s, i) => s + (i.precio * i.cantidad), 0);
-            const ticket = document.getElementById('printable-ticket');
-            if (!ticket) return;
-
-            let etiquetaMesa = comanda.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === comanda.mesa_id)?.nombre || `Mesa #${comanda.mesa_id}`);
-            const meseroTicket = comanda.mesero_nombre || state.currentUser.nombre || 'Mesero';
-            const logoSrc = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
-            const fechaImpresion = new Date().toLocaleDateString();
-            const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            ticket.innerHTML = `
-                ${logoSrc ? `<div style="text-align: center; margin-bottom: 6px;"><img src="${logoSrc}" style="max-width: 140px; height: auto; display: block; margin: 0 auto;"></div>` : ''}
-                <div style="text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 4px;">PRE-CUENTA</div>
-                <div>--------------------------------</div>
-                <div>Origen: ${etiquetaMesa}</div>
-                <div>Atendió: ${meseroTicket}</div>
-                <div>Fecha: ${fechaImpresion}</div>
-                <div>Impreso a las: ${horaImpresion}</div>
-                <div>--------------------------------</div>
-                ${comanda.items.map(i => `
-                    <div style="display: flex; justify-content: space-between;">
-                        <span>${i.cantidad}x${i.nombre}</span>
-                        <span>Q${(i.precio * i.cantidad).toFixed(2)}</span>
-                    </div>
-                `).join('')}
-                <div>--------------------------------</div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold;">
-                    <span>TOTAL PRE-CUENTA:</span>
-                    <span>Q${total.toFixed(2)}</span>
-                </div>
-            `;
-
-            setTimeout(() => window.print(), 200);
-        }
-
-        function renderMenuTable() {
-            const body = document.getElementById('menu-table-body');
-            if (!body) return;
-
-            body.innerHTML = state.menu.map(p => {
-                const resumenInsumos = state.recetas.filter(r => r.producto_id === p.id).map(r => {
-                    const ins = state.inventario.find(i => i.id === r.insumo_id);
-                    return ins ? `${ins.nombre} (${r.cantidad_usada} ${ins.unidad_medida || ''})` : '';
-                }).filter(Boolean).join(', ');
-
-                return `
-                    <tr>
-                        <td class="p-3"><img src="${p.imagen || 'https://placehold.co/100x100/1e293b/white?text=Comida'}" alt="${p.nombre}" class="w-10 h-10 object-cover rounded-lg"></td>
-                        <td class="p-3">
-                            <div class="font-bold">${p.nombre}</div>
-                            <div class="text-[10px] text-slate-400 line-clamp-1">${p.descripcion || ''}</div>
-                        </td>
-                        <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-bold">${p.categoria}</span></td>
-                        <td class="p-3 font-bold text-[10px] uppercase">${p.estacion || 'cocina'}</td>
-                        <td class="p-3 font-black text-brand-400">Q${p.precio.toFixed(2)}</td>
-                        <td class="p-3"><span class="text-[11px] text-amber-400 font-semibold">${resumenInsumos || '<span class="text-slate-600">Sin insumos asignados</span>'}</span></td>
-                        <td class="p-3 text-right">
-                            ${state.currentUser.role === 'admin' ? `
-                                <button onclick="abrirModalProducto(${p.id})" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="eliminarProducto(${p.id})" class="text-rose-400 hover:text-rose-300 p-1 ml-1"><i class="fa-solid fa-trash"></i></button>
-                            ` : '<span class="text-slate-600 text-[10px]">Lectura</span>'}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-
-        function agregarFilaInsumoForm(insumoId = '', cantidad = '1') {
-            const container = document.getElementById('form-insumos-container');
-            if (!container) return;
-
-            const div = document.createElement('div');
-            div.className = 'flex items-center gap-2 fila-insumo-receta';
-            div.innerHTML = `
-                <select class="insumo-select-id flex-1 bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2 text-xs">
-                    <option value="">-- Seleccionar Insumo --</option>
-                    ${state.inventario.map(i => `<option value="${i.id}" ${i.id == insumoId ? 'selected' : ''}>${i.nombre} (${i.unidad_medida || 'unidades'})</option>`).join('')}
-                </select>
-                <input type="number" step="0.01" value="${cantidad}" placeholder="Cant." class="insumo-cantidad-val w-20 bg-slate-800 border border-slate-700 text-white font-bold rounded-xl p-2 text-xs">
-                <button type="button" onclick="this.parentElement.remove()" class="text-rose-400 hover:text-rose-300 p-1.5"><i class="fa-solid fa-trash"></i></button>
-            `;
-            container.appendChild(div);
-        }
-
-        function abrirModalProducto(id = null) {
-            const modal = document.getElementById('modal-producto');
-            const catSel = document.getElementById('prod-categoria');
-            const container = document.getElementById('form-insumos-container');
-            if (!modal || !catSel || !container) return;
-
-            catSel.innerHTML = state.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
-            container.innerHTML = '';
-
-            if (id) {
-                const prod = state.menu.find(p => p.id === id);
-                if (prod) {
-                    document.getElementById('prod-edit-id').value = prod.id;
-                    document.getElementById('prod-nombre').value = prod.nombre;
-                    document.getElementById('prod-precio').value = prod.precio;
-                    document.getElementById('prod-estacion').value = prod.estacion || 'cocina';
-                    document.getElementById('prod-categoria').value = prod.categoria;
-                    document.getElementById('prod-imagen').value = prod.imagen || '';
-                    document.getElementById('prod-descripcion').value = prod.descripcion || '';
-                    document.getElementById('modal-prod-title').innerText = "Editar Platillo";
-
-                    const misInsumos = state.recetas.filter(r => r.producto_id === prod.id);
-                    if (misInsumos.length > 0) {
-                        misInsumos.forEach(r => agregarFilaInsumoForm(r.insumo_id, r.cantidad_usada));
-                    } else {
-                        agregarFilaInsumoForm();
-                    }
-                }
-            } else {
-                document.getElementById('prod-edit-id').value = '';
-                document.getElementById('prod-nombre').value = '';
-                document.getElementById('prod-precio').value = '';
-                document.getElementById('prod-imagen').value = '';
-                document.getElementById('prod-descripcion').value = '';
-                document.getElementById('modal-prod-title').innerText = "Nuevo Platillo";
-                agregarFilaInsumoForm();
-            }
-            modal.classList.remove('hidden');
-        }
-
-        function cerrarModalProducto() {
-            document.getElementById('modal-producto').classList.add('hidden');
-        }
-
-        async function guardarProducto(e) {
-            e.preventDefault();
-            const editId = document.getElementById('prod-edit-id').value;
-            const nombre = document.getElementById('prod-nombre').value.trim();
-            const precio = parseFloat(document.getElementById('prod-precio').value) || 0;
-            const categoria = document.getElementById('prod-categoria').value;
-            const estacion = document.getElementById('prod-estacion').value;
-            const imagen = document.getElementById('prod-imagen').value.trim();
-            const descripcion = document.getElementById('prod-descripcion').value.trim();
-
-            let targetProdId;
-            if (editId) {
-                targetProdId = parseInt(editId);
-                await supabaseClient.from('menu').update({ nombre, precio, categoria, estacion, imagen, descripcion }).eq('id', targetProdId);
-                await supabaseClient.from('recetas').delete().eq('producto_id', targetProdId);
-            } else {
-                const { data, error } = await supabaseClient.from('menu').insert([{ nombre, precio, categoria, estacion, imagen, descripcion }]).select();
-                if (error || !data) { showToast("Error al guardar platillo", "error"); return; }
-                targetProdId = data[0].id;
-            }
-
-            const recetasAInsertar = [];
-            document.querySelectorAll('.fila-insumo-receta').forEach(fila => {
-                const insumoId = fila.querySelector('.insumo-select-id').value;
-                const cantVal = parseFloat(fila.querySelector('.insumo-cantidad-val').value) || 0;
-                if (insumoId && cantVal > 0) {
-                    recetasAInsertar.push({ producto_id: targetProdId, insumo_id: parseInt(insumoId), cantidad_usada: cantVal });
-                }
-            });
-
-            if (recetasAInsertar.length > 0) {
-                await supabaseClient.from('recetas').insert(recetasAInsertar);
-            }
-
-            showToast("Platillo guardado con éxito", "success");
-            cerrarModalProducto();
-            await cargarMenuDesdeSupabase();
-            await cargarRecetasDesdeSupabase();
-        }
-
-        async function eliminarProducto(id) {
-            if (confirm("¿Desea eliminar este producto?")) {
-                await supabaseClient.from('menu').delete().eq('id', id);
-                await cargarMenuDesdeSupabase();
-                showToast("Producto eliminado", "info");
-            }
-        }
-
-        function abrirModalCategoria() {
-            document.getElementById('modal-categoria').classList.remove('hidden');
-        }
-
-        function cerrarModalCategoria() {
-            document.getElementById('modal-categoria').classList.add('hidden');
-        }
-
-        function guardarCategoria(e) {
-            e.preventDefault();
-            const name = document.getElementById('cat-nombre').value.trim();
-            if (name && !state.categorias.includes(name)) {
-                state.categorias.push(name);
-                showToast(`Categoría "${name}" creada`, "success");
-                cerrarModalCategoria();
-                renderPosCategories();
-            }
-        }
-
-        function renderInventario() {
-            if (state.currentUser.role !== 'admin') return;
-            const body = document.getElementById('inventario-table-body');
-            if (!body) return;
-
-            let saludable = 0, alerta = 0, agotado = 0;
-
-            body.innerHTML = state.inventario.map(ins => {
-                const stock = parseFloat(ins.stock) || 0;
-                const isAgotado = stock <= 0;
-                const isAlerta = stock > 0 && stock <= 10;
-
-                if (isAgotado) agotado++;
-                else if (isAlerta) alerta++;
-                else saludable++;
-
-                const statusBadge = isAgotado ? '<span class="bg-rose-500/20 text-rose-400 font-bold px-2 py-0.5 rounded text-[10px]">AGOTADO</span>' :
-                                   isAlerta ? '<span class="bg-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded text-[10px]">ALERTA</span>' :
-                                   '<span class="bg-emerald-500/20 text-emerald-400 font-bold px-2 py-0.5 rounded text-[10px]">OK</span>';
-
-                return `
-                    <tr>
-                        <td class="p-3 font-bold">${ins.nombre}</td>
-                        <td class="p-3"><span class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px]">${ins.categoria || 'Insumo'}</span></td>
-                        <td class="p-3 font-black text-sm">${stock}</td>
-                        <td class="p-3 font-bold text-slate-400 text-[11px]">${ins.unidad_medida || 'Unidades'}</td>
-                        <td class="p-3">${statusBadge}</td>
-                        <td class="p-3 text-right space-x-1">
-                            <button onclick="reabastecerInsumoDirecto(${ins.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition">+ Stock</button>
-                            <button onclick="eliminarInsumoInventario(${ins.id})" class="text-rose-400 hover:text-rose-300 p-1.5"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.getElementById('inv-kpi-total').innerText = state.inventario.length;
-            document.getElementById('inv-kpi-saludable').innerText = saludable;
-            document.getElementById('inv-kpi-alerta').innerText = alerta;
-            document.getElementById('inv-kpi-agotado').innerText = agotado;
-        }
-
-        function abrirModalInsumo() {
-            document.getElementById('insumo-edit-id').value = '';
-            document.getElementById('insumo-nombre').value = '';
-            document.getElementById('insumo-stock').value = '50';
-            document.getElementById('modal-insumo').classList.remove('hidden');
-        }
-
-        function cerrarModalInsumo() {
-            document.getElementById('modal-insumo').classList.add('hidden');
-        }
-
-        async function guardarInsumoInventario(e) {
-            e.preventDefault();
-            const { error } = await supabaseClient.from('inventario').insert([{
-                nombre: document.getElementById('insumo-nombre').value.trim(),
-                categoria: document.getElementById('insumo-categoria').value.trim(),
-                unidad_medida: document.getElementById('insumo-unidad').value,
-                stock: parseFloat(document.getElementById('insumo-stock').value) || 0
-            }]);
-
-            if (error) {
-                showToast("Error al guardar insumo", "error");
-            } else {
-                showToast("Insumo agregado", "success");
-                cerrarModalInsumo();
-                await cargarInventarioDesdeSupabase();
-            }
-        }
-
-        async function reabastecerInsumoDirecto(id) {
-            const add = prompt("Cantidad a sumar al stock:");
-            const cant = parseFloat(add);
-            if (!isNaN(cant) && cant > 0) {
-                const ins = state.inventario.find(i => i.id === id);
-                if (ins) {
-                    await supabaseClient.from('inventario').update({ stock: (parseFloat(ins.stock) || 0) + cant }).eq('id', id);
-                    await cargarInventarioDesdeSupabase();
-                    showToast("Stock actualizado", "success");
-                }
-            }
-        }
-
-        async function eliminarInsumoInventario(id) {
-            if (confirm("¿Desea eliminar este insumo?")) {
-                await supabaseClient.from('inventario').delete().eq('id', id);
-                await cargarInventarioDesdeSupabase();
-                showToast("Insumo eliminado", "info");
-            }
+            showToast("¡Venta cobrada y registrada en red!", "success");
+            await cargarComandasDesdeSupabase();
+            switchTab('mesas');
         }
 
         function renderReportes() {
             const body = document.getElementById('ventas-table-body');
             if (!body) return;
 
-            const dataset = state.ventas.filter(v => {
-                if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
-                if (state.ultimoInicioDia) {
-                    return v.timestamp_cobro >= new Date(state.ultimoInicioDia).getTime();
-                }
-                return (v.fecha || '') >= state.turnoActivoFecha;
-            });
-
-            let totalVentas = 0, efectivo = 0, tarjeta = 0, pedidosya = 0;
+            const dataset = state.ventas.filter(v => (v.fecha || '') >= state.turnoActivoFecha);
+            let totalVentas = 0, efectivo = 0, tarjeta = 0;
 
             dataset.forEach(v => {
                 totalVentas += v.total;
-                const metodo = (v.metodo_pago || 'efectivo').toLowerCase();
-                if (metodo.includes('efectivo')) efectivo += v.total;
-                else if (metodo.includes('tarjeta')) tarjeta += v.total;
-                else if (metodo.includes('transferencia') || metodo.includes('pedidosya') || metodo.includes('pedidos ya')) pedidosya += v.total;
+                efectivo += v.total;
             });
-
-            const efectivoTotalEnCaja = efectivo + (state.fondoCajaInicial || 0);
 
             document.getElementById('rep-total-ventas').innerText = `Q${totalVentas.toFixed(2)}`;
             document.getElementById('rep-efectivo').innerText = `Q${efectivo.toFixed(2)}`;
-            document.getElementById('rep-tarjeta').innerText = `Q${tarjeta.toFixed(2)}`;
-            document.getElementById('rep-pedidosya').innerText = `Q${pedidosya.toFixed(2)}`;
-            const cajaTotalDisplay = document.getElementById('rep-efectivo-total-caja');
-            if (cajaTotalDisplay) cajaTotalDisplay.innerText = `Q${efectivoTotalEnCaja.toFixed(2)}`;
+            document.getElementById('rep-efectivo-total-caja').innerText = `Q${(efectivo + (state.fondoCajaInicial || 0)).toFixed(2)}`;
+            document.getElementById('input-fondo-caja').value = state.fondoCajaInicial > 0 ? state.fondoCajaInicial : '';
 
-            const inputFondo = document.getElementById('input-fondo-caja');
-            if (inputFondo) {
-                inputFondo.value = state.fondoCajaInicial > 0 ? state.fondoCajaInicial : '';
-            }
-
-            body.innerHTML = dataset.map(v => {
-                let etiquetaMesa = v.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === v.mesa_id)?.nombre || `Mesa #${v.mesa_id}`);
-                const fechaComanda = v.fecha || new Date().toISOString().split('T')[0];
-                const horaComanda = v.hora || '--:--';
-
-                return `
-                    <tr>
-                        <td class="p-3 font-bold text-slate-400">#${v.id}</td>
-                        <td class="p-3 font-bold text-amber-300">${fechaComanda}</td>
-                        <td class="p-3 font-bold">${etiquetaMesa}</td>
-                        <td class="p-3">${v.mesero_nombre || 'Mesero'}</td>
-                        <td class="p-3 font-mono">${horaComanda}</td>
-                        <td class="p-3 uppercase font-bold text-[10px] text-brand-400">${v.metodo_pago || 'efectivo'}</td>
-                        <td class="p-3 font-black">Q${v.total.toFixed(2)}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="imprimirTicketFinal58mm(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition">
-                                <i class="fa-solid fa-print"></i> Reimprimir
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-bold">No hay registros de ventas para este nuevo día</td></tr>`;
+            body.innerHTML = dataset.map(v => `
+                <tr>
+                    <td class="p-3 font-bold text-slate-400">#${v.id}</td>
+                    <td class="p-3 font-bold text-amber-300">${v.fecha}</td>
+                    <td class="p-3 font-bold">Mesa/Llevar</td>
+                    <td class="p-3">${v.mesero_nombre}</td>
+                    <td class="p-3 font-mono">${v.hora}</td>
+                    <td class="p-3 uppercase font-bold text-[10px] text-brand-400">Efectivo</td>
+                    <td class="p-3 font-black">Q${v.total.toFixed(2)}</td>
+                    <td class="p-3 text-right">--</td>
+                </tr>
+            `).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-bold">No hay ventas registradas hoy</td></tr>`;
         }
 
-        let ventasFiltradasCache = [];
-
-        function renderAdminHistorial(listaVentas = null) {
+        function renderAdminHistorial() {
             const body = document.getElementById('admin-ventas-table-body');
             if (!body) return;
-
-            let dataset = listaVentas || state.ventas;
-            ventasFiltradasCache = dataset;
-
-            body.innerHTML = dataset.map(v => {
-                let etiquetaMesa = v.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === v.mesa_id)?.nombre || `Mesa #${v.mesa_id}`);
-                const fechaComanda = v.fecha || new Date().toISOString().split('T')[0];
-                const horaComanda = v.hora || '--:--';
-
-                return `
-                    <tr>
-                        <td class="p-3 font-bold text-slate-400">#${v.id}</td>
-                        <td class="p-3 font-bold text-amber-300">${fechaComanda}</td>
-                        <td class="p-3 font-bold">${etiquetaMesa}</td>
-                        <td class="p-3">${v.mesero_nombre || 'Mesero'}</td>
-                        <td class="p-3 font-mono">${horaComanda}</td>
-                        <td class="p-3 uppercase font-bold text-[10px] text-brand-400">${v.metodo_pago || 'efectivo'}</td>
-                        <td class="p-3 font-black">Q${v.total.toFixed(2)}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="imprimirTicketFinal58mm(${JSON.stringify(v).replace(/"/g, '&quot;')})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-slate-700 transition">
-                                <i class="fa-solid fa-print"></i> Reimprimir
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('') || `<tr><td colspan="8" class="text-center py-6 text-slate-500 font-bold">No hay comandas registradas</td></tr>`;
+            body.innerHTML = state.ventas.map(v => `
+                <tr>
+                    <td class="p-3 font-bold">#${v.id}</td>
+                    <td class="p-3">${v.fecha}</td>
+                    <td class="p-3">Comanda</td>
+                    <td class="p-3">${v.mesero_nombre}</td>
+                    <td class="p-3">${v.hora}</td>
+                    <td class="p-3">Efectivo</td>
+                    <td class="p-3 font-black">Q${v.total.toFixed(2)}</td>
+                    <td class="p-3 text-right">--</td>
+                </tr>
+            `).join('');
         }
 
-        function filtrarVentasHistoricas() {
-            const fechaVal = document.getElementById('filtro-fecha-historial').value;
-            const mesVal = document.getElementById('filtro-mes-historial').value;
-            const titleEl = document.getElementById('table-admin-ventas-title');
-
-            let filtradas = [...state.ventas];
-
-            if (fechaVal) {
-                filtradas = filtradas.filter(v => (v.fecha || '') === fechaVal);
-                if (titleEl) titleEl.innerText = `Historial Filtrado por Fecha: ${fechaVal}`;
-            } else if (mesVal) {
-                filtradas = filtradas.filter(v => (v.fecha || '').startsWith(mesVal));
-                if (titleEl) titleEl.innerText = `Historial Filtrado por Mes: ${mesVal}`;
-            }
-
-            renderAdminHistorial(filtradas);
+        function renderInventario() {
+            const body = document.getElementById('inventario-table-body');
+            if (!body) return;
+            body.innerHTML = state.inventario.map(i => `
+                <tr>
+                    <td class="p-3 font-bold">${i.nombre}</td>
+                    <td class="p-3">${i.categoria || 'Insumo'}</td>
+                    <td class="p-3 font-black">${i.stock}</td>
+                    <td class="p-3">${i.unidad_medida}</td>
+                    <td class="p-3"><span class="text-emerald-400 font-bold">OK</span></td>
+                    <td class="p-3 text-right">--</td>
+                </tr>
+            `).join('');
         }
 
-        function limpiarFiltroHistorico() {
-            document.getElementById('filtro-fecha-historial').value = '';
-            document.getElementById('filtro-mes-historial').value = '';
-            const titleEl = document.getElementById('table-admin-ventas-title');
-            if (titleEl) titleEl.innerText = "Todas las Comandas Históricas Acumuladas";
-            renderAdminHistorial();
+        function renderMenuTable() {
+            const body = document.getElementById('menu-table-body');
+            if (!body) return;
+            body.innerHTML = state.menu.map(p => `
+                <tr>
+                    <td class="p-3"><img src="${p.imagen}" class="w-10 h-10 object-cover rounded"></td>
+                    <td class="p-3 font-bold">${p.nombre}</td>
+                    <td class="p-3">${p.categoria}</td>
+                    <td class="p-3 uppercase">${p.estacion}</td>
+                    <td class="p-3 font-black text-brand-400">Q${parseFloat(p.precio).toFixed(2)}</td>
+                    <td class="p-3 text-right">--</td>
+                </tr>
+            `).join('');
         }
 
-        function exportarHistorialFiltradoPDF() {
-            if (!window.html2pdf) {
-                showToast("Librería PDF no cargada", "error");
-                return;
-            }
-
-            const dataset = ventasFiltradasCache.length > 0 ? ventasFiltradasCache : state.ventas;
-            if (dataset.length === 0) {
-                showToast("No hay comandas en el filtro actual para exportar", "error");
-                return;
-            }
-
-            const fechaVal = document.getElementById('filtro-fecha-historial').value;
-            const mesVal = document.getElementById('filtro-mes-historial').value;
-            let subtituloFiltro = "Historial General Acumulado";
-            if (fechaVal) subtituloFiltro = `Reporte de Comandas - Fecha: ${fechaVal}`;
-            else if (mesVal) subtituloFiltro = `Reporte de Comandas - Mes: ${mesVal}`;
-
-            let totalVentas = 0, totalEfectivo = 0, totalTarjeta = 0, totalOtros = 0;
-
-            const htmlComandas = dataset.map(v => {
-                totalVentas += v.total;
-                const metodo = (v.metodo_pago || 'efectivo').toLowerCase();
-                if (metodo.includes('efectivo')) totalEfectivo += v.total;
-                else if (metodo.includes('tarjeta')) totalTarjeta += v.total;
-                else totalOtros += v.total;
-
-                let etiquetaMesa = v.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === v.mesa_id)?.nombre || `Mesa #${v.mesa_id}`);
-                
-                const itemsComandaHtml = (v.items || []).map(i => `
-                    <tr>
-                        <td style="padding: 4px 8px; border-bottom: 1px solid #cbd5e1; color: #1e293b;">${i.cantidad}x ${i.nombre}</td>
-                        <td style="padding: 4px 8px; border-bottom: 1px solid #cbd5e1; text-align: right; color: #1e293b; font-weight: bold;">Q${(i.precio * i.cantidad).toFixed(2)}</td>
-                    </tr>
-                `).join('');
-
-                return `
-                    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 11px; color: #0f172a; page-break-inside: avoid;">
-                        <div style="display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin-bottom: 4px; font-size: 12px;">
-                            <span>Comanda #${v.id} (${etiquetaMesa})</span>
-                            <span style="color: #0284c7;">Q${v.total.toFixed(2)}</span>
-                        </div>
-                        <div style="color: #475569; font-size: 10px; margin-bottom: 6px;">
-                            Atendió: <strong style="color: #0f172a;">${v.mesero_nombre || 'Mesero'}</strong> | Fecha: ${v.fecha || '--'} | Hora: ${v.hora || '--:--'} | Pago: <strong style="text-transform: uppercase;">${v.metodo_pago || 'efectivo'}</strong>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f1f5f9; color: #334155; font-size: 10px; text-transform: uppercase;">
-                                    <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #94a3b8;">Platillo / Bebida</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #94a3b8;">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsComandaHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }).join('');
-
-            const fechaImpresion = new Date().toLocaleDateString();
-            const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-            const containerPDF = document.createElement('div');
-            containerPDF.style.padding = '15px';
-            containerPDF.style.background = '#ffffff';
-            containerPDF.style.color = '#000000';
-            containerPDF.style.fontFamily = 'Inter, sans-serif';
-            containerPDF.style.width = '650px';
-
-            containerPDF.innerHTML = `
-                <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 15px;">
-                    <h1 style="font-size: 16px; font-weight: 900; margin: 0; color: #0284c7; text-transform: uppercase;">LA ESQUINA - ${subtituloFiltro}</h1>
-                    <p style="font-size: 10px; color: #475569; margin: 4px 0 0 0;">Generado: ${fechaImpresion} a las ${horaImpresion}</p>
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px;">
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Total Ventas</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #16a34a; margin-top: 2px;">Q${totalVentas.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Efectivo</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #0284c7; margin-top: 2px;">Q${totalEfectivo.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Tarjeta</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #0284c7; margin-top: 2px;">Q${totalTarjeta.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Transf / Otros</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #e11d48; margin-top: 2px;">Q${totalOtros.toFixed(2)}</div>
-                    </div>
-                </div>
-
-                <h3 style="font-size: 12px; font-weight: bold; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin-bottom: 10px; color: #0f172a; text-transform: uppercase;">DETALLE DE COMANDAS EN EL PERIODO SELECCIONADO</h3>
-                <div>
-                    ${htmlComandas}
-                </div>
-            `;
-
-            document.body.appendChild(containerPDF);
-
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `Historial_Comandas_${fechaVal || mesVal || 'Completo'}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
-            };
-
-            window.html2pdf().from(containerPDF).set(opt).save().then(() => {
-                containerPDF.remove();
-                showToast("Historial exportado a PDF con éxito", "success");
-            }).catch(err => {
-                containerPDF.remove();
-                showToast("Error al exportar PDF", "error");
-                console.error(err);
-            });
-        }
-
-        function exportarCortePDF() {
-            if (!window.html2pdf) {
-                showToast("Librería PDF no cargada", "error");
-                window.print();
-                return;
-            }
-
-            const turnoVentas = state.ventas.filter(v => {
-                if (!v.timestamp_cobro) return (v.fecha || '') >= state.turnoActivoFecha;
-                if (state.ultimoInicioDia) {
-                    return v.timestamp_cobro >= new Date(state.ultimoInicioDia).getTime();
-                }
-                return (v.fecha || '') >= state.turnoActivoFecha;
-            });
-            
-            let totalVentas = 0, totalEfectivo = 0, totalTarjeta = 0, totalTransferencia = 0, totalPedidosYa = 0;
-            
-            const htmlComandas = turnoVentas.map(v => {
-                totalVentas += v.total;
-                const metodo = (v.metodo_pago || 'efectivo').toLowerCase();
-                if (metodo.includes('efectivo')) totalEfectivo += v.total;
-                else if (metodo.includes('tarjeta')) totalTarjeta += v.total;
-                else if (metodo.includes('transferencia')) totalTransferencia += v.total;
-                else if (metodo.includes('pedidosya') || metodo.includes('pedidos ya')) totalPedidosYa += v.total;
-
-                let etiquetaMesa = v.tipo_orden === 'llevar' ? 'Para Llevar' : (state.mesas.find(x => x.id === v.mesa_id)?.nombre || `Mesa #${v.mesa_id}`);
-                
-                const itemsComandaHtml = (v.items || []).map(i => `
-                    <tr>
-                        <td style="padding: 4px 8px; border-bottom: 1px solid #cbd5e1; color: #1e293b;">${i.cantidad}x ${i.nombre}</td>
-                        <td style="padding: 4px 8px; border-bottom: 1px solid #cbd5e1; text-align: right; color: #1e293b; font-weight: bold;">Q${(i.precio * i.cantidad).toFixed(2)}</td>
-                    </tr>
-                `).join('');
-
-                return `
-                    <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 11px; color: #0f172a; page-break-inside: avoid;">
-                        <div style="display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin-bottom: 4px; font-size: 12px;">
-                            <span>Comanda #${v.id} (${etiquetaMesa})</span>
-                            <span style="color: #0284c7;">Q${v.total.toFixed(2)}</span>
-                        </div>
-                        <div style="color: #475569; font-size: 10px; margin-bottom: 6px;">
-                            Atendió: <strong style="color: #0f172a;">${v.mesero_nombre || 'Mesero'}</strong> | Fecha: ${v.fecha || '--'} | Hora: ${v.hora || '--:--'} | Pago: <strong style="text-transform: uppercase;">${v.metodo_pago || 'efectivo'}</strong>
-                        </div>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #f1f5f9; color: #334155; font-size: 10px; text-transform: uppercase;">
-                                    <th style="text-align: left; padding: 4px 8px; border-bottom: 1px solid #94a3b8;">Platillo / Bebida</th>
-                                    <th style="text-align: right; padding: 4px 8px; border-bottom: 1px solid #94a3b8;">Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemsComandaHtml}
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-            }).join('') || '<p style="text-align: center; color: #64748b; font-size: 12px;">No hay ventas registradas para este turno.</p>';
-
-            const fechaImpresion = new Date().toLocaleDateString();
-            const horaImpresion = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const efectivoTotalCaja = totalEfectivo + (state.fondoCajaInicial || 0);
-
-            const containerPDF = document.createElement('div');
-            containerPDF.style.padding = '15px';
-            containerPDF.style.background = '#ffffff';
-            containerPDF.style.color = '#000000';
-            containerPDF.style.fontFamily = 'Inter, sans-serif';
-            containerPDF.style.width = '650px';
-
-            containerPDF.innerHTML = `
-                <div style="text-align: center; border-bottom: 2px solid #0284c7; padding-bottom: 10px; margin-bottom: 15px;">
-                    <h1 style="font-size: 16px; font-weight: 900; margin: 0; color: #0284c7; text-transform: uppercase;">LA ESQUINA - CORTE DE CAJA DIARIO</h1>
-                    <p style="font-size: 10px; color: #475569; margin: 4px 0 0 0;">Fecha: ${fechaImpresion} | Impreso a las: ${horaImpresion}</p>
-                </div>
-
-                <div style="margin-bottom: 10px; font-size: 11px; font-weight: bold; color: #334155;">
-                    Fondo Inicial de Caja: Q${(state.fondoCajaInicial || 0).toFixed(2)} | Total Efectivo en Caja: Q${efectivoTotalCaja.toFixed(2)}
-                </div>
-
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px;">
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Ventas Totales</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #16a34a; margin-top: 2px;">Q${totalVentas.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Efectivo Ventas</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #0284c7; margin-top: 2px;">Q${totalEfectivo.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Tarjeta</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #0284c7; margin-top: 2px;">Q${totalTarjeta.toFixed(2)}</div>
-                    </div>
-                    <div style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 8px; border-radius: 6px; text-align: center;">
-                        <span style="font-size: 9px; color: #475569; font-weight: bold; text-transform: uppercase; display: block;">Transf / Ya</span>
-                        <div style="font-size: 13px; font-weight: 900; color: #e11d48; margin-top: 2px;">Q${(totalTransferencia + totalPedidosYa).toFixed(2)}</div>
-                    </div>
-                </div>
-
-                <h3 style="font-size: 12px; font-weight: bold; border-bottom: 1px solid #94a3b8; padding-bottom: 4px; margin-bottom: 10px; color: #0f172a; text-transform: uppercase;">DETALLE DE COMANDAS VENDIDAS</h3>
-                <div>
-                    ${htmlComandas}
-                </div>
-            `;
-
-            document.body.appendChild(containerPDF);
-
-            const opt = {
-                margin:       [10, 10, 10, 10],
-                filename:     `Corte_Caja_Detallado_${new Date().toISOString().split('T')[0]}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'letter', orientation: 'portrait' }
-            };
-
-            window.html2pdf().from(containerPDF).set(opt).save().then(() => {
-                containerPDF.remove();
-                showToast("PDF exportado con éxito", "success");
-            }).catch(err => {
-                containerPDF.remove();
-                showToast("Error al exportar PDF", "error");
-                console.error(err);
-            });
+        function renderReservaciones() {
+            const body = document.getElementById('reservas-table-body');
+            if (!body) return;
+            body.innerHTML = state.reservaciones.map(r => `
+                <tr>
+                    <td class="p-3 font-bold">${r.cliente}</td>
+                    <td class="p-3">${r.telefono}</td>
+                    <td class="p-3">${r.fecha} - ${r.hora}</td>
+                    <td class="p-3">${r.personas}</td>
+                    <td class="p-3">${r.tipo}</td>
+                    <td class="p-3">${r.estado}</td>
+                    <td class="p-3 text-right">--</td>
+                </tr>
+            `).join('');
         }
     </script>
 </body>
