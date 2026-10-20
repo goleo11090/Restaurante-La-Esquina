@@ -929,13 +929,7 @@
             fondoCajaInicial: parseFloat(localStorage.getItem('pos_fondo_caja')) || 0,
             turnoActivoFecha: localStorage.getItem('pos_turno_activo_fecha') || new Date().toISOString().split('T')[0],
             categorias: ['Platillos', 'Carnes', 'Bebidas', 'Postres', 'Entradas'],
-            usuarios: [
-                { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
-                { id: 2, nombre: 'Ana Gómez', rol: 'cajero', password: '123' },
-                { id: 3, nombre: 'Luis Méndez', rol: 'barista', password: '123' },
-                { id: 4, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' },
-                { id: 5, nombre: 'Admin General', rol: 'admin', password: '123' }
-            ],
+            usuarios: [],
             get meseros() {
                 return this.usuarios.filter(u => u.rol === 'mesero' || u.rol === 'admin');
             },
@@ -960,6 +954,7 @@
 
         window.onload = async function() {
             await aplicarConfiguracionVisual();
+            await cargarUsuariosDesdeSupabase();
             renderUserSession();
             renderMesas();
             renderGridLlevar();
@@ -995,7 +990,6 @@
                 if (headerRoot) headerRoot.className = "bg-slate-900 border-b border-slate-800 px-4 py-3 flex flex-wrap items-center justify-between gap-3 sticky top-0 z-30 shadow-md";
             }
 
-            // CARGAR LOGOS DESDE SUPABASE STORAGE (Con respaldo en Default)
             let loginLogoUrl = localStorage.getItem('pos_login_logo') || DEFAULT_LOGO_URL;
             let ticketLogoUrl = localStorage.getItem('pos_ticket_logo') || DEFAULT_TICKET_LOGO_URL;
 
@@ -1008,7 +1002,7 @@
                     if (rowTicket && rowTicket.valor) ticketLogoUrl = rowTicket.valor;
                 }
             } catch (e) {
-                console.warn("Usando enlaces predeterminados de Supabase Storage", e);
+                console.warn("Usando enlaces predeterminados", e);
             }
 
             localStorage.setItem('pos_login_logo', loginLogoUrl);
@@ -1029,6 +1023,26 @@
                     loginContainer.innerHTML = `<img src="${loginLogoUrl}" class="max-h-16 mx-auto object-contain rounded-xl shadow-md" onerror="this.onerror=null; this.parentElement.innerHTML='<span class=\'text-white font-black text-xl tracking-wider\'>LA ESQUINA</span>';">`;
                 } else {
                     loginContainer.innerHTML = `<span class="text-white font-black text-xl tracking-wider">LA ESQUINA</span>`;
+                }
+            }
+        }
+
+        async function cargarUsuariosDesdeSupabase() {
+            const { data, error } = await supabaseClient.from('usuarios').select('*');
+            if (!error && data && data.length > 0) {
+                state.usuarios = data;
+            } else {
+                // Usuarios predeterminados si la tabla está vacía
+                state.usuarios = [
+                    { id: 1, nombre: 'Carlos Ruiz', rol: 'mesero', password: '123' },
+                    { id: 2, nombre: 'Ana Gómez', rol: 'cajero', password: '123' },
+                    { id: 3, nombre: 'Luis Méndez', rol: 'barista', password: '123' },
+                    { id: 4, nombre: 'Pedro Juárez', rol: 'cocinero', password: '123' },
+                    { id: 5, nombre: 'Admin General', rol: 'admin', password: '123' }
+                ];
+                // Intentar guardar en Supabase para futuras conexiones
+                for (const u of state.usuarios) {
+                    await supabaseClient.from('usuarios').upsert([u], { onConflict: 'id' });
                 }
             }
         }
@@ -1108,6 +1122,9 @@
                         .channel('realtime-pos')
                         .on('postgres_changes', { event: '*', schema: 'public', table: 'ordenes' }, payload => {
                             cargarComandasDesdeSupabase();
+                        })
+                        .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios' }, payload => {
+                            cargarUsuariosDesdeSupabase();
                         })
                         .subscribe();
                 }
@@ -1255,7 +1272,7 @@
             }
         }
 
-        function autenticarUsuario(e) {
+        async function autenticarUsuario(e) {
             e.preventDefault();
             const userVal = document.getElementById('login-user').value.trim().toLowerCase();
             const passVal = document.getElementById('login-pass').value.trim();
@@ -1273,6 +1290,7 @@
                 return;
             }
 
+            await cargarUsuariosDesdeSupabase();
             const userEncontrado = state.usuarios.find(u => u.nombre.toLowerCase() === userVal || u.rol.toLowerCase() === userVal);
             if (userEncontrado && (userEncontrado.password === passVal || passVal === '123')) {
                 state.currentUser = { role: userEncontrado.rol, nombre: userEncontrado.nombre, password: userEncontrado.password || passVal };
@@ -1416,7 +1434,6 @@
             localStorage.setItem('pos_brand_color', brandColor);
             localStorage.setItem('pos_theme_mode', themeMode);
 
-            // Sincronizar en la base de datos de Supabase
             try {
                 await supabaseClient.from('configuracion').upsert([
                     { clave: 'logo_url', valor: logoUrl },
@@ -1430,7 +1447,8 @@
             setTimeout(() => location.reload(), 1000);
         }
 
-        function renderListaUsuariosModal() {
+        async function renderListaUsuariosModal() {
+            await cargarUsuariosDesdeSupabase();
             const body = document.getElementById('usuarios-table-body');
             if (!body) return;
 
@@ -1466,38 +1484,51 @@
             document.getElementById('user-form-title').innerText = "Editar Usuario / Rol";
         }
 
-        function eliminarUsuarioMesero(id) {
+        async function eliminarUsuarioMesero(id) {
             if (state.usuarios.length <= 1) {
                 showToast("Debe existir al menos un usuario", "error");
                 return;
             }
             if (confirm("¿Desea eliminar este usuario?")) {
-                state.usuarios = state.usuarios.filter(u => u.id !== id);
-                renderListaUsuariosModal();
-                renderPosMeseroSelector();
-                showToast("Usuario eliminado", "info");
+                const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
+                if (error) {
+                    showToast("Error al eliminar en Supabase", "error");
+                } else {
+                    await cargarUsuariosDesdeSupabase();
+                    renderListaUsuariosModal();
+                    renderPosMeseroSelector();
+                    showToast("Usuario eliminado", "info");
+                }
             }
         }
 
-        function guardarUsuarioMesero(e) {
+        async function guardarUsuarioMesero(e) {
             e.preventDefault();
             const editId = document.getElementById('user-edit-id').value;
             const nombre = document.getElementById('user-nombre').value.trim();
             const rol = document.getElementById('user-rol').value;
             const password = document.getElementById('user-pass').value.trim();
 
-            if (editId) {
-                const user = state.usuarios.find(u => u.id === parseInt(editId));
-                if (user) { user.nombre = nombre; user.rol = rol; user.password = password; }
-            } else {
-                const newId = state.usuarios.length > 0 ? Math.max(...state.usuarios.map(u => u.id)) + 1 : 1;
-                state.usuarios.push({ id: newId, nombre, rol, password });
-            }
+            let userId = editId ? parseInt(editId) : Date.now();
 
-            resetFormUsuario();
-            renderListaUsuariosModal();
-            renderPosMeseroSelector();
-            showToast("Usuario guardado con éxito", "success");
+            const usuarioObj = {
+                id: userId,
+                nombre: nombre,
+                rol: rol,
+                password: password
+            };
+
+            const { error } = await supabaseClient.from('usuarios').upsert([usuarioObj], { onConflict: 'id' });
+
+            if (error) {
+                showToast("Error al sincronizar usuario en Supabase", "error");
+            } else {
+                showToast("Usuario guardado y sincronizado en la red", "success");
+                resetFormUsuario();
+                await cargarUsuariosDesdeSupabase();
+                renderListaUsuariosModal();
+                renderPosMeseroSelector();
+            }
         }
 
         function renderMesas() {
